@@ -209,24 +209,24 @@ LaunchDefaultApp(protocol, candidates*) {
     LaunchFirst(candidates*)
 }
 #f::{
-    LaunchFirst(A_LocalAppData . "\Programs\Ferdium\Ferdium.exe",
-                A_LocalAppData . "\Ferdium\Ferdium.exe",
-                A_ProgramFiles . "\Ferdium\Ferdium.exe",
+    LaunchFirst(EnvGet("LocalAppData") . "\Ferdium\Ferdium.exe",
+                EnvGet("LocalAppData") . "\Programs\Ferdium\Ferdium.exe",
+                EnvGet("ProgramFiles") . "\Ferdium\Ferdium.exe",
                 "ferdium.exe")
 }
 #b::{
     LaunchDefaultApp("http",
-        A_ProgramFiles . "\Zen Browser\zen.exe",
-        A_LocalAppData . "\zen\zen.exe",
-        A_ProgramFiles . "\BraveSoftware\Brave-Browser\Application\brave.exe",
-        A_LocalAppData . "\BraveSoftware\Brave-Browser\Application\brave.exe",
+        EnvGet("ProgramFiles") . "\Zen Browser\zen.exe",
+        EnvGet("LocalAppData") . "\zen\zen.exe",
+        EnvGet("ProgramFiles") . "\BraveSoftware\Brave-Browser\Application\brave.exe",
+        EnvGet("LocalAppData") . "\BraveSoftware\Brave-Browser\Application\brave.exe",
         "zen.exe", "brave.exe")
 }
 #m::{
     LaunchDefaultApp("mailto",
-        A_LocalAppData . "\Mailspring\Mailspring.exe",
-        A_LocalAppData . "\Programs\mailspring\Mailspring.exe",
-        A_ProgramFiles . "\Mailspring\Mailspring.exe",
+        EnvGet("LocalAppData") . "\Mailspring\Mailspring.exe",
+        EnvGet("LocalAppData") . "\Programs\mailspring\Mailspring.exe",
+        EnvGet("ProgramFiles") . "\Mailspring\Mailspring.exe",
         "mailspring.exe")
 }
 
