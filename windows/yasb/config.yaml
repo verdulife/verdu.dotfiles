@@ -1,0 +1,272 @@
+# YASB v2 status bar configuration for the Komorebi window manager setup.
+# Docs: https://github.com/amnweb/yasb/wiki
+
+bars:
+  status-bar:
+    enabled: true
+    screens:
+      - "*"
+    style: "bar"
+    alignment:
+      position: "top"
+      align: "center"
+    dimensions:
+      width: "100%"
+      height: 36
+    padding:
+      top: 4
+      left: 4
+      bottom: 0
+      right: 4
+    animation:
+      enabled: true
+      duration: 500
+    blur_effect:
+      enabled: false
+      dark_mode: true
+      round_corners: false
+    window_flags:
+      always_on_top: true
+      windows_app_bar: true
+      hide_on_fullscreen: false
+    widgets:
+      left:
+        - "komorebi_workspaces"
+      center:
+        - "grouper_media"
+      right:
+        - "grouper_sysinfo"
+        - "clock"
+        - "power_menu"
+
+widgets:
+  komorebi_workspaces:
+    type: "komorebi.workspaces.WorkspaceWidget"
+    options:
+      label_offline: "Komorebi Offline"
+      label_workspace_btn: "•"
+      label_workspace_active_btn: "●"
+      label_workspace_populated_btn: "•"
+      label_zero_index: false
+      hide_empty_workspaces: false
+      hide_if_offline: true
+      enable_scroll_switching: true
+      reverse_scroll_direction: false
+      app_icons:
+        enabled_populated: false
+        enabled_active: false
+        size: 16
+        max_icons: 1
+        hide_label: true
+        hide_duplicates: true
+        hide_floating: true
+
+  # Layout pill (BSP) — currently NOT shown in the bar. Add "komorebi_active_layout"
+  # back to bars.status-bar.widgets.left to restore it.
+  komorebi_active_layout:
+    type: "komorebi.active_layout.ActiveLayoutWidget"
+    options:
+      hide_if_offline: true
+      label: "{layout_name}"
+      layouts:
+        - "bsp"
+        - "columns"
+        - "rows"
+        - "grid"
+        - "scrolling"
+        - "vertical_stack"
+        - "horizontal_stack"
+        - "ultrawide_vertical_stack"
+        - "right_main_vertical_stack"
+      callbacks:
+        on_left: "toggle_layout_menu"
+        on_middle: "next_layout"
+        on_right: "prev_layout"
+      layout_menu:
+        blur: true
+        round_corners: true
+
+  clock:
+    type: "yasb.clock.ClockWidget"
+    options:
+      label: "{%#d %B %Y · %H:%M h}"   # %#d = day without leading zero (Windows flag)
+      label_alt: "{%H:%M:%S}"
+      locale: "es_ES"               # month names in Spanish
+      update_interval: 1000
+      tooltip: false                # no hover info on the clock
+      calendar:
+        blur: true
+        round_corners: true
+
+  systray:
+    type: "yasb.systray.SystrayWidget"
+    options:
+      class_name: "systray"
+      icon_size: 16
+      pin_click_modifier: "alt"
+      show_unpinned: false          # unpinned icons start collapsed
+      show_unpinned_button: true    # ▾ button toggles the unpinned icons
+      use_hook: false
+
+  power_menu:
+    type: "yasb.power_menu.PowerMenuWidget"
+    options:
+      label: "\uf011"
+      uptime: false
+      show_user: false
+      menu_style: "popup"
+      popup:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "System"
+        alignment: "right"
+        direction: "down"
+        offset_top: 6
+        offset_left: 0
+      buttons:
+        restart: ["\uead2", "Restart"]
+        shutdown: ["\uf011", "Shut Down"]
+        sleep: ["\u23fe", "Sleep"]
+        lock: ["\uea75", "Lock"]
+        hibernate: ["\uf28e", "Hibernate"]
+        cancel: ["", "Cancel"]
+
+  # --- Media group: Media Lite + audio visualizer (one pill) ---
+  grouper_media:
+    type: "yasb.grouper.GrouperWidget"
+    options:
+      widgets:
+        - "audio_visualizer"
+        - "media_lite"
+      hide_empty: true
+      collapse_options:
+        enabled: false
+
+  media_lite:
+    type: "yasb.media_lite.MediaWidget"
+    options:
+      class_name: "media-lite"
+      show_thumbnail: true
+      show_title: true
+      show_artist: false             # single line of text
+      image_size: 24
+      thumbnail_corner_radius: 6
+      max_label_size: 18
+      tooltip: false                 # no hover info on the media pill
+      callbacks:
+        on_left: "toggle_media_menu"
+      media_menu:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "System"
+        direction: "down"
+        offset_top: 6
+        offset_left: 0
+        image_size: 120
+        thumbnail_corner_radius: 12
+
+  audio_visualizer:
+    type: "yasb.audio_visualizer.AudioVisualizerWidget"
+    options:
+      class_name: "audio-viz"
+      style: "bars"
+      height: 18
+      smoothness: 70
+      sensitivity: 50
+      auto_gain: true
+      framerate: 60
+      freq_min: 500
+      freq_max: 12000
+      hide_idle: true
+      hide_idle_after: 1500
+      channels: "mono"
+      mono_option: "average"
+      bars:
+        count: 16
+        width: 2
+        gap: 3
+
+  # --- System info group: CPU + MEM + GPU + traffic (collapsible pill) ---
+  grouper_sysinfo:
+    type: "yasb.grouper.GrouperWidget"
+    options:
+      widgets:
+        - "cpu"
+        - "memory"
+        - "gpu"
+        - "systray"                 # tray icons stay collapsed inside the group (▾)
+      collapse_options:
+        enabled: false                # always expanded, not collapsible
+
+  cpu:
+    type: "yasb.cpu.CpuWidget"
+    options:
+      label: "<span class=\"icon\">\uf2db</span> {info[percent][total]}% · {info[freq][current]} MHz"
+      label_alt: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%"
+      update_interval: 2000
+      menu:
+        enabled: false
+
+  memory:
+    type: "yasb.memory.MemoryWidget"
+    options:
+      label: "<span class=\"icon\">\uefc5</span> {virtual_mem_percent}%"
+      label_alt: "<span class=\"icon\">\uefc5</span> VIRT {virtual_mem_percent}% SWAP {swap_mem_percent}%"
+      update_interval: 3000
+      menu:
+        enabled: false
+
+  gpu:
+    type: "yasb.gpu.GpuWidget"
+    options:
+      label: "<span class=\"icon\">\uf0e7</span> {info[utilization]}% · {info[temp]}°C"
+      label_alt: "<span class=\"icon\">\uf0e7</span> {info[utilization]}% | {info[mem_used]}/{info[mem_total]}"
+      update_interval: 3000
+      menu:
+        enabled: false
+
+  traffic:
+    type: "yasb.traffic.TrafficWidget"
+    options:
+      label: "<span class=\"icon\">\uf019</span> {download_speed} <span class=\"icon\">\uf093</span> {upload_speed}"
+      label_alt: "{download_speed} | {upload_speed}"
+      update_interval: 1000
+
+  # Volume widget (system volume) — user chose NOT to use it; keep for reference.
+  volume:
+    type: "yasb.volume.VolumeWidget"
+    options:
+      label: "<span>{icon}</span> {level}"
+      label_alt: "{level}"
+      mute_text: "mute"
+      callbacks:
+        on_left: "toggle_volume_menu"
+        on_middle: "do_nothing"
+        on_right: "toggle_mute"
+      audio_menu:
+        blur: true
+        round_corners: true
+        round_corners_type: "normal"
+        border_color: "system"
+        alignment: "right"
+        direction: "down"
+        offset_top: 6
+        offset_left: 0
+        show_apps: true
+        show_app_labels: true
+        show_app_icons: true
+        show_apps_expanded: false
+
+  # Active window title widget — removed at the user's request.
+  active_window:
+    type: "yasb.active_window.ActiveWindowWidget"
+    options:
+      label: "{win[title]}"
+      label_no_window: ""
+      label_icon: true
+      label_icon_size: 16
+      max_length: 52
+      max_length_ellipsis: "..."
+      monitor_exclusive: true

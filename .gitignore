@@ -1,0 +1,16 @@
+# Logs and transient files
+*.log
+*.out
+*.err
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Local notes (not meant to ship)
+*.local.*

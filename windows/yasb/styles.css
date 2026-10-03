@@ -1,0 +1,248 @@
+/* YASB theme: fully transparent bar; each widget is its own white translucent pill. */
+
+.yasb-bar {
+  background-color: transparent;
+  color: #e8eaed;
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+/* ---- One pill per widget (workspaces / active layout / clock) ---- */
+.widget {
+  background-color: rgba(0, 0, 0, 0.45);   /* black pills, less transparency */
+  color: #eef1f4;
+  border-radius: 14px;
+  min-height: 28px;
+  max-height: 28px;
+  padding: 0 10px;
+  margin: 0 3px;
+}
+
+/* ---- Komorebi workspaces (dots inside the pill) ---- */
+/* Inactive dots are translucent; the active one is fully opaque and has no background */
+.komorebi-workspaces .ws-btn {
+  color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  font-size: 14px;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 12px;
+}
+.komorebi-workspaces .ws-btn.populated {
+  color: rgba(255, 255, 255, 0.50);
+}
+.komorebi-workspaces .ws-btn.active {
+  color: #ffffff;
+  background-color: transparent;
+}
+.komorebi-workspaces .offline-status {
+  color: #ff8a8a;
+}
+
+/* ---- Active layout name ---- */
+.komorebi-active-layout {
+  color: #dfe3e8;
+}
+
+/* ---- System tray (replaces the native taskbar tray) ---- */
+.systray .unpinned-container,
+.systray .pinned-container {
+  background: transparent;
+}
+.systray .button {
+  border-radius: 6px;
+  padding: 2px;
+}
+.systray .button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- Media widget: spacing and icon font ---- */
+/* Buttons use the JetBrainsMono Nerd Font (complete) first, as the user preferred;
+   the Windows icon fonts stay as fallback. */
+.media-widget .label {
+  color: #eef1f4;
+  padding: 0 8px;
+}
+.media-widget .btn {
+  font-family: "JetBrainsMono NF", "JetBrainsMono NFP", "Segoe MDL2 Assets", "Segoe Fluent Icons", sans-serif;
+  color: #dde3ea;
+  margin: 0 3px;
+  padding: 0 4px;
+}
+.media-widget .btn:hover {
+  color: #ffffff;
+}
+
+/* ---- Media menu (popup): breathing room ---- */
+.media-menu {
+  background-color: rgba(17, 17, 27, 0.55);
+  border-radius: 8px;
+  padding: 10px;
+}
+.media-menu .title,
+.media-menu .artist,
+.media-menu .source {
+  margin: 2px 8px;
+}
+.media-menu .btn {
+  font-family: "JetBrainsMono NF", "JetBrainsMono NFP", "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+  margin: 0 6px;
+  padding: 6px 8px;
+}
+.media-menu .app-volume-container {
+  margin-top: 10px;
+  padding: 8px 6px;
+}
+
+/* ---- Groupers: the group is ONE pill; children are flattened ---- */
+.grouper {
+  font-family: "JetBrainsMono NF", "JetBrainsMono NFP", sans-serif;
+}
+.grouper .widget {
+  background-color: transparent;
+  margin: 0;
+  padding: 0 6px;
+}
+.grouper .icon {
+  font-family: "JetBrainsMono NFP", "JetBrainsMono NF", sans-serif;
+  color: #9aa3b2;   /* muted icons for the elegant minimal look */
+  margin-right: 4px;
+}
+
+/* Media Lite: spacing between cover and text + its popup */
+.media-lite-widget .widget-container {
+  padding: 0 6px;
+}
+.media-lite-widget .thumbnail {
+  margin-right: 8px;
+}
+.media-lite-widget .text {
+  padding: 0 10px 0 0;
+}
+.media-lite-widget .label,
+.media-lite-widget .title {
+  color: #eef1f4;
+}
+/* Media Lite popup: proper breathing room */
+.media-lite-menu {
+  min-width: 280px;
+  max-width: 280px;
+  background-color: rgba(17, 17, 27, 0.72);
+  border-radius: 10px;
+}
+.media-lite-menu .header {
+  padding: 16px 16px 0 16px;
+}
+.media-lite-menu .controls {
+  padding: 28px 16px 24px 16px;
+}
+.media-lite-menu .title {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Segoe UI", sans-serif;
+  color: #eef1f4;
+}
+.media-lite-menu .artist {
+  font-size: 12px;
+  color: #a6adc8;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+.media-lite-menu .btn {
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+  font-size: 14px;
+  margin: 4px 2px;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  border-radius: 20px;
+}
+.media-lite-menu .btn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+.media-lite-menu .btn.play {
+  background-color: #ffffff;
+  color: #000000;
+}
+.media-lite-menu .volume-button,
+.media-lite-menu .volume-slider-popup {
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+  background-color: rgb(24, 25, 32);
+  border-radius: 10px;
+}
+.grouper .widget:first-child {
+  padding-left: 2px;
+}
+.grouper .widget:last-child {
+  padding-right: 2px;
+}
+
+/* Audio visualizer bars */
+.audio-viz {
+  color: #8fd6a1;
+}
+
+/* Systray collapse button */
+.systray .unpinned-visibility-btn {
+  border-radius: 4px;
+  height: 20px;
+  width: 16px;
+  border: none;
+  outline: none;
+}
+.systray .unpinned-visibility-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---- Power menu widget ---- */
+/* The label glyph (\uf011 power icon) comes from the Nerd Font.
+   NFP (Propo) first: its proportional metrics stop icons getting clipped. */
+.power-menu-widget .label {
+  font-family: "JetBrainsMono NFP", "JetBrainsMono NF", sans-serif;
+  color: #e8eaed;
+}
+/* Compact popup: breathing room everywhere */
+.power-menu-compact {
+  background-color: rgba(17, 17, 27, 0.65);
+  border-radius: 8px;
+  padding: 8px;
+}
+.power-menu-compact .buttons {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 4px;
+}
+.power-menu-compact .button {
+  padding: 8px 14px;
+  margin: 2px;
+  border-radius: 6px;
+  border: none;
+}
+.power-menu-compact .button.hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+.power-menu-compact .button .icon {
+  font-family: "JetBrainsMono NF", "JetBrainsMono NFP", sans-serif;
+  color: #dde3ea;
+  min-width: 22px;
+  padding-right: 10px;
+}
+.power-menu-compact .button .label {
+  font-family: "Segoe UI", sans-serif;
+  color: #e8eaed;
+}
+
+/* ---- Active window (focused tile) ---- */
+.active-window-widget {
+  color: #cfd4da;
+}
+.active-window-widget .label {
+  color: #d7dce2;
+}
+
+/* ---- Clock ---- */
+.clock {
+  color: #eef1f4;
+}
