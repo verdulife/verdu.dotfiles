@@ -1,4 +1,4 @@
-# dotfiles — Windows bootstrap (idempotent: safe to re-run).
+# dotfiles - Windows bootstrap (idempotent: safe to re-run).
 # Installs the winget packages and places the configuration files where the
 # Windows tooling expects them. Run from the repo root:
 #   powershell -ExecutionPolicy Bypass -File windows\install\setup.ps1
@@ -12,13 +12,13 @@ function Install-WinGet($id) {
     if ($LASTEXITCODE -ne 0) { Write-Warning "winget failed for $id (exit $LASTEXITCODE)" }
 }
 
-Write-Host "== 1) Packages (winget) =="
+Write-Host '== 1) Packages (winget) =='
 Install-WinGet 'LGUG2Z.komorebi'          # tiling window manager
 Install-WinGet 'AutoHotkey.AutoHotkey'    # v2: hotkeys + FFm + taskbar handling
 Install-WinGet 'AmN.yasb'                 # status bar
 Install-WinGet 'DEVCOM.JetBrainsMonoNerdFont'  # icon font (family name: "JetBrainsMono NF")
 
-Write-Host "== 2) Configuration files =="
+Write-Host '== 2) Configuration files =='
 $homeFiles = @(
     @{ Src = "$Dot\windows\komorebi\komorebi.ahk";                 Dst = "$HOME\komorebi.ahk" },
     @{ Src = "$Dot\windows\komorebi\komorebi-autostart.ps1";       Dst = "$HOME\komorebi-autostart.ps1" },
@@ -33,15 +33,15 @@ foreach ($f in $homeFiles) {
     Write-Host "  -> $($f.Dst)"
 }
 
-Write-Host "== 3) Startup folder (logon autostart) =="
+Write-Host '== 3) Startup folder (logon autostart) =='
 $startup = [Environment]::GetFolderPath('Startup')
 Copy-Item "$Dot\windows\autostart\komorebi-autostart.vbs" (Join-Path $startup 'komorebi-autostart.vbs') -Force
 Write-Host "  -> $startup\komorebi-autostart.vbs"
 
-Write-Host ""
-Write-Host "Done. To activate on this machine:"
-Write-Host "  1) Make sure PATH sees komorebic (new terminal / logon)."
-Write-Host "  2) Log on (or run $HOME\komorebi-autostart.ps1 once) - it starts komorebi,"
-Write-Host "     applies workspace/layout/border settings, launches AHK (hotkeys + FFm +")
-Write-Host "     hidden taskbar), then YASB."
-Write-Host "  3) See README.md -> 'Verification' for health checks."
+Write-Host ''
+Write-Host 'Done. To activate on this machine:'
+Write-Host '  1) Make sure PATH sees komorebic (new terminal or logon).'
+Write-Host "  2) Log on, or run once: $HOME\komorebi-autostart.ps1 - it starts komorebi,"
+Write-Host '     applies the layout and border settings, launches the AHK hotkeys,'
+Write-Host '     focus-follows-mouse and the hidden taskbar, then YASB.'
+Write-Host '  3) See README.md - Verification for health checks.'
