@@ -1,7 +1,7 @@
 # AGENTS — fast path
 
-You are an agent working with this dotfiles repo. This file is the compressed
-version of README.md; read README.md for depth, this for procedure.
+Compressed version of README.md. Read README.md for depth; **read
+MANIFEST.md to install** — it is the file→destination contract.
 
 ## What this repo is
 
@@ -9,17 +9,24 @@ Portable personal configuration: a Windows tiling-desktop stack (komorebi +
 AutoHotkey + YASB + Windows Terminal + PowerShell) and shared tools (Starship,
 Neovim). Linux folders are placeholders until the Arch configs land.
 
-## Commands that matter
+## Install = copy, per MANIFEST.md
+
+No installers, no symlinks. For each row in `MANIFEST.md`:
+
+- `copy <repo-file> <destination>` — exact paths, do not invent.
+- `shared/nvim/` is the only recursive copy.
+- Windows: first install the four winget prerequisites (listed at the top of
+  the manifest — one-time, manual).
+- After copying: sign in once (or run `%USERPROFILE%\komorebi-autostart.ps1`).
+
+## Revert
+
+Delete the destination files from the manifest.
+
+## Health checks
 
 ```powershell
-# install on Windows (idempotent)
-powershell -ExecutionPolicy Bypass -File windows\install\setup.ps1
-
-# rollback
-powershell -ExecutionPolicy Bypass -File windows\install\cleanup.ps1
-
-# health checks
-komorebic state                       # WM alive + layout JSON
+komorebic state
 Get-Process komorebi,yasb,AutoHotkey64
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 ```
@@ -46,16 +53,15 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 | Prompt | `shared/starship.toml` |
 | Neovim | `shared/nvim/` |
 
-## Workflow for adding a machine
+## Workflow
 
-1. `git clone`; run `setup.ps1` (Windows) or copy `shared/` (Linux).
-2. Verify with the health checks above.
-3. If you change a config here, update both the file and the relevant README,
-   then re-run `setup.ps1` on the target machine (copies, not symlinks).
+1. Clone; copy per `MANIFEST.md`.
+2. Verify with the health checks.
+3. If you change a config in the repo, update the file AND the relevant README,
+   then re-copy that single file on the target machine.
 
 ## Rules
 
-- No secrets: no tokens/keys — home configs are public-ready.
-- Keep the README's "Gotchas" list honest — it is the accumulated hard-won
-  knowledge; append when you discover something new.
+- No secrets: no tokens/keys.
+- Keep the README's "Gotchas" list honest — append when you discover something.
 - Commit logical units with conventional messages.

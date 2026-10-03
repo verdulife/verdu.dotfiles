@@ -1,14 +1,17 @@
 # dotfiles
 
 Personal configuration, ported across machines and OSes. Everything here is
-**source of truth**: to use it on a fresh machine, clone and copy/install — no
-symlink manager required (copies are simpler and Windows-friendlier).
+**source of truth**; to use it anywhere you **copy files to their exact
+destinations** — see [MANIFEST.md](MANIFEST.md), which maps every file. No
+installers, no symlink managers: copy is the contract. Machines get exactly the
+same setup by following the same manifest.
 
 Works on **Windows** (tiling desktop: komorebi + AutoHotkey + YASB) and is
 structured for **Linux** (Arch + Hyprland) — the Linux side currently ships as
 ready-made folders with configs to be added from the Arch machine.
 
-Written for humans and agents: see [AGENTS.md](AGENTS.md) for the fast path.
+Written for humans and agents: **read [MANIFEST.md](MANIFEST.md) to install**,
+[AGENTS.md](AGENTS.md) is the fast path for AI agents.
 
 ---
 
@@ -16,26 +19,24 @@ Written for humans and agents: see [AGENTS.md](AGENTS.md) for the fast path.
 
 ```
 dotfiles/
-├── README.md              ← this file
-├── AGENTS.md              ← fast path for AI agents
+├── MANIFEST.md           ← WHERE EVERY FILE GOES (the contract for copying)
+├── README.md
+├── AGENTS.md
 ├── shared/
-│   ├── starship.toml      ← Starship prompt (both OSes)
-│   └── nvim/              ← Neovim config (vim-plug based; currently ~/.config/nvim)
+│   ├── starship.toml     ← Starship prompt (both OSes)
+│   └── nvim/             ← Neovim config (vim-plug based)
 ├── windows/
 │   ├── komorebi/
-│   │   ├── komorebi.ahk              ← AHK v2: hotkeys, focus-follows-mouse, taskbar handling
-│   │   ├── komorebi-autostart.ps1    ← logon script: layout/looks + launches everything
+│   │   ├── komorebi.ahk              ← AHK v2: hotkeys, focus-follows-mouse, taskbar
+│   │   ├── komorebi-autostart.ps1    ← applies layout/looks + launches everything
 │   │   └── README.md
 │   ├── yasb/
 │   │   ├── config.yaml               ← YASB v2 bar: widgets, groupers, pills
 │   │   ├── styles.css                ← theme: transparent bar, black pills
 │   │   └── README.md
 │   ├── win-terminal/settings.json    ← Windows Terminal
-│   ├── powershell/                   ← PS7 profile (sources user_profile.ps1)
-│   ├── autostart/komorebi-autostart.vbs  ← windowless logon launcher
-│   └── install/
-│       ├── setup.ps1                 ← winget + file placement (idempotent)
-│       └── cleanup.ps1               ← rollback
+│   ├── powershell/                   ← PS7 profile + user_profile.ps1
+│   └── autostart/komorebi-autostart.vbs  ← windowless logon launcher
 └── linux/
     ├── hyprland/        ← placeholder (Arch machine config goes here)
     ├── waybar/          ← placeholder
@@ -44,33 +45,18 @@ dotfiles/
 
 ---
 
-## Quick start — Windows
+## Install — copy per the manifest
 
-Prerequisites: Windows 11, [winget](https://github.com/microsoft/winget-cli).
+1. Clone the repo anywhere.
+2. Open **`MANIFEST.md`** — it lists each repo file and its exact destination
+   for Windows and Linux.
+3. Copy the files to those destinations (a handful of `copy`/`cp` commands; the
+   `shared/nvim/` entry is a recursive copy).
+4. Windows: install the four prerequisites (winget commands are at the top of
+   the manifest — they are one-time, not part of the repo), then sign in once
+   (or run `%USERPROFILE%\komorebi-autostart.ps1` once) and verify (below).
 
-```powershell
-git clone <this-repo> C:\Users\<you>\dotfiles
-cd C:\Users\<you>\dotfiles
-powershell -ExecutionPolicy Bypass -File windows\install\setup.ps1
-```
-
-`setup.ps1` (idempotent, safe to re-run):
-1. Installs via winget: `LGUG2Z.komorebi` · `AutoHotkey.AutoHotkey` · `AmN.yasb` · `DEVCOM.JetBrainsMonoNerdFont`.
-2. Places the config files (komorebi.ahk, autostart, YASB config/styles, PowerShell profile).
-3. Installs the logon autostart (`komorebi-autostart.vbs` in `shell:startup`).
-
-Then **log on once** (or run `%USERPROFILE%\komorebi-autostart.ps1` once):
-komorebi starts, layout/workspace/border preferences are applied, AHK loads
-(hotkeys + focus-follows-mouse + hidden taskbar), YASB renders the bar.
-
-## Quick start — Linux
-
-```bash
-git clone <this-repo> ~/dotfiles
-ln -sf ~/dotfiles/shared/starship.toml ~/.config/starship.toml
-rsync -a ~/dotfiles/shared/nvim/ ~/.config/nvim/
-# hyprland/waybar configs land in linux/ as they are ported from the Arch machine
-```
+That is the whole install. Nothing else runs.
 
 ---
 
@@ -120,14 +106,13 @@ right  : ⟲ cpu%·MHz  MEM%  ⚡ gpu%·temp  ▾tray  ·  date time h  ⏻
 - Click widgets for their popups (media player controls + per-app volume,
   power menu with restart/shutdown/sleep/lock/hibernate).
 
-See `windows/yasb/README.md` for the widget map and the styling notes.
+See `windows/yasb/README.md` for the widget map and styling notes.
 
 ### Starship / Neovim / Terminal
 
 - `shared/starship.toml` — segmented prompt (Catppuccin-flavored).
-- `shared/nvim/` — Neovim with **vim-plug** (`init.vim` + `plug.vim`); note:
-  despite the project plan mentioning LazyVim, the live config is vim-plug —
-  swapping to LazyVim later means replacing this folder and re-plugging.
+- `shared/nvim/` — Neovim with **vim-plug** (`init.vim` + `plug.vim`); the live
+  config is not LazyVim — swapping later means replacing this folder.
 - `windows/win-terminal/settings.json` — Windows Terminal settings (per-machine
   profiles may need trimming).
 
@@ -136,16 +121,10 @@ See `windows/yasb/README.md` for the widget map and the styling notes.
 ## Verification (health checks)
 
 ```powershell
-# komorebi alive + state
-komorebic state          # -> JSON; peek is_paused, monitors, workspaces
-
-# processes expected after logon
+komorebic state          # WM alive + layout JSON
 Get-Process komorebi,yasb,AutoHotkey64
-
-# YASB log (errors show up here after config/style edits)
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
-
-# quick sanity: bar is rendering at the top; Super+arrows focuses tiles
+# sanity: the bar renders at the top; Super+arrows focuses tiles
 ```
 
 ## Customization knobs
@@ -155,8 +134,9 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
   `komorebi-autostart.ps1` — read the border formula comment first.
 - **YASB look**: pill opacity `rgba(0,0,0,0.45)` in `styles.css` (` .widget`);
   widget set/order in `config.yaml` under `bars.status-bar.widgets`.
-- **FFm dwell**: in `komorebi.ahk` (`SetTimer(FollowMouse, 60)`; the 
+- **FFm dwell**: in `komorebi.ahk` (`SetTimer(FollowMouse, 60)`; the
   `stable++ < 2` value is the dwell multiplier).
+- After editing a config, **re-copy that single file** to reinstall it.
 
 ## Gotchas (learned the hard way)
 
@@ -168,10 +148,11 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 6. **YASB rewrites its config files on reload**; after editing `styles.css` a YASB restart is the reliable way to see changes. Widget validation is strict (e.g., `power_menu` requires `shutdown`, `restart`, `cancel`).
 7. Don't run `komorebic start` from within MSYS bash (it hangs there); use PowerShell `Start-Process` or the logon script.
 
-## Uninstall (Windows)
+## Revert
 
-`powershell -ExecutionPolicy Bypass -File windows\install\cleanup.ps1` removes the
-placed files and the startup entry; winget uninstall commands are printed there.
+Delete the destination files listed in `MANIFEST.md` (optionally uninstall the
+four winget prerequisites). Nothing here modifies what was previously on the
+machine.
 
 ---
 
