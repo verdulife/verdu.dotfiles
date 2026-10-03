@@ -46,8 +46,16 @@ works and is already wired into `komorebi.ahk`.
 | Resize (toward the neighbor = grow) | `Super+Ctrl+arrows` |
 | Workspaces 1–5 | `Super+1..5` · move `Super+Shift+1..5` |
 | Close | `Super+W` |
-| Fullscreen (monocle) / float | `Super+F` / `Super+Shift+V` |
-| Minimize / maximize | `Super+Shift+M` / `Super+M` |
+| Float | `Super+Shift+V` |
+| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email |
+| Minimize | `Super+Shift+M` |
+
+Launchers resolve: the registered OS default for the URL scheme first (`http` /
+`mailto` via UserChoice ProgId), with fallbacks Ferdium→(known paths, then
+plain name), browser→Zen then Brave, email→Mailspring. The Squirrel
+`Update.exe` stub is skipped so Mailspring launches the real app. Monocle
+(fullscreen) and native maximize are intentionally unbound since `Super+F`/
+`Super+M` became launchers.
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
 | Terminal | `Super+Enter` |
 | Pause tiling | `Super+Shift+P` |

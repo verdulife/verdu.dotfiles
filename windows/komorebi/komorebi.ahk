@@ -162,8 +162,8 @@ FollowMouse() {
 ; Window state / management
 #w::Komorebic("close")          ; was Win+Q (Win+Q stays free); Win+W replaces Windows Widgets
 #+v::Komorebic("toggle-float")  ; Hyprland SUPER+V (real Win+V clipboard stays yours)
-#f::Komorebic("toggle-monocle") ; Hyprland SUPER+F fullscreen equivalent
-#m::Komorebic("toggle-maximize") ; native maximize (replaces Win+M minimize-all)
+; Note: Super+F (was monocle) and Super+M (was maximize) are now app launchers,
+; defined in the global section below. Fullscreen/maximize are currently unbound.
 #+m::Komorebic("minimize")       ; minimize focused window (restore via Alt+Tab/taskbar)
 #+p::Komorebic("toggle-pause")
 #+r::Komorebic("retile")
@@ -173,6 +173,62 @@ FollowMouse() {
 ; ---- Global (work also while Illustrator is focused) ----
 ; Launch Windows Terminal
 #Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
+
+; ---- App launchers -----------------------------------------------------------
+; Super+F -> Ferdium
+; Super+B -> default browser (fallback order: Zen, Brave)
+; Super+M -> default email client (fallback: Mailspring)
+LaunchFirst(paths*) {
+    for p in paths
+        if (FileExist(p))
+            return Run(p)
+}
+UrlAppExe(protocol) {          ; registered default app executable for http/mailto
+    try {
+        progId := RegRead("HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\" protocol "\UserChoice", "ProgId")
+        if (!progId)
+            return ""
+        cmd := Trim(RegRead("HKCU\Software\Classes\" progId "\shell\open\command"))
+        if (SubStr(cmd, 1, 1) = '"') {
+            end := InStr(cmd, '"', false, 2)
+            if (end)
+                return SubStr(cmd, 2, end - 2)
+        }
+        sp := InStr(cmd, A_Space)
+        return sp ? SubStr(cmd, 1, sp - 1) : cmd
+    } catch
+        return ""
+}
+LaunchDefaultApp(protocol, candidates*) {
+    exe := UrlAppExe(protocol)
+    if (exe && FileExist(exe)) {
+        SplitPath(exe, &exeName)
+        if (exeName != "Update.exe")        ; Squirrel updater stub is not launchable
+            return Run(exe)
+    }
+    LaunchFirst(candidates*)
+}
+#f::{
+    LaunchFirst(A_LocalAppData . "\Programs\Ferdium\Ferdium.exe",
+                A_LocalAppData . "\Ferdium\Ferdium.exe",
+                A_ProgramFiles . "\Ferdium\Ferdium.exe",
+                "ferdium.exe")
+}
+#b::{
+    LaunchDefaultApp("http",
+        A_ProgramFiles . "\Zen Browser\zen.exe",
+        A_LocalAppData . "\zen\zen.exe",
+        A_ProgramFiles . "\BraveSoftware\Brave-Browser\Application\brave.exe",
+        A_LocalAppData . "\BraveSoftware\Brave-Browser\Application\brave.exe",
+        "zen.exe", "brave.exe")
+}
+#m::{
+    LaunchDefaultApp("mailto",
+        A_LocalAppData . "\Mailspring\Mailspring.exe",
+        A_LocalAppData . "\Programs\mailspring\Mailspring.exe",
+        A_ProgramFiles . "\Mailspring\Mailspring.exe",
+        "mailspring.exe")
+}
 
 ; ---- Suppress the Start menu on a lone Win press -------------------------
 ; '~' keeps the Win key's native behaviour, so Win+E, Win+Tab, Win+D, Win+L... still work.
