@@ -61,3 +61,16 @@ plain name), browser→Zen then Brave, email→Mailspring. The Squirrel
 | Pause tiling | `Super+Shift+P` |
 
 It is a HM-style Toggle: `Super` = the Windows key.
+
+## Gotchas
+
+- **Zen cold start escapes tiling.** If Zen was fully closed, its main window can
+  be created WITHOUT a `Show` window event (only a `TitleUpdate` arrives), so
+  komorebi never registers it as a tile and the window floats until you open a
+  second one. `manage-rule exe zen.exe` alone does not cover this case. The
+  `RescueUnmanagedWindows` timer in `komorebi.ahk` polls for a visible
+  `zen.exe`/`MozillaWindowClass` main window that is not yet managed and forces
+  it with `komorebic manage` (focus preserved via `WinActivate` round-trip).
+  Note: in AutoHotkey v2 the timer must pass its arguments with
+  `FocusManage.Bind(hwnd, restore)` — arrow closures do **not** capture local
+  variables, and a bare `Bind()` call silently kills the script.
