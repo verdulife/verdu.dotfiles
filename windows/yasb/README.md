@@ -28,6 +28,16 @@ right : grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾
 | `clock` | `yasb.clock.ClockWidget` | `{%#d %B %Y · %H:%M h}`, `locale: es_ES`, `tooltip: false` |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 
+## Fullscreen behavior
+
+`hide_on_fullscreen: true` (combined with `always_on_top: true`, which the
+feature requires) makes the bar drop to `HWND_BOTTOM` while a **real
+fullscreen** window is active — browser fullscreen video (F11), exclusive
+fullscreen games — and restore it when fullscreen closes. It uses the native
+Windows appbar notification `ABN_FULLSCREENAPP`, so borderless-windowed games
+(which are ordinary top-level windows) do **not** trigger it; that is a YASB
+limitation, not a config one.
+
 ## Editing rules
 
 - After changing `styles.css` or `config.yaml`, **restart YASB** (it rewrites

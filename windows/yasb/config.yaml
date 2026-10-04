@@ -28,7 +28,7 @@ bars:
     window_flags:
       always_on_top: true
       windows_app_bar: true
-      hide_on_fullscreen: false
+      hide_on_fullscreen: true   # real fullscreen (video F11, juegos exclusivos) baja la barra a HWND_BOTTOM
     widgets:
       left:
         - "komorebi_workspaces"

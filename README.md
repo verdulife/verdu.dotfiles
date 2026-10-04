@@ -163,6 +163,7 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 7. Don't run `komorebic start` from within MSYS bash (it hangs there); use PowerShell `Start-Process` or the logon script.
 8. **Reboots can silently undo the komorebi layout**: Windows 11 can re-launch a bare `komorebi.exe` (plus AHK/YASB) at sign-in via "restart apps" before/without the autostart script, and komorebi's IPC socket can lag on a busy boot. The autostart handles both: it waits until `komorebic state` answers (up to 20s), re-applies the layout, skips AHK/YASB if already running, and logs to `%USERPROFILE%\komorebi-autostart.log`. If the layout is missing after a reboot, read that log first.
 9. **`komorebic border-offset -1` fails**: `-1` is parsed as a flag; use `border-offset -- -1` (the autostart already does).
+11. **YASB hides on real fullscreen only**: `hide_on_fullscreen: true` (requires `always_on_top: true`) drops the bar to `HWND_BOTTOM` via the `ABN_FULLSCREENAPP` appbar notification — browser fullscreen video and exclusive-fullscreen games hide it, but borderless-windowed games do not (YASB limitation). If a fullscreen app stays under the bar, it is either a maximized window (not fullscreen) or borderless windowed.
 
 ## Revert
 
