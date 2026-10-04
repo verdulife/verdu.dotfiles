@@ -148,6 +148,8 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 5. **`mouse_follows_focus` must be OFF** (the autostart disables it) or the cursor gets warped on every focus change and fights focus-follows-mouse.
 6. **YASB rewrites its config files on reload**; after editing `styles.css` a YASB restart is the reliable way to see changes. Widget validation is strict (e.g., `power_menu` requires `shutdown`, `restart`, `cancel`).
 7. Don't run `komorebic start` from within MSYS bash (it hangs there); use PowerShell `Start-Process` or the logon script.
+8. **Reboots can silently undo the komorebi layout**: Windows 11 can re-launch a bare `komorebi.exe` (plus AHK/YASB) at sign-in via "restart apps" before/without the autostart script, and komorebi's IPC socket can lag on a busy boot. The autostart handles both: it waits until `komorebic state` answers (up to 20s), re-applies the layout, skips AHK/YASB if already running, and logs to `%USERPROFILE%\komorebi-autostart.log`. If the layout is missing after a reboot, read that log first.
+9. **`komorebic border-offset -1` fails**: `-1` is parsed as a flag; use `border-offset -- -1` (the autostart already does).
 
 ## Revert
 

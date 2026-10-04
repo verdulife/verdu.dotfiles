@@ -29,6 +29,7 @@ Delete the destination files from the manifest.
 komorebic state
 Get-Process komorebi,yasb,AutoHotkey64
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
+Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "layout applied" = config took effect
 ```
 
 ## Key invariants (do not break)

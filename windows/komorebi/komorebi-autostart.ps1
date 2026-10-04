@@ -1,6 +1,12 @@
 # Komorebi setup autostart — launched at logon, hidden window.
-# Order: komorebi (WM) -> layout preferences -> AHK hotkey script -> YASB bar.
+# Order: komorebi (WM) -> wait until it answers -> layout preferences -> verify -> AHK -> YASB.
 # Remove autostart by deleting komorebi-autostart.vbs (Startup folder) and this file.
+#
+# Why the wait: on a fresh boot komorebi's IPC socket can take several seconds to
+# come up. A blind `Start-Sleep 3` before the komorebic calls silently failed on
+# busy logons (and after Windows 11 "restart apps" re-launched a bare komorebi),
+# leaving komorebi on its defaults. This script now waits until the socket
+# answers, verifies what it applied, and writes $env:USERPROFILE\komorebi-autostart.log.
 
 $ErrorActionPreference = 'SilentlyContinue'
 
@@ -8,11 +14,29 @@ $komorebic = 'C:\Program Files\komorebi\bin\komorebic.exe'
 $ahk       = "$env:LOCALAPPDATA\Programs\AutoHotkey\v2\AutoHotkey64.exe"
 $ahkScript = "$env:USERPROFILE\komorebi.ahk"
 $yasb      = 'C:\Program Files\yasb\yasb.exe'
-$masir     = 'C:\Program Files\masir\bin\masir.exe'   # focus-follows-mouse helper for komorebi
+$log       = "$env:USERPROFILE\komorebi-autostart.log"
 
-# Start the window manager
-Start-Process -FilePath $komorebic -ArgumentList 'start'
-Start-Sleep -Seconds 3
+function Write-Log([string]$msg) {
+    "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File -FilePath $log -Append -Encoding utf8
+}
+
+# Start the window manager (no-op when already running).
+& $komorebic start 2>$null | Out-Null
+Start-Sleep -Seconds 2
+
+# --- Wait until komorebi answers; without this every config command below
+# --- fails silently against a not-yet-ready socket (the bug this fixes).
+$ready = $false
+foreach ($i in 1..40) {                      # up to ~20s
+    $probe = & $komorebic state 2>$null
+    if ($probe) { $ready = $true; break }
+    Start-Sleep -Milliseconds 500
+}
+if (-not $ready) {
+    Write-Log '[FAIL] komorebi did not become ready within 20s; layout NOT applied'
+    exit 1
+}
+Write-Log '[ok] komorebi ready'
 
 # --- Layout preferences (re-applied at every login) ---
 $monitors      = 0, 1     # monitor indexes (zero-based): extend if more monitors
@@ -29,7 +53,7 @@ $resizeStep    = 25       # px per resize key press
 
 & $komorebic resize-delta $resizeStep | Out-Null
 & $komorebic border-width $borderWidth | Out-Null
-& $komorebic border-offset $borderOffset | Out-Null
+& $komorebic border-offset -- $borderOffset | Out-Null   # '--' so -1 is not parsed as a flag
 & $komorebic border-style $borderStyle | Out-Null
 
 # Border colours (RGB 0-255): focused = dark gray, unfocused = pure black (inverted look)
@@ -59,6 +83,27 @@ foreach ($mon in $monitors) {
 # focus change and fights the pointer-driven focus.
 & $komorebic mouse-follows-focus disable | Out-Null
 
-# Hotkeys + status bar
-Start-Process -FilePath $ahk -ArgumentList "`"$ahkScript`""
-Start-Process -FilePath $yasb
+# --- Verify what we just applied (fields readable from `state`) ---
+$state = (& $komorebic state 2>$null) -join "`n"
+$s = $null
+try { $s = $state | ConvertFrom-Json } catch { }
+if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus) {
+    $wsPerMon = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
+    $wsTotal  = ($wsPerMon | Measure-Object -Sum).Sum
+    if ($wsTotal -eq ($monitors.Count * $workspaces)) {
+        Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) workspaces=$($wsPerMon -join '/')"
+    } else {
+        Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected $($monitors.Count)x$workspaces)"
+    }
+} else {
+    Write-Log '[FAIL] verification: layout values did not stick'
+}
+
+# Hotkeys + status bar (guarded: Windows may have re-launched them already via
+# "restart apps after sign-in"; starting them again would double every process).
+if (-not (Get-Process AutoHotkey64 -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $ahk -ArgumentList "`"$ahkScript`""
+}
+if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $yasb
+}
