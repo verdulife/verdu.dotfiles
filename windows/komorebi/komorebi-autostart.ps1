@@ -75,6 +75,16 @@ foreach ($kind in 'unfocused', 'unfocused-locked') {
 # Force-manage rules: komorebi does not auto-register some windows (documented rare case).
 # Zen Browser windows need this, otherwise a reopened window stays untiled.
 & $komorebic manage-rule exe zen.exe | Out-Null
+
+# Floating rules (ignore-rule = the window is left unmanaged, floating above tiles):
+# - class #32770 = standard Windows common dialog (Save As / Open / Explorer copy)
+# - class TaskDialog = modern Windows task dialog
+# - class MozillaDialogClass = Zen/Firefox dialog windows (main window is MozillaWindowClass)
+# Matching by exe would float the app's MAIN window too, so dialogs are matched by class.
+# Discover new dialog classes with windows/komorebi/spy-dialog.ps1 (repo-only tool).
+foreach ($rule in @("#32770", "TaskDialog", "MozillaDialogClass", "MozillaDropShadowWindowClass")) {
+    & $komorebic ignore-rule class $rule | Out-Null
+}
 foreach ($mon in $monitors) {
     & $komorebic ensure-workspaces $mon $workspaces | Out-Null
     foreach ($ws in 0..($workspaces - 1)) {

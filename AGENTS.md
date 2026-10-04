@@ -51,7 +51,7 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "layout applied" = confi
 | Want to change | File |
 |---|---|
 | WM hotkeys, taskbar, Win key | `windows/komorebi/komorebi.ahk` |
-| Workspaces/gaps/borders/colours | `windows/komorebi/komorebi-autostart.ps1` |
+| Workspaces/gaps/borders/colours, floating dialog rules | `windows/komorebi/komorebi-autostart.ps1` (+ `spy-dialog.ps1` repo-only to discover dialog classes) |
 | Bar widgets/groups/pill look | `windows/yasb/config.yaml` + `styles.css` |
 | Prompt | `shared/starship.toml` |
 | Neovim | `shared/nvim/` |

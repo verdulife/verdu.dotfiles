@@ -91,6 +91,14 @@ Implied/native details worth knowing:
 - A **dummy keystroke** (`~LWin::Send("{Blind}{vkE8}")`) stops the lone Super
   press from opening the Start menu; all `Super+letter` system shortcuts keep
   working.
+- **Dialogs float**: the autostart adds `ignore-rule` for the common dialog
+  classes (`#32770`, `TaskDialog`) and Zen's dialog shadow
+  (`MozillaDialogClass` / `MozillaDropShadowWindowClass`), so Save As, open and
+  copy-progress dialogs stay unmanaged above the tiles. Match by **class**, never
+  by exe (that would float the app's main window too). Custom dialogs (e.g.
+  Illustrator) can be discovered with `windows/komorebi/spy-dialog.ps1`
+  (repo-only tool: `spy-dialog.ps1 -Watch 90` while you open it) and added to
+  the same rule list.
 
 See `windows/komorebi/README.md` for the border/padding *formula* — the single
 most important gotcha for hand-editing this stack.
