@@ -27,7 +27,7 @@ function Write-Log([string]$msg) {
 # start it with --ffm so the custom focus-follows-mouse implementation is usable.
 & $komorebic stop 2>$null | Out-Null
 Start-Sleep -Seconds 1
-Start-Process -FilePath $komorebi -ArgumentList '--ffm'
+Start-Process -FilePath $komorebi -ArgumentList '--ffm' -WindowStyle Hidden   # hidden console: komorebi.exe is a console app
 Start-Sleep -Seconds 2
 
 # --- Wait until komorebi answers; without this every config command below
