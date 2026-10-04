@@ -39,8 +39,10 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "layout applied" = confi
   The autostart PS1 documents it inline; edits here shift tile↔bar alignment.
 - **YASB restarts** after style/config edits — that's how edits take effect.
 - **Nerd Font family = "JetBrainsMono NF"** (Propo = `NFP`, use first for icons).
-- **`mouse_follows_focus` stays OFF** — focus-follows-mouse lives in AHK and
-  would fight the cursor warp.
+- **`mouse_follows_focus` stays OFF**; **focus-follows-mouse is komorebi-native**
+  (autostart starts `komorebi.exe --ffm` and runs `focus-follows-mouse enable
+  -i komorebi`, which focuses only managed tiles — an AHK polling timer used to
+  kill context menus by activating their `#32768` popup).
 - YASB widget validation is strict; keep required keys (`power_menu` needs
   `shutdown`, `restart`, `cancel`).
 
@@ -48,7 +50,7 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "layout applied" = confi
 
 | Want to change | File |
 |---|---|
-| WM hotkeys, FFm, taskbar, Win key | `windows/komorebi/komorebi.ahk` |
+| WM hotkeys, taskbar, Win key | `windows/komorebi/komorebi.ahk` |
 | Workspaces/gaps/borders/colours | `windows/komorebi/komorebi-autostart.ps1` |
 | Bar widgets/groups/pill look | `windows/yasb/config.yaml` + `styles.css` |
 | Prompt | `shared/starship.toml` |

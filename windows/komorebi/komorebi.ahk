@@ -66,44 +66,13 @@ ResizeDirectional(axis, arrow) {
     Komorebic("resize-edge " edge " " sizing)
 }
 
-; ---- Focus follows mouse (instant) --------------------------------------
-; Implemented here instead of the masir helper: masir's window raising does not
-; take effect on this system (and it kept dying from console Ctrl-C signals).
-; INSTANT mode: the timer just watches which window is under the cursor and
-; focuses it the moment the pointer enters a different window (no dwell, so
-; crossing a window with the pointer also takes focus - that is the intent).
-; NOTE: komorebi's own mouse-follows-focus must stay OFF (the autostart disables it),
-; otherwise the cursor gets warped on every focus change and fights this.
-try FileDelete(A_Temp . "\ffm-debug.log")
-FfmLog(msg) {
-    try FileAppend(FormatTime(A_Now, "HH:mm:ss") . " " . msg . "`n", A_Temp . "\ffm-debug.log")
-}
-SetTimer(FollowMouse, 60)          ; fast poll for a near-instant reaction
-FollowMouse() {
-    static lastRoot := 0
-    MouseGetPos(&x, &y, &h)
-    if (!h) {
-        lastRoot := 0
-        return
-    }
-    root := DllCall("GetAncestor", "Ptr", h, "UInt", 2, "Ptr")   ; GA_ROOT: top-level under cursor
-    if (!root || root = lastRoot)
-        return                      ; same window as before: nothing to do
-    try {
-        cls := WinGetClass("ahk_id " root)
-        if (cls = "yasb-bar" || cls = "Shell_TrayWnd" || cls = "Progman" || cls = "WorkerW") {
-            lastRoot := 0           ; leaving a window: re-entering it focuses again
-            return
-        }
-        lastRoot := root
-        if (!WinActive("ahk_id " root)) {
-            WinActivate("ahk_id " root)
-            FfmLog("activando: " . cls . " (" . root . ") activa=" . (WinActive("ahk_id " root) ? 1 : 0))
-        }
-    } catch as e {
-        FfmLog("error: " . e.Message)
-    }
-}
+; ---- Focus follows mouse (native) -----------------------------------------
+; Handled by komorebi itself: the autostart starts komorebi with --ffm and runs
+; `focus-follows-mouse enable -i komorebi`. It only focuses komorebi-managed
+; windows, so context menus, the desktop and the taskbar are never touched.
+; (The previous AHK WinActivate timer broke context menus by activating the
+; menu's #32768 popup window - that is why FFM no longer lives here.)
+; komorebi's own mouse-follows-focus must stay OFF (the autostart disables it).
 
 ; ---- Bindings are inactive while the focused window is Illustrator ----
 #HotIf !WinActive("ahk_exe Illustrator.exe")

@@ -80,8 +80,11 @@ keyboard-driven; the native taskbar is hidden and the YASB bar replaces it.
 | Pause tiling | `Super+Shift+P` |
 
 Implied/native details worth knowing:
-- **Focus follows mouse** is implemented in AHK (masir was retired: its raising
-  never changed focus on this system and it died on console Ctrl-C).
+- **Focus follows mouse** is komorebi's own implementation (autostart starts it
+  with `--ffm` and runs `focus-follows-mouse enable -i komorebi`): it only
+  focuses windows komorebi manages, so context menus/desktop/taskbar are never
+  touched. (An earlier AHK-based version broke context menus by activating the
+  menu's `#32768` popup — that is why FFM no longer lives in AHK.)
 - The **native taskbar is hidden** by an AHK watchdog (auto-hide leaves a 2 px
   sliver that reveals it; hiding the window kills the sliver). The YASB systray
   widget replaces the tray.
@@ -135,8 +138,9 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
   `komorebi-autostart.ps1` — read the border formula comment first.
 - **YASB look**: pill opacity `rgba(0,0,0,0.45)` in `styles.css` (` .widget`);
   widget set/order in `config.yaml` under `bars.status-bar.widgets`.
-- **FFm dwell**: in `komorebi.ahk` (`SetTimer(FollowMouse, 60)`; the
-  `stable++ < 2` value is the dwell multiplier).
+- **Focus follows mouse**: komorebi native — `--ffm` on start and
+  `focus-follows-mouse enable -i komorebi` in `komorebi-autostart.ps1`; it
+  focuses only managed tiles. Never re-add an AHK polling loop for this.
 - After editing a config, **re-copy that single file** to reinstall it.
 
 ## Gotchas (learned the hard way)
@@ -146,6 +150,7 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 3. **`%#d`** (not `%-d`) is how Windows Python renders a day without a leading zero.
 4. **No per-widget blur in YASB** (DWM limitation, confirmed by the maintainer): blur applies to whole windows; pills share one window.
 5. **`mouse_follows_focus` must be OFF** (the autostart disables it) or the cursor gets warped on every focus change and fights focus-follows-mouse.
+10. **Focus-follows-mouse is komorebi-native**: the autostart starts `komorebi.exe --ffm` and enables `focus-follows-mouse -i komorebi`, which focuses only managed windows. An AHK `WinActivate` polling timer (the old approach) made every context menu close instantly by activating the menu's `#32768` popup window — if menus break again, check no AHK timer is competing with komorebi's FFM.
 6. **YASB rewrites its config files on reload**; after editing `styles.css` a YASB restart is the reliable way to see changes. Widget validation is strict (e.g., `power_menu` requires `shutdown`, `restart`, `cancel`).
 7. Don't run `komorebic start` from within MSYS bash (it hangs there); use PowerShell `Start-Process` or the logon script.
 8. **Reboots can silently undo the komorebi layout**: Windows 11 can re-launch a bare `komorebi.exe` (plus AHK/YASB) at sign-in via "restart apps" before/without the autostart script, and komorebi's IPC socket can lag on a busy boot. The autostart handles both: it waits until `komorebic state` answers (up to 20s), re-applies the layout, skips AHK/YASB if already running, and logs to `%USERPROFILE%\komorebi-autostart.log`. If the layout is missing after a reboot, read that log first.

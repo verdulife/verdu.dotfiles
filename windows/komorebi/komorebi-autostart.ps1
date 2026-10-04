@@ -1,16 +1,18 @@
 # Komorebi setup autostart — launched at logon, hidden window.
-# Order: komorebi (WM) -> wait until it answers -> layout preferences -> verify -> AHK -> YASB.
+# Order: komorebi (WM, with --ffm) -> wait until it answers -> layout + FFM -> verify -> AHK -> YASB.
 # Remove autostart by deleting komorebi-autostart.vbs (Startup folder) and this file.
 #
 # Why the wait: on a fresh boot komorebi's IPC socket can take several seconds to
 # come up. A blind `Start-Sleep 3` before the komorebic calls silently failed on
 # busy logons (and after Windows 11 "restart apps" re-launched a bare komorebi),
-# leaving komorebi on its defaults. This script now waits until the socket
+# leaving komorebi on its defaults. This script now stops any previous instance,
+# starts komorebi with --ffm (custom focus-follows-mouse), waits until the socket
 # answers, verifies what it applied, and writes $env:USERPROFILE\komorebi-autostart.log.
 
 $ErrorActionPreference = 'SilentlyContinue'
 
 $komorebic = 'C:\Program Files\komorebi\bin\komorebic.exe'
+$komorebi  = 'C:\Program Files\komorebi\bin\komorebi.exe'
 $ahk       = "$env:LOCALAPPDATA\Programs\AutoHotkey\v2\AutoHotkey64.exe"
 $ahkScript = "$env:USERPROFILE\komorebi.ahk"
 $yasb      = 'C:\Program Files\yasb\yasb.exe'
@@ -20,8 +22,12 @@ function Write-Log([string]$msg) {
     "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File -FilePath $log -Append -Encoding utf8
 }
 
-# Start the window manager (no-op when already running).
-& $komorebic start 2>$null | Out-Null
+# Stop any previous komorebi (e.g. a bare instance relaunched by Windows
+# "restart apps", which would run without --ffm and without our layout), then
+# start it with --ffm so the custom focus-follows-mouse implementation is usable.
+& $komorebic stop 2>$null | Out-Null
+Start-Sleep -Seconds 1
+Start-Process -FilePath $komorebi -ArgumentList '--ffm'
 Start-Sleep -Seconds 2
 
 # --- Wait until komorebi answers; without this every config command below
@@ -77,26 +83,29 @@ foreach ($mon in $monitors) {
     }
 }
 
-# Focus-follows-mouse is implemented inside komorebi.ahk (masir is not used: its window
-# raising has no effect here and it died from console Ctrl-C signals).
-# komorebi's own mouse-follows-focus must stay disabled or it warps the cursor on every
-# focus change and fights the pointer-driven focus.
+# Focus-follows-mouse: komorebi's OWN custom implementation (requires --ffm above).
+# It only focuses komorebi-managed windows, so context menus, the desktop and the
+# taskbar are never touched - an AHK WinActivate timer used to break context menus
+# by activating the menu's #32768 popup window, which is why FFM now lives here.
+# komorebi's mouse-follows-focus (cursor warp on focus change) must stay disabled.
+& $komorebic focus-follows-mouse enable -i komorebi | Out-Null
 & $komorebic mouse-follows-focus disable | Out-Null
 
 # --- Verify what we just applied (fields readable from `state`) ---
 $state = (& $komorebic state 2>$null) -join "`n"
 $s = $null
 try { $s = $state | ConvertFrom-Json } catch { }
-if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus) {
+$ffmOk = $null -ne $s.focus_follows_mouse -and $s.focus_follows_mouse -ne $false
+if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus -and $ffmOk) {
     $wsPerMon = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
     $wsTotal  = ($wsPerMon | Measure-Object -Sum).Sum
     if ($wsTotal -eq ($monitors.Count * $workspaces)) {
-        Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) workspaces=$($wsPerMon -join '/')"
+        Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse) workspaces=$($wsPerMon -join '/')"
     } else {
         Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected $($monitors.Count)x$workspaces)"
     }
 } else {
-    Write-Log '[FAIL] verification: layout values did not stick'
+    Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse)"
 }
 
 # Hotkeys + status bar (guarded: Windows may have re-launched them already via
