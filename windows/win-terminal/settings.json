@@ -31,7 +31,7 @@
     ],
     "copyFormatting": "none",
     "copyOnSelect": false,
-    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+    "defaultProfile": "{e5c4b3a2-89d1-4f6e-9c7b-2a5d8e1f3b64}",
     "initialCols": 140,
     "initialRows": 40,
     "keybindings": 
@@ -87,6 +87,15 @@
                 "scrollbarState": "hidden",
                 "source": "Windows.Terminal.PowershellCore",
                 "useAcrylic": true
+            },
+            {
+                "colorScheme": "Catppuccin-Mocha",
+                "commandline": "\"C:\\Users\\verdu\\AppData\\Local\\Programs\\nu\\bin\\nu.exe\"",
+                "guid": "{e5c4b3a2-89d1-4f6e-9c7b-2a5d8e1f3b64}",
+                "hidden": false,
+                "name": "Nushell",
+                "padding": "6",
+                "scrollbarState": "hidden"
             },
             {
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
