@@ -10,8 +10,6 @@
 ;   Win+F               -> Feedback Hub
 ; (Alt+arrows in browsers/Explorer are RESTORED: no longer intercepted.)
 ;
-; Adobe Illustrator (Illustrator.exe) is excluded via #HotIf:
-; ALL of its shortcuts keep working unchanged while it has focus.
 
 #Requires AutoHotkey v2.0.2
 #SingleInstance Force
@@ -78,8 +76,11 @@ ResizeDirectional(axis, arrow) {
 ; menu's #32768 popup window - that is why FFM no longer lives here.)
 ; komorebi's own mouse-follows-focus must stay OFF (the autostart disables it).
 
-; ---- Bindings are inactive while the focused window is Illustrator ----
-#HotIf !WinActive("ahk_exe Illustrator.exe")
+; No per-app #HotIf gate: every binding below is Win-prefixed, so app shortcuts built
+; on Ctrl/Alt/Shift or bare keys cannot collide with them. Adobe Illustrator was
+; excluded here until 2026-10-05 (the gate was left from the era when Alt+arrows were
+; intercepted); restore "#HotIf !WinActive(\"ahk_exe Illustrator.exe\")" on the line
+; below if an Adobe app ever misbehaves with these bindings.
 
 ; Focus windows (Hyprland: SUPER + arrows)
 #Right::Komorebic("focus right")
@@ -143,7 +144,7 @@ ResizeDirectional(axis, arrow) {
 
 #HotIf
 
-; ---- Global (work also while Illustrator is focused) ----
+; ---- Global bindings ----
 ; Launch Windows Terminal
 #Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
 

@@ -7,8 +7,11 @@ hidden taskbar, Start-menu suppression).
 
 ## Files
 
-- `komorebi.ahk` — AHK v2 script (hotkeys, FFm timer, `HideTaskbar` watchdog,
-  `~LWin` dummy keystroke, `#HotIf !WinActive("ahk_exe Illustrator.exe")` guard).
+- `komorebi.ahk` — AHK v2 script: Win-prefixed hotkeys, `~LWin` dummy keystroke (no
+  Start menu on a lone Win press), `HideTaskbar` watchdog, Zen cold-start window
+  rescue. Focus-follows-mouse lives in komorebi itself (`--ffm`), not in an AHK timer,
+  and there is no per-app `#HotIf` gate: every binding is Win-prefixed, so application
+  shortcuts cannot collide with them.
 - `komorebi-autostart.ps1` — logon/apply script: starts komorebi, re-applies
   every runtime preference, launches AHK + YASB.
 - `../autostart/komorebi-autostart.vbs` — windowless logon launcher.
