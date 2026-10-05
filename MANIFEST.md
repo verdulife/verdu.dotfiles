@@ -53,7 +53,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 > embeds per-machine paths):
 >
 > ```powershell
-> nu %USERPROFILE%\dotfiles\windows\nushell\setup-autoloads.nu
+> nu %USERPROFILE%\verdu.dotfiles\windows\nushell\setup-autoloads.nu
 > ```
 
 After copying: sign out and in once (or run `%USERPROFILE%\komorebi-autostart.ps1`
