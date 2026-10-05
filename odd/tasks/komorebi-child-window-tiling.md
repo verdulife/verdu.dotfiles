@@ -1,6 +1,6 @@
 # Stop komorebi from tiling Zen's child windows
 
-Status: in progress
+Status: REOPENED 2026-10-05 20:08 - the fix is deployed and the state verified clean, but the user reports the symptom persists. Not closed.
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `main`
 Date: 2026-10-05
 Related: `odd/tasks/komorebi-autostart-resilience.md` (same script, different defect)
@@ -66,6 +66,40 @@ Root cause: these two classes were never in the autostart's `ignore-rule class` 
 | 4 | Verify workspace index 1 ends with two containers and no child windows anywhere | done - the child windows are gone from the whole state |
 | 5 | Record the pattern in the README gotchas (detection + fix) | done - gotcha 19, including the dumped-state trap |
 | 6 | Commit the work unit | done |
+
+## Reopened (2026-10-05 20:08) - the user still sees it
+
+The user reported the symptom persists right after the verification. The state captured
+at 20:08:47 could not confirm it:
+
+```
+ws[0] (bar '1'): 1377920 WindowsTerminal.exe
+ws[1] (bar '2'):  66860 Ferdium.exe
+child classes anywhere in the state: 0
+ignore_identifiers: ... ReunionWindowingCaptionControls, InputNonClientPointerSource
+```
+
+...but **hwnd 985448 (Zen Browser) and both child hwnds were already destroyed at that
+moment**: Zen had been closed, so that snapshot cannot prove anything either way. The one
+configuration that matters is **Zen open**, and that is exactly what the 20:04 check
+covered (children alive, komorebi not managing them).
+
+Next session, in this order:
+
+1. With Zen open, dump the state and look for the two classes. If they are absent, the
+   ignore rules are doing their job and the visible symptom is something else.
+2. If they are present, the class rule is not matching child windows: try
+   `float-rule class` for them, or pass `--clean-state` to komorebi in the autostart so a
+   dumped state can never resurrect them, and re-read `komorebic global-state` ->
+   `ignore_identifiers`.
+3. If they are absent *and* the left half still looks empty, capture fresh evidence with
+   the workspace on screen: `komorebic state` (per-workspace containers) plus the
+   visible-window enumeration, and compare the tile rects against the real window rects.
+   Watch for a single-container workspace where the BSP tree kept a split.
+
+Note: `komorebic ignore-rule class <ID>` has no matching-strategy option, so the
+`"matching_strategy": "Legacy"` seen in `global-state` is how class rules are stored, not a
+misconfiguration.
 
 ## Verification (2026-10-05)
 
