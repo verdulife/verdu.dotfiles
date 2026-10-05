@@ -52,9 +52,9 @@ dotfiles/
    for Windows and Linux.
 3. Copy the files to those destinations (a handful of `copy`/`cp` commands; the
    `shared/nvim/` entry is a recursive copy).
-4. Windows: install the four prerequisites (winget commands are at the top of
-   the manifest — they are one-time, not part of the repo), then sign in once
-   (or run `%USERPROFILE%\komorebi-autostart.ps1` once) and verify (below).
+4. Windows: install the prerequisites listed at the top of the manifest (winget
+   commands — one-time, not part of the repo), then sign in once (or run
+   `%USERPROFILE%\komorebi-autostart.ps1` once) and verify (below).
 
 That is the whole install. Nothing else runs.
 
@@ -192,8 +192,8 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 ## Revert
 
 Delete the destination files listed in `MANIFEST.md` (optionally uninstall the
-four winget prerequisites). Nothing here modifies what was previously on the
-machine.
+winget prerequisites listed there). Nothing here modifies what was previously on
+the machine.
 
 ---
 
