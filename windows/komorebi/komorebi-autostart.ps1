@@ -112,9 +112,16 @@ if ($ready) {
     # - class #32770 = standard Windows common dialog (Save As / Open / Explorer copy)
     # - class TaskDialog = modern Windows task dialog
     # - class MozillaDialogClass = Zen/Firefox dialog windows (main window is MozillaWindowClass)
+    # - class ReunionWindowingCaptionControls / InputNonClientPointerSource = Zen/Firefox
+    #   CHILD windows (WS_CHILD of the main window): the caption-button layer and the
+    #   non-client input sink. Tiling a child window steals a slot that nothing can paint
+    #   into, so the workspace shows a large empty area: on 2026-10-05 the caption child
+    #   held the whole left half of workspace 2 while Ferdium and Zen were squeezed into
+    #   the right half. Signature of this whole family: GetAncestor(hwnd, GA_ROOT) != hwnd.
     # Matching by exe would float the app's MAIN window too, so dialogs are matched by class.
     # Discover new dialog classes with windows/komorebi/spy-dialog.ps1 (repo-only tool).
-    foreach ($rule in @("#32770", "TaskDialog", "MozillaDialogClass", "MozillaDropShadowWindowClass")) {
+    foreach ($rule in @("#32770", "TaskDialog", "MozillaDialogClass", "MozillaDropShadowWindowClass",
+                        "ReunionWindowingCaptionControls", "InputNonClientPointerSource")) {
         & $komorebic ignore-rule class $rule | Out-Null
     }
     foreach ($mon in $monitors) {
