@@ -24,6 +24,12 @@ winget install -e --id JesseDuffield.lazygit
 winget install -e --id Neovim.Neovim
 ```
 
+The PowerShell profile also imports a module that winget does not provide:
+
+```powershell
+Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
+```
+
 | Repo file | Destination (Windows) |
 |---|---|
 | `windows/komorebi/komorebi.ahk` | `%USERPROFILE%\komorebi.ahk` |
@@ -77,3 +83,12 @@ machine before.
 - `windows/nushell/setup-autoloads.nu` regenerates tool-generated files; it is
   run, not copied.
 - After a config change in the repo, re-copy only the affected file.
+- `windows/win-terminal/settings.json` is a full snapshot that carries
+  per-machine dynamic profiles (WSL distro names, Visual Studio versions) and a
+  machine-local `defaultProfile` GUID. On a different machine, **merge** it —
+  add the Nushell profile and point `defaultProfile` at it — instead of copying
+  it wholesale, or stale profiles come back. See README → Gotchas.
+- `windows/powershell/user_profile.ps1` is dot-sourced by
+  `Microsoft.PowerShell_profile.ps1`. Its destination directory
+  (`%USERPROFILE%\.config\powershell\`) is not created by anything else, so
+  create it first if the copy fails.
