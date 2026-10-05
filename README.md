@@ -120,13 +120,20 @@ right  : ⟲ cpu%·MHz  MEM%  ⚡ gpu%·temp  ▾tray  ·  date time h  ⏻
 
 See `windows/yasb/README.md` for the widget map and styling notes.
 
-### Starship / Neovim / Terminal
+### Starship / Neovim / Terminal / Shell
 
 - `shared/starship.toml` — segmented prompt (Catppuccin-flavored).
-- `shared/nvim/` — Neovim with **vim-plug** (`init.vim` + `plug.vim`); the live
-  config is not LazyVim — swapping later means replacing this folder.
-- `windows/win-terminal/settings.json` — Windows Terminal settings (per-machine
-  profiles may need trimming).
+- `shared/nvim/` — **LazyVim** (GentlemanNvim from Gentleman.Dots, adapted for
+  Windows: node paths quoted, current extras, AI plugins the user does not use
+  disabled). Installed to `%LOCALAPPDATA%\nvim` on Windows (Neovim ignores
+  `~/.config/nvim` there). First launch bootstraps lazy.nvim and all plugins.
+- `windows/nushell/` — Nushell config (`config.nu`, `env.nu`) + `setup-autoloads.nu`
+  which regenerates the tool-generated `vendor/autoload/*.nu` (starship/zoxide/
+  atuin/carapace) at the destination.
+- `windows/herdr/config.toml` — Herdr (agent multiplexer): Gentle theme, prefix
+  `ctrl+a`, arrow-key pane navigation, alt+arrow resize, default shell Nushell.
+- `windows/win-terminal/settings.json` — Windows Terminal settings; Nushell is
+  the default profile (per-machine profiles may need trimming).
 
 ---
 

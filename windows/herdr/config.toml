@@ -1,0 +1,49 @@
+# herdr configuration — Gentleman.Dots theme, adapted for Windows native.
+# Based on Gentleman-Programming/Gentleman.Dots herdr/config.toml
+# Windows-specific: default_shell = pwsh (full path), catppuccin kept as onboarding=false base.
+
+onboarding = false
+
+[terminal]
+default_shell = "C:\\Users\\verdu\\AppData\\Local\\Programs\\nu\\bin\\nu.exe"
+
+[theme]
+# Use a built-in dark theme with neutral foregrounds so Herdr does not inherit
+# bright-black selected rows or warm/yellow label text.
+name = "one-dark"
+
+[theme.custom]
+panel_bg = "#06080f"
+# Match the Gentle theme, with a muted cyan for Herdr chrome.
+accent = "#6FA0AF"
+green = "#B7CC85"
+blue = "#6FA0AF"
+red = "#CB7C94"
+yellow = "#DEBA87"
+
+[ui]
+accent = "#6FA0AF"
+pane_borders = true
+sidebar_width = 28
+host_cursor = "drawn"
+
+[keys]
+# Match tmux/Zellij-style prefix muscle memory.
+prefix = "ctrl+a"
+
+# Move between panes with arrow keys instead of vim h/j/k/l.
+focus_pane_left = "prefix+left"
+focus_pane_down = "prefix+down"
+focus_pane_up = "prefix+up"
+focus_pane_right = "prefix+right"
+
+# Resize panes with alt+arrows (horizontal), as in tmux.
+resize_pane_left = "prefix+alt+left"
+resize_pane_right = "prefix+alt+right"
+
+# Move between agents in the sidebar with arrow keys.
+previous_agent = "prefix+alt+up"
+next_agent = "prefix+alt+down"
+
+# Jump straight to agent N (1..9) as listed in the sidebar.
+focus_agent = "prefix+ctrl+1..9"
