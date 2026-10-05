@@ -1,6 +1,6 @@
 # Consolidate the Pi coding agent into one managed installation
 
-Status: done — tasks 1-7 complete and verified; task 8 is this closure. One follow-up is intentionally left uncommitted (see *Final state*).
+Status: done — tasks 1-8 complete and verified.
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `chore/apply-dotfiles-port`
 Date: 2026-10-05
 Related: `odd/tasks/apply-dotfiles.md` (this work is the follow-up of that port's fallout)
@@ -18,7 +18,7 @@ the three duplicate distributions found during the audit.
   managed launchers spawn (`pi.cmd` runs `node "%~dp0pi-launcher.js"` with `node`
   taken from PATH), so it is a dependency, not a duplicate.
 - No push and no pull request: only the document itself was committed, with explicit
-  user approval (commit `fd35c53`).
+  user approval (commit `e9640e9`).
 - The accidental empty `git init` in `%USERPROFILE%` was reported and later removed
   with explicit approval; it was never part of the consolidation.
 
@@ -68,7 +68,7 @@ gone; the hook/origin chain above is the surviving evidence.
 | 4 | **User:** remove the bun copy (`bun remove -g @earendil-works/pi-coding-agent`) in a terminal outside Pi, then confirm `where.exe pi` prints nothing | done — bun left two orphan shims behind, removed by hand |
 | 5 | **User:** run the official installer in a fresh terminal and answer its prompts | done — managed install at `~\.pi\agent\install\releases\1.0.3` |
 | 6 | Verify the managed install in a new shell (version, resolved shim, packages, `pi update`) | done — see *Managed install verified*; `pi update` deliberately not run |
-| 7 | Decide the shell/Node strategy: keep `pi-node` on PATH and, if wanted, add an fnm hook to Nushell via `fnm env --json | from json | load-env` | done — fnm integration added to Nushell (left uncommitted) |
+| 7 | Decide the shell/Node strategy: keep `pi-node` on PATH and, if wanted, add an fnm hook to Nushell via `fnm env --json | from json | load-env` | done — fnm integration added to Nushell and committed separately |
 | 8 | Close: record the final state, update this document, save memory | done |
 
 Task 4-5 must run in the user's own terminal: the installer prompts via `Read-Host`
@@ -208,9 +208,10 @@ Cleanups approved and done: `%USERPROFILE%\.git` (empty accidental repo: 0 commi
 0 tracked files, 0 remotes) and the empty
 `~/.pi/agent/npm/node_modules/@earendil-works/`.
 
-Left uncommitted on purpose: `windows/nushell/env.nu` (the fnm integration). The
-MANIFEST maps it to `%APPDATA%\nushell\env.nu`, and both copies are byte-identical;
-only the document itself is committed in `fd35c53`.
+Committed separately, as `feat(nushell): integrate fnm into the environment`: the repo
+file `windows/nushell/env.nu`, its destination copy under `%APPDATA%\nushell` (the two
+are byte-identical), and the README/MANIFEST notes that now record fnm as a
+prerequisite.
 
 ## Rollback
 

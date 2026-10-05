@@ -14,6 +14,7 @@ winget install -e --id AutoHotkey.AutoHotkey
 winget install -e --id AmN.yasb
 winget install -e --id DEVCOM.JetBrainsMonoNerdFont
 winget install -e --id Nushell.Nushell --scope user
+winget install -e --id Schniz.fnm
 winget install -e --id ajeetdsouza.zoxide
 winget install -e --id Atuinsh.Atuin
 winget install -e --id rsteube.Carapace

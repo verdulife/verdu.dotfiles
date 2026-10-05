@@ -129,7 +129,10 @@ See `windows/yasb/README.md` for the widget map and styling notes.
   `~/.config/nvim` there). First launch bootstraps lazy.nvim and all plugins.
 - `windows/nushell/` — Nushell config (`config.nu`, `env.nu`) + `setup-autoloads.nu`
   which regenerates the tool-generated `vendor/autoload/*.nu` (starship/zoxide/
-  atuin/carapace) at the destination.
+  atuin/carapace) at the destination. `env.nu` also wires **fnm** into Nushell by
+  hand: fnm has no nushell target and `fnm env --json` reports no `PATH`, so the
+  file loads the JSON and prepends `FNM_MULTISHELL_PATH` itself. fnm is therefore a
+  prerequisite (see `MANIFEST.md`).
 - `windows/herdr/config.toml` — Herdr (agent multiplexer): Gentle theme, prefix
   `ctrl+a`, arrow-key pane navigation, alt+arrow resize, default shell Nushell.
 - `windows/win-terminal/settings.json` — Windows Terminal settings; Nushell is
@@ -178,6 +181,13 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 16. **A missing Windows Installer cache makes an MSI uninstallable**: `whkd` (the pre-AHK hotkey daemon) refused to uninstall with MSI error `1612` after its cached package disappeared from `C:\Windows\Installer`; force-recaching the same MSI failed with `1603`. The files and the ARP entry survive unless the registry key is removed by hand. Disk cleaners that purge `C:\Windows\Installer` are the usual culprit.
 17. **komorebi aborts if `AllowSetForegroundWindow` fails 5 times**: recent builds `bail!` on `failed call to AllowSetForegroundWindow after 5 retries` (`komorebi\src\main.rs`) instead of logging and continuing, so `komorebi.exe` exits immediately and `komorebic state` then panics with `os error 10050` (nobody listening on the named pipe). The call only succeeds when the caller may itself set the foreground window, which is why it is sensitive to the launch context; `HKCU\Control Panel\Desktop\ForegroundLockTimeout` (default `200000`) keeps the lock on and a background process cannot grant the right. Seen here twice immediately after installation — through both a direct `Start-Process` and the Startup `.vbs` logon path — and **not reproducible afterwards**: all five launch forms (hidden, normal, minimized, `cmd /c start`, `-NoNewWindow`) then started fine. Symptom-to-action: retry the launch; if it persists, check the foreground lock and whether the process chain is a background one.
 18. **The autostart's workspace check assumes two monitors**: on a single-monitor machine `komorebi-autostart.ps1` logs `[WARN] workspaces unexpected: 5 (expected 2x5)` even though one monitor with five workspaces is correct. The layout still applies (`[ok] komorebi ready`); the warning is a false alarm from a hardcoded `2x5`.
+19. **fnm needs a hand-written Nushell hook, and `nu -c` will not show it**: fnm 1.39
+    has no `--shell nushell` target and `fnm env --json` reports only the `FNM_*`
+    variables, with no `PATH`, so `env.nu` loads the JSON and prepends
+    `FNM_MULTISHELL_PATH` itself. Verify it in an *interactive* Nushell tab:
+    `nu -c '<command>'` never loads `env.nu`, so a command-mode check misleadingly
+    reports the pre-existing `node`. For scripted checks use
+    `nu --env-config <path>/env.nu -c 'node --version'`.
 
 ## Revert
 
