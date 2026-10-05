@@ -247,7 +247,14 @@ RescueUnmanagedWindows() {
     wins := WinGetList("ahk_class MozillaWindowClass ahk_exe zen.exe")
     if (wins.Length = 0)
         return
-    restore := WinGetID("A")
+    ; WinExist("A") returns 0 instead of throwing when there is no active
+    ; window (komorebi workspace switches leave a focus gap); never use
+    ; WinGetID("A") bare here for the same reason.
+    restore := 0
+    try
+        restore := WinExist("A")
+    catch
+        restore := 0
     for hwnd in wins {
         if (!DllCall("user32.dll\IsWindowVisible", "Ptr", hwnd))
             continue
@@ -274,6 +281,6 @@ FocusManage(hwnd, restore) {
         Komorebic("manage")
     } catch
         return
-    if (WinExist("ahk_id " restore))
+    if (restore && WinExist("ahk_id " restore))
         WinActivate("ahk_id " restore)
 }
