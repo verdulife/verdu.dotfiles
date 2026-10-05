@@ -61,6 +61,26 @@ is the next reboot: the log must either show `[ok] komorebi ready` on the first 
 or `[warn] komorebi start attempt n/3 failed (...)` followed by success, and it must
 never end with hotkeys and bar unstarted.
 
+## Follow-up: the workspace-count false alarm (2026-10-05 19:34)
+
+The verification compared `state.monitors` against the hardcoded `$monitors` index
+list, so this single-monitor machine logged `[WARN] workspaces unexpected: 5
+(expected 2x5)` at every logon (README gotcha 18). The check now compares against the
+monitors komorebi actually reports, and the `[ok]` line records them. `$monitors` stays
+a superset on purpose: configuring an index that does not exist fails silently, while
+the verification must describe reality.
+
+Live run after the change, exit 0:
+
+```
+19:34:05 [ok] komorebi ready
+19:34:06 [ok] layout applied: resize_delta=25 mouse_follows_focus=False ffm=Komorebi workspaces=5 monitors=1
+```
+
+No `[WARN]` line, and the delta from the previous run is what matters: `19:24:30
+[WARN] workspaces unexpected: 5 (expected 2x5)` is gone. README gotcha 10
+(focus-follows-mouse) was also moved to its numeric position, where it belongs.
+
 ## Verification
 
 - Immediate: run the script from a terminal and check that (a) komorebi answers, or

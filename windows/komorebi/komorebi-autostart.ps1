@@ -77,7 +77,7 @@ if ($ready) {
     Write-Log '[ok] komorebi ready'
 
     # --- Layout preferences (re-applied at every login) ---
-    $monitors      = 0, 1     # monitor indexes (zero-based): extend if more monitors
+    $monitors      = 0, 1     # monitor indexes (zero-based); a superset is fine (a nonexistent index fails silently) - the check below uses the monitors komorebi reports
     $workspaces    = 5        # workspaces per monitor (matches Win+1..5 bindings)
     $workspacePadding = 4     # px: margin from the screen edge
     $containerPadding = 0     # px: gap between adjacent tiles (each tile adds one side)
@@ -139,12 +139,18 @@ if ($ready) {
     try { $s = $state | ConvertFrom-Json } catch { }
     $ffmOk = $null -ne $s.focus_follows_mouse -and $s.focus_follows_mouse -ne $false
     if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus -and $ffmOk) {
-        $wsPerMon = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
-        $wsTotal  = ($wsPerMon | Measure-Object -Sum).Sum
-        if ($wsTotal -eq ($monitors.Count * $workspaces)) {
-            Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse) workspaces=$($wsPerMon -join '/')"
+        $wsMonitors = @($s.monitors.elements).Count
+        $wsPerMon   = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
+        $wsTotal    = ($wsPerMon | Measure-Object -Sum).Sum
+        # Compare against the monitors komorebi actually reports, never against the
+        # $monitors list above: that list is a superset of monitor indexes, so on a
+        # single-monitor machine it warned "expected 2x5" at every logon. A log that
+        # always warns is a log nobody reads, and this is the first log to read when
+        # the layout is missing.
+        if ($wsTotal -eq ($wsMonitors * $workspaces)) {
+            Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse) workspaces=$($wsPerMon -join '/') monitors=$wsMonitors"
         } else {
-            Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected $($monitors.Count)x$workspaces)"
+            Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected ${wsMonitors}x$workspaces)"
         }
     } else {
         Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse)"
