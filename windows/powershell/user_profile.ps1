@@ -46,3 +46,40 @@ if ($Host.Name -eq 'ConsoleHost' -and -not [Console]::IsOutputRedirected) {
 
 
 
+
+# --- Migrated from this machine's previous profile (dotfiles port) -----------
+# These blocks lived only on this machine, not in the repo profile. They are kept
+# so that adopting the repo profile loses no local functionality.
+
+# godot: launcher for the WinGet-installed Godot editor.
+# NOTE: Godot is not currently installed on this machine; this path is stale.
+function godot {
+    & "C:\Users\verdu\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.1-stable_win64.exe" @args
+}
+
+# yazi: cd to the last visited directory on exit; pass yazi subcommands through
+function ya {
+  if ($args.Length -gt 0 -and $args[0] -in @('pkg', 'pack', 'help', 'h', '--help', '-h', '--version', '-V')) {
+    ya.exe @args
+    return
+  }
+  $tmp = Join-Path $env:TEMP ("yazi-cwd-{0}.tmp" -f [guid]::NewGuid().ToString("N"))
+  yazi @args "--cwd-file=$tmp"
+  if (Test-Path $tmp) {
+    $cwd = (Get-Content -Raw $tmp).Trim()
+    if ($cwd -and $cwd -ne (Get-Location).Path) { Set-Location -LiteralPath $cwd }
+    Remove-Item -Force $tmp -ErrorAction SilentlyContinue
+  }
+}
+
+# herdr: auto-attach if the server has active panes. Kept last on purpose, so the
+# banner above has already been printed before herdr takes over the console.
+if ($Host.Name -eq 'ConsoleHost' -and -not $env:HERDR_ENV) {
+    $srv = herdr status server --json 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
+    if ($srv.running) {
+        $wsList = herdr workspace list 2>$null | ConvertFrom-Json -ErrorAction SilentlyContinue
+        if ($wsList.result.workspaces | Where-Object { $_.pane_count -gt 0 }) {
+            herdr
+        }
+    }
+}
