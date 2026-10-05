@@ -1,7 +1,7 @@
 # Apply verdu.dotfiles to this machine
 
-Status: implemented — task 13 (start the stack) pending an explicit go-ahead
-Repo: `C:\Users\verdu\verdu.dotfiles` @ `main` (clean before this work)
+Status: done — tasks 1-13 complete, task 14 blocked on a user decision
+Repo: `C:\Users\verdu\verdu.dotfiles`, branch `chore/apply-dotfiles-port` (5 commits)
 Date: 2026-10-05
 Backup: `C:\Users\verdu\dotfiles-backup-20261005-130613` (see its `MANIFEST.txt`)
 
@@ -73,8 +73,42 @@ drifted, and remove the legacy leftovers that the repo replaces.
 | 10 | Run `setup-autoloads.nu` | done — 4 autoloads regenerated |
 | 11 | Remove the legacy leftovers | partial — 4 files deleted; package blocked |
 | 12 | Back-port into the repo (files + README/MANIFEST) | done |
-| 13 | Start the stack and run the health checks | pending — needs the go-ahead |
+| 13 | Start the stack and run the health checks | done — stack up, all checks pass |
 | 14 | Resolve the `whkd` package removal | **blocked** — see below |
+
+## Task 13 verification (the stack is running)
+
+| Check | Result |
+|---|---|
+| `komorebic state` | OK, JSON parses |
+| Monitors / workspaces | 1 (DISPLAY1) × 5 workspaces, focused index 0 |
+| Processes | `komorebi(13924)`, `AutoHotkey64(5936)`, `yasb(15184)` |
+| `is_paused` | `False` |
+| `resize_delta` | `25` (layout applied) |
+| Native taskbar | `Shell_TrayWnd` visible = **False** (hidden by the AHK watchdog) |
+| YASB bar | window present, visible |
+| `yasb.log` | 0 ERROR lines; `Komorebi connected to named pipe` |
+| `komorebi-autostart.log` | `[ok] komorebi ready` |
+| Startup `.vbs` | present, so the stack also starts at logon |
+
+### Two findings recorded on the way
+
+1. **First two launches aborted with `failed call to AllowSetForegroundWindow after
+   5 retries`.** `komorebi.exe` exited immediately and `komorebic state` panicked
+   with `os error 10050`. It happened through both a direct `Start-Process` and the
+   Startup `.vbs` logon path. It is **not reproducible**: after one successful
+   `cmd /c start` launch, all five launch forms succeeded (`hidden`, `normal`,
+   `minimized`, `cmd start`, `-NoNewWindow`). `ForegroundLockTimeout` is at the
+   Windows default `200000`, which lets a background process refuse the grant, but
+   the transient nature is unexplained and is recorded as such rather than
+   attributed.
+2. **`[WARN] workspaces unexpected: 5 (expected 2x5)`** is a false alarm: this
+   machine has one monitor, so 5 workspaces is correct. The layout still applied.
+3. **YASB's komorebi widget needs `komorebic` on `PATH`.** It logged
+   `Komorebi failed to subscribe named pipe` while launched from a shell whose
+   `PATH` predated the install; relaunching with the machine `PATH` produced
+   `Komorebi connected to named pipe`. At logon the machine `PATH` is already
+   complete, so this is a non-issue for the real startup path.
 
 ## Blockers
 
@@ -119,3 +153,6 @@ running and its config file is gone.
    `...\WinGet\Packages\GodotEngine.GodotEngine_..._8wekyb3d8bbwe` no longer
    exists. Removing a PATH entry was not part of this plan.
 3. **`whkd` removal** — needs a decision (see Blockers).
+4. **Optional:** make the autostart's workspace check compare against
+   `monitors × 5` instead of a hardcoded `2x5`, to stop the false warning on
+   single-monitor machines.
