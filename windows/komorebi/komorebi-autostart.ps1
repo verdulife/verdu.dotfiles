@@ -1,5 +1,6 @@
 # Komorebi setup autostart - launched at logon, hidden window.
-# Order: komorebi (WM, with --ffm) -> wait until it answers -> layout + FFM -> verify -> AHK -> YASB.
+# Order: AHK + YASB FIRST (they do not depend on komorebi) -> komorebi (WM, with --ffm)
+# -> wait until it answers -> layout + FFM -> verify.
 # Remove autostart by deleting komorebi-autostart.vbs (Startup folder) and this file.
 #
 # Why the wait: on a fresh boot komorebi's IPC socket can take several seconds to
@@ -9,15 +10,19 @@
 # komorebi with --ffm (custom focus-follows-mouse), waits until the socket answers,
 # verifies what it applied, and writes $env:USERPROFILE\komorebi-autostart.log.
 #
-# Why the retries (2026-10-05): komorebi.exe can die within milliseconds when
-# AllowSetForegroundWindow fails - main.rs bails after five attempts with no delay
-# between them, and does so BEFORE initialising its logger, so a failed start leaves
-# nothing at all in %TEMP%\komorebi.log.<date>. Seen at the 17:40 logon: komorebi
-# never answered and, because this script used to exit on the first failure, neither
-# AutoHotkey nor YASB was started. Upstream master still has the same code, so the
-# mitigation lives here: retry the launch (retrying is what worked at 13:30 the same
-# day), capture komorebi's stderr so the next failure is diagnosable, and start the
-# hotkeys and the bar no matter what komorebi does.
+# Why the long retry horizon (2026-10-06): AllowSetForegroundWindow only succeeds when
+# the caller may already set the foreground window. At logon none of the conditions
+# hold - the foreground right belongs to the shell, the process did not receive the
+# last input event, and the foreground lock re-arms for ForegroundLockTimeout
+# (default 200000 ms) after the last input - so the call fails until the lock expires
+# or the user generates input (~200 s, whichever comes first). komorebi's OWN retry
+# loop (5 attempts, added upstream in 46d5ea4 for exactly this) has no delay between
+# attempts and bails in ~0 s, so the horizon must live outside the binary. Round 1
+# (2026-10-05) retried 3 times in ~10 s, which stayed entirely inside the blind
+# window: at the 2026-10-06 logon komorebi died at 10:01:54 / 10:01:57 / 10:02:00 and
+# the session got no WM until a manual relaunch. This round retries for ~240 s with
+# backoff, and adopts any instance that already answers (Windows "restart apps" may
+# have started one) instead of blindly starting a second.
 
 $ErrorActionPreference = 'SilentlyContinue'
 
@@ -37,27 +42,54 @@ function Write-Log([string]$msg) {
     "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File -FilePath $log -Append -Encoding utf8
 }
 
-# Stop any previous komorebi (e.g. a bare instance relaunched by Windows
-# "restart apps", which would run without --ffm and without our layout), then
-# start it with --ffm so the custom focus-follows-mouse implementation is usable.
-& $komorebic stop 2>$null | Out-Null
-Start-Sleep -Seconds 1
+# --- Hotkeys + status bar first, guarded per process. Deliberately NOT gated on
+# --- komorebi: a window-manager failure must not also cost the hotkeys and the bar,
+# --- and YASB's komorebi widget reconnects by itself when komorebi appears (yasb.log:
+# --- pipe subscribe failed at sign-in, connected the moment komorebi answered).
+# --- Guarded per process because Windows may have re-launched them already via
+# --- "restart apps after sign-in"; starting them twice would double them.
+if (-not (Get-Process AutoHotkey64 -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $ahk -ArgumentList "`"$ahkScript`""
+}
+if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $yasb
+}
 
-# --- Start komorebi and wait until it answers, retrying the launch.
-# --- The socket needs a moment on a busy logon, and the foreground-window check
-# --- can kill the process outright, so "not answering yet" and "already dead"
-# --- are handled separately. Without this every config command below fails
-# --- silently against a not-yet-ready socket (the bug this fixes).
-$attempts = 3
+# --- Start komorebi and wait until it answers, retrying with backoff. The gate that
+# --- blocks the start is the Win32 foreground lock (see header): it opens on user
+# --- input or after ~200 s, which is why the horizon is ~4 min and no longer ~10 s.
+# --- "not answering yet" (socket still starting) and "already dead" (the
+# --- AllowSetForegroundWindow bail) are told apart, and an instance that already
+# --- answers is ADOPTED rather than restarted - unless it lacks --ffm, in which case
+# --- it is stopped and started again with --ffm. Without this every config command
+# --- below fails silently against a not-yet-ready socket (the bug this fixes).
+$attempts = 9
+$backoff  = @(5, 10, 20, 30, 30, 30, 30, 30)   # s between attempts (attempt n waits backoff[n-1]); horizon ~240 s
 $ready    = $false
 for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
-    if ($attempt -gt 1) { Start-Sleep -Seconds 2 }
+    if ($attempt -gt 1) { Start-Sleep -Seconds $backoff[$attempt - 2] }
+
+    # Adopt an instance that already answers (e.g. launched by Windows "restart apps"
+    # or by hand) instead of starting a second one.
+    $adoptRaw = (& $komorebic state 2>$null) -join "`n"
+    if ($adoptRaw) {
+        $a = $null
+        try { $a = $adoptRaw | ConvertFrom-Json } catch { }
+        $ffmOn = $null -ne $a.focus_follows_mouse -and $a.focus_follows_mouse -ne $false
+        if ($ffmOn) { $ready = $true; break }
+        Write-Log "[warn] an instance is running without --ffm; restarting it with --ffm"
+    }
+
+    # Clean slate for our own start: stop any instance and kill a lingering one.
+    & $komorebic stop 2>$null | Out-Null
+    Get-Process komorebi -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 500
 
     # hidden console: komorebi.exe is a console app
     Start-Process -FilePath $komorebi -ArgumentList '--ffm' -WindowStyle Hidden `
         -RedirectStandardOutput $komorebiOut -RedirectStandardError $komorebiErr
 
-    foreach ($i in 1..12) {                      # up to ~6s per attempt
+    foreach ($i in 1..12) {                      # up to ~6 s per attempt
         Start-Sleep -Milliseconds 500
         if (& $komorebic state 2>$null) { $ready = $true; break }
         if (-not (Get-Process komorebi -ErrorAction SilentlyContinue)) { break }
@@ -163,21 +195,9 @@ if ($ready) {
         Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse)"
     }
 } else {
-    Write-Log "[FAIL] komorebi not ready after $attempts attempts; layout NOT applied (see $komorebiErr)"
+    Write-Log "[FAIL] komorebi not ready after $attempts attempts (~240 s); layout NOT applied (see $komorebiErr)"
 }
 
-# Hotkeys + status bar. Deliberately NOT gated on komorebi: a window-manager
-# failure must not also cost the hotkeys and the bar. YASB's komorebi widget
-# reports offline tiles when komorebi is down, which is strictly better than no
-# bar at all. Guarded per process because Windows may have re-launched them
-# already via "restart apps after sign-in"; starting them twice would double them.
-if (-not (Get-Process AutoHotkey64 -ErrorAction SilentlyContinue)) {
-    Start-Process -FilePath $ahk -ArgumentList "`"$ahkScript`""
-}
-if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
-    Start-Process -FilePath $yasb
-}
-
-# Report komorebi's outcome as the script's exit code, after the two launches
-# above, so a failure is still visible to whatever ran this script.
+# Report komorebi's outcome as the script's exit code, so a failure is still visible
+# to whatever ran this script. The hotkeys and the bar were already started at the top.
 if (-not $ready) { exit 1 }

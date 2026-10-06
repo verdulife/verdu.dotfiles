@@ -1,6 +1,8 @@
 # Keep the session usable when komorebi fails to start at logon
 
-Status: done - fixed, deployed and verified live; the logon path is confirmed at the next reboot
+Status: REOPENED 2026-10-06 - Round 1 (failure handling) is done and verified; Round 2
+fixes the residual failure: the retry window was so short it stayed inside the
+~200 s foreground-lock blind window, so the 2026-10-06 logon got no WM at all.
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `chore/apply-dotfiles-port`
 Date: 2026-10-05
 Related: `odd/tasks/apply-dotfiles.md` (the port that introduced this autostart)
@@ -94,3 +96,67 @@ No `[WARN]` line, and the delta from the previous run is what matters: `19:24:30
 
 `git revert` the work-unit commit, or restore the previous script from it and
 re-copy it to `%USERPROFILE%\komorebi-autostart.ps1`.
+
+## Round 2: the logon race is a ~200 s blind window (2026-10-06)
+
+Round 1 made the failure *diagnosable* but did not *recover* from it: 3 attempts in
+~10 s all land inside the same blind window. The 2026-10-06 logon proved it - the
+log shows the failure cleanly, and the session still had no WM until a manual run.
+
+### Symptom (2026-10-06, reported by the user)
+
+- Boot 09:59:49; komorebi start attempts 10:01:54 / 10:01:57 / 10:02:00, all
+  `process exited` with the stderr reason below; script gave up at 10:02:00.
+- No tiling at all; YASB showed no workspaces widget. The user guessed YASB started
+  before komorebi - it did not: YASB's komorebi listener reconnects by itself when
+  komorebi appears (yasb.log 10:02:05 subscribe failed -> 10:53:47 connected, no
+  restart). The widget simply hides while offline (`hide_if_offline: true`, kept by
+  user decision on 2026-10-06), which made the outage look like "widget did not
+  load".
+
+### Mechanism (verified against source and Microsoft docs)
+
+- `AllowSetForegroundWindow` fails unless the caller may already set the foreground
+  window. Microsoft's conditions: the caller is the foreground process, was started
+  by it, received the last input event, is being debugged, there is no foreground
+  window, **or the foreground lock timeout has expired**
+  (`SPI_GETFOREGROUNDLOCKTIMEOUT` / `HKCU\Control Panel\Desktop\ForegroundLockTimeout`,
+  default `200000` ms).
+- At logon, the startup chain (`wscript.exe` -> `powershell.exe` -> `komorebi.exe`,
+  10:01:54, ~2 min after boot) satisfies none of them: the foreground right belongs
+  to the shell and the lock re-armed with the logon input, so the gate only opens on
+  fresh user input or after ~200 s. This is why the same binary always succeeds on a
+  manual run minutes later.
+- Upstream added retries for exactly this (`46d5ea4`, "The startup Win32 API call can
+  sporadically fail"), but the loop has **no delay between attempts** - verified in
+  `master` `komorebi/src/main.rs:203-221` on 2026-10-06, still identical to v0.1.41 -
+  so it bails after ~0 s. Issue #683 ("Auto Start is very unstable") stays open.
+  Native autostart (`komorebic enable-autostart`, `.lnk` in `shell:startup`) and a
+  static `komorebi.json` do not change the timing and hit the same race.
+
+### Tasks (Round 2)
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Record the 2026-10-06 failure and the lock mechanism | done |
+| 2 | Start AHK + YASB before komorebi (guarded per process), so nothing waits on the WM | done |
+| 3 | Replace the 3-attempt loop with 9 attempts and backoff (5/10/20/30/30/30/30/30 s, horizon ~240 s, covering the ~200 s lock) | done |
+| 4 | Adopt an instance that already answers (`komorebic state` probe per attempt) instead of starting a second; restart it only if it lacks `--ffm` | done |
+| 5 | Copy to `%USERPROFILE%` (MANIFEST destination), syntax-check both copies, live run | done - byte-identical copy, `[ok] layout applied` on the first attempt |
+| 6 | Update README gotchas 8 and 17 | done |
+| 7 | Commit the work unit on `fix/komorebi-logon-retry-horizon` | done - see the work-unit commit on this branch |
+| 8 | Close: the reboot test (user action) - expect `[ok] komorebi ready` or `[warn] … attempt n/9` followed by success within ~4 min | pending - reboot is the user's call |
+
+### Live run before reboot (2026-10-06 10:53+, after the user-approved restore)
+
+```
+komorebi-autostart.ps1 -> exit code 0
+  [ok] komorebi ready
+  [ok] layout applied: resize_delta=25 mouse_follows_focus=False ffm=Komorebi workspaces=5 monitors=1
+procs: komorebi, yasb, AutoHotkey64 (no duplicates)
+yasb.log: connected to named pipe at the moment komorebi answered (no YASB restart)
+```
+
+Note for whoever hits the failure path next: the `[warn] … attempt n/9` lines now
+span up to ~240 s of logon, and AHK/YASB are already up by then (they start before
+the loop). The reboot is the only real proof of the failure path.
