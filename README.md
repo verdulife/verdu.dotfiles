@@ -1,4 +1,4 @@
-# dotfiles
+# verdu.dotfiles
 
 Personal configuration, ported across machines and OSes. Everything here is
 **source of truth**; to use it anywhere you **copy files to their exact
@@ -18,7 +18,7 @@ Written for humans and agents: **read [MANIFEST.md](MANIFEST.md) to install**,
 ## Layout
 
 ```
-dotfiles/
+verdu.dotfiles/
 ├── MANIFEST.md           ← WHERE EVERY FILE GOES (the contract for copying)
 ├── README.md
 ├── AGENTS.md

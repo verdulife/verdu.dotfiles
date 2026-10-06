@@ -16,11 +16,11 @@ linux/
 ## Install (once populated)
 
 ```bash
-git clone <this-repo> ~/dotfiles
-ln -sf ~/dotfiles/shared/starship.toml ~/.config/starship.toml
-rsync -a ~/dotfiles/shared/nvim/ ~/.config/nvim/
-ln -sf ~/dotfiles/linux/hyprland/hyprland.conf ~/.config/hypr/hyprland.conf
-ln -sf ~/dotfiles/linux/waybar/* ~/.config/waybar/   # adjust after import
+git clone <this-repo> ~/verdu.dotfiles
+ln -sf ~/verdu.dotfiles/shared/starship.toml ~/.config/starship.toml
+rsync -a ~/verdu.dotfiles/shared/nvim/ ~/.config/nvim/
+ln -sf ~/verdu.dotfiles/linux/hyprland/hyprland.conf ~/.config/hypr/hyprland.conf
+ln -sf ~/verdu.dotfiles/linux/waybar/* ~/.config/waybar/   # adjust after import
 ```
 
 ## Correspondence with the Windows stack
