@@ -3,8 +3,12 @@
 """
 OpenCode Go usage helper for YASB CustomWidget.
 
-Reads the OpenCode Go API key from:
-%USERPROFILE%\\.local\\share\\opencode\\auth.json
+Reads the OpenCode Go API key from the first store that has one and is accepted:
+%USERPROFILE%\\.pi\\agent\\auth.json            (Pi's managed store: `type: api_key`)
+%USERPROFILE%\\.local\\share\\opencode\\auth.json  (opencode CLI store: `type: api`)
+The Pi store is tried first: on this machine only its key holds the Go entitlement,
+the opencode one answers 403 EntitlementError even though its entry is also called
+`opencode-go` (verified 2026-10-06).
 
 Output modes:
     --json  -> JSON suitable for YASB
@@ -24,13 +28,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-AUTH_PATH = (
-    Path(os.environ.get("USERPROFILE", str(Path.home())))
-    / ".local"
-    / "share"
-    / "opencode"
-    / "auth.json"
+HOME = Path(os.environ.get("USERPROFILE", str(Path.home())))
+
+# Candidate stores, in order. Pi's managed store first: its `opencode-go` entry is an
+# `api_key` carrying the Go entitlement, while the opencode CLI store's `type: api` key
+# is rejected with 403 EntitlementError for the same endpoint (verified 2026-10-06). A
+# key that the endpoint rejects falls through to the next candidate instead of leaving
+# the widget at 0%.
+AUTH_PATHS = (
+    HOME / ".pi" / "agent" / "auth.json",
+    HOME / ".local" / "share" / "opencode" / "auth.json",
 )
+AUTH_PATH = AUTH_PATHS[0]   # kept for messages: the store the widget prefers
 
 USAGE_URL = "https://opencode.ai/zen/go/v1/usage"
 
@@ -47,43 +56,64 @@ BAR_FULL = "\u25b0"
 BAR_EMPTY = "\u25b1"
 
 
-def load_key() -> str:
-    """Load the OpenCode Go API key from auth.json."""
-    with AUTH_PATH.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+def load_keys() -> list[tuple[Path, str]]:
+    """Every `opencode-go` key found, in candidate-store order."""
+    found: list[tuple[Path, str]] = []
+    unreadable: list[str] = []
 
-    entry = data.get("opencode-go", {})
-    key = entry.get("key")
+    for path in AUTH_PATHS:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            continue
+        except Exception as error:
+            unreadable.append(f"{path}: {error}")
+            continue
 
-    if not key:
-        raise RuntimeError(
-            f"No opencode-go.key found in {AUTH_PATH}"
-        )
+        key = (data.get("opencode-go") or {}).get("key")
 
-    return key
+        if key:
+            found.append((path, key))
+
+    if found:
+        return found
+
+    detail = f" ({'; '.join(unreadable)})" if unreadable else ""
+
+    raise RuntimeError(
+        "No opencode-go.key found in "
+        + ", ".join(str(path) for path in AUTH_PATHS)
+        + detail
+    )
 
 
 def fetch_usage() -> dict:
-    """Fetch current usage from the OpenCode Go API."""
-    key = load_key()
+    """Fetch current usage, trying each candidate key until one is accepted."""
+    last_error = None
 
-    request = urllib.request.Request(
-        USAGE_URL,
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Accept": "application/json",
-            "User-Agent": "YASB-OpenCode-Go-Usage/1.0",
-        },
-        method="GET",
-    )
-
-    with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
-        if response.status != 200:
-            raise RuntimeError(f"HTTP {response.status}")
-
-        return json.loads(
-            response.read().decode("utf-8")
+    for path, key in load_keys():
+        request = urllib.request.Request(
+            USAGE_URL,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Accept": "application/json",
+                "User-Agent": "YASB-OpenCode-Go-Usage/1.0",
+            },
+            method="GET",
         )
+
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"HTTP {response.status}")
+
+                return json.loads(
+                    response.read().decode("utf-8")
+                )
+        except Exception as error:
+            last_error = f"{path}: {error}"
+
+    raise RuntimeError(f"No accepted opencode-go key - {last_error}")
 
 
 def normalize(data: dict) -> dict:
@@ -110,8 +140,17 @@ def normalize(data: dict) -> dict:
 
 
 def cache_path() -> Path:
-    """Return the cache file path."""
-    return Path(__file__).with_suffix(".cache.json")
+    """Return the cache file path.
+
+    Deliberately NOT next to the script: the deployed script lives in
+    `%USERPROFILE%\\.config\\yasb`, which YASB watches for config changes, so a cache
+    write every 5 minutes there risks poking the watcher and reloading the bar. The
+    cache is runtime state, so it goes to %TEMP% (or the home directory as a fallback).
+    """
+    state_dir = Path(
+        os.environ.get("TEMP") or os.environ.get("TMP") or str(HOME)
+    )
+    return state_dir / "opencode-go-usage.cache.json"
 
 
 def load_cache() -> dict | None:

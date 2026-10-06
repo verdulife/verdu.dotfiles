@@ -32,20 +32,32 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 
 ## OpenCode Go widget (`opencode_go`)
 
-`opencode_go.py` reads the key at
-`%USERPROFILE%\.local\share\opencode\auth.json` (entry `opencode-go`), queries
-the usage endpoint every 5 minutes and returns one JSON line: the 5h / week /
-month percentages plus their text bars. Requirements:
+`opencode_go.py` tries the `opencode-go` key of two stores, in this order:
+
+1. `%USERPROFILE%\.pi\agent\auth.json` — Pi's managed store (`type: api_key`),
+   the one that carries the Go entitlement on this machine.
+2. `%USERPROFILE%\.local\share\opencode\auth.json` — the opencode CLI store
+   (`type: api`); its key answers `403 EntitlementError: OpenCode Go
+   subscription required` for this endpoint (measured 2026-10-06).
+
+A key the endpoint rejects falls through to the next candidate, so an entitled
+key in either store is enough. It queries every 5 minutes and returns one JSON
+line: the 5h / week / month percentages plus their text bars. The cache lives in
+`%TEMP%\opencode-go-usage.cache.json` on purpose: next to the script it would sit
+in the directory YASB watches for config changes and could poke the bar into
+reloading every interval.
+
+Requirements:
 
 - An interpreter the Windows launcher resolves: `run_cmd` uses `py`, not
   `python`, because on a machine where the Microsoft Store app-execution alias
   owns `python` that stub fails even though a real Python is installed.
 - `CaskaydiaCove NFP` for the ▰/▱ bar glyphs (the label also forces it on the
   bar cells); see the family list in `styles.css`.
-- A key with an active OpenCode Go entitlement: without it the endpoint answers
-  `403 EntitlementError: OpenCode Go subscription required` and the widget
-  renders `0%` with empty bars. It stays in the layout on purpose — the error
-  is not silent in the JSON, but the pill itself only shows zeros.
+- A key with an active OpenCode Go entitlement somewhere: without one the
+  endpoint answers `403 EntitlementError` for every candidate, the widget falls
+  back to the cached values (`stale: true`) and, with no cache, renders `0%` with
+  empty bars. The pill itself only shows zeros; the `error` is in the JSON.
 
 ## Fullscreen behavior
 
