@@ -28,13 +28,14 @@ bars:
     window_flags:
       always_on_top: true
       windows_app_bar: true
-      hide_on_fullscreen: true   # real fullscreen (video F11, juegos exclusivos) baja la barra a HWND_BOTTOM
+      hide_on_fullscreen: true # real fullscreen (video F11, juegos exclusivos) baja la barra a HWND_BOTTOM
     widgets:
       left:
         - "komorebi_workspaces"
       center:
         - "grouper_media"
       right:
+        - "opencode_go"
         - "grouper_sysinfo"
         - "clock"
         - "power_menu"
@@ -89,11 +90,11 @@ widgets:
   clock:
     type: "yasb.clock.ClockWidget"
     options:
-      label: "{%#d %B %Y · %H:%M h}"   # %#d = day without leading zero (Windows flag)
+      label: "{%#d %B %Y · %H:%M h}" # %#d = day without leading zero (Windows flag)
       label_alt: "{%H:%M:%S}"
-      locale: "es_ES"               # month names in Spanish
+      locale: "es_ES" # month names in Spanish
       update_interval: 1000
-      tooltip: false                # no hover info on the clock
+      tooltip: false # no hover info on the clock
       calendar:
         blur: true
         round_corners: true
@@ -104,8 +105,8 @@ widgets:
       class_name: "systray"
       icon_size: 16
       pin_click_modifier: "alt"
-      show_unpinned: false          # unpinned icons start collapsed
-      show_unpinned_button: true    # ▾ button toggles the unpinned icons
+      show_unpinned: false # unpinned icons start collapsed
+      show_unpinned_button: true # ▾ button toggles the unpinned icons
       use_hook: false
 
   power_menu:
@@ -149,11 +150,11 @@ widgets:
       class_name: "media-lite"
       show_thumbnail: true
       show_title: true
-      show_artist: false             # single line of text
+      show_artist: false # single line of text
       image_size: 24
       thumbnail_corner_radius: 6
       max_label_size: 18
-      tooltip: false                 # no hover info on the media pill
+      tooltip: false # no hover info on the media pill
       callbacks:
         on_left: "toggle_media_menu"
       media_menu:
@@ -174,8 +175,12 @@ widgets:
       style: "bars"
       height: 18
       smoothness: 70
-      sensitivity: 50
-      auto_gain: true
+      # auto_gain: false is REQUIRED for hide_idle to work: the adaptive gain keeps
+      # amplifying silence, so the idle detector never sees a zero level and the widget
+      # never collapses (observed 2026-10-06). Sensitivity becomes a plain multiplier
+      # (50 = 1x), so it is raised to 70 (~1.4x) to keep quiet playback lively.
+      sensitivity: 70
+      auto_gain: false
       framerate: 60
       freq_min: 500
       freq_max: 12000
@@ -196,9 +201,9 @@ widgets:
         - "cpu"
         - "memory"
         - "gpu"
-        - "systray"                 # tray icons stay collapsed inside the group (▾)
+        - "systray" # tray icons stay collapsed inside the group (▾)
       collapse_options:
-        enabled: false                # always expanded, not collapsible
+        enabled: false # always expanded, not collapsible
 
   cpu:
     type: "yasb.cpu.CpuWidget"
@@ -270,3 +275,32 @@ widgets:
       max_length: 52
       max_length_ellipsis: "..."
       monitor_exclusive: true
+
+  # Custom widget for OpenCode Go (5h, weekly, monthly stats) — user added it to the bar.
+  opencode_go:
+    type: "yasb.custom.CustomWidget"
+    options:
+      # One-line display: percent + text bar (▰ filled / ▱ empty, 5 cells, gray) per
+      # metric, in the order 5h / Week / Month. The bars come from the script as
+      # {data[??]_bar} strings; the <font> tags give them the muted icon gray (#9aa3b2,
+      # same as the cpu/ram/gpu icons) AND force the family that actually contains the
+      # ▰/▱ glyphs (CaskaydiaCove NFP; JetBrains Mono Nerd lacks them). The icon span is
+      # the 8x10 logo (qproperty-pixmap in styles.css).
+      label: '<span class="icon"></span> {data[rolling]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[rolling_bar]}</font> 5h  {data[weekly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[weekly_bar]}</font> Week  {data[monthly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[monthly_bar]}</font> Month'
+      label_alt: '<span class="icon"></span> {data[rolling]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[rolling_bar]}</font> 5h  {data[weekly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[weekly_bar]}</font> Week  {data[monthly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[monthly_bar]}</font> Month'
+      label_placeholder: "5h --  W --  M --"
+      class_name: "opencode-go-widget"
+      tooltip: false # no hover response: nothing appears on mouse-over
+      exec_options:
+        run_cmd: 'python %USERPROFILE%\.config\yasb\opencode_go.py'
+        run_interval: 300000
+        return_format: "json"
+        hide_empty: false
+        use_shell: true
+      callbacks:
+        # Display-only widget on purpose (2026-10-06): all clicks are inert. The old
+        # left-click popup was removed; the tokenizer/comillas lesson lives in the
+        # task notes if a click ever comes back.
+        on_left: "do_nothing"
+        on_middle: "do_nothing"
+        on_right: "do_nothing"

@@ -39,6 +39,8 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/autostart/komorebi-autostart.vbs` | `%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\komorebi-autostart.vbs` |
 | `windows/yasb/config.yaml` | `%USERPROFILE%\.config\yasb\config.yaml` |
 | `windows/yasb/styles.css` | `%USERPROFILE%\.config\yasb\styles.css` |
+| `windows/yasb/opencode_go.py` | `%USERPROFILE%\.config\yasb\opencode_go.py` |
+| `windows/yasb/opencode-logo.png` | `%USERPROFILE%\.config\yasb\opencode-logo.png` |
 | `windows/win-terminal/settings.json` | `%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json` |
 | `windows/powershell/Microsoft.PowerShell_profile.ps1` | `%USERPROFILE%\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` |
 | `windows/powershell/user_profile.ps1` | `%USERPROFILE%\.config\powershell\user_profile.ps1` |

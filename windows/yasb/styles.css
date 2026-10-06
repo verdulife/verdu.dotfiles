@@ -246,3 +246,29 @@
 .clock {
   color: #eef1f4;
 }
+
+
+/* ---- OpenCode Go ---- */
+.opencode-go-widget .widget-container {
+  padding: 0 6px;
+}
+
+.opencode-go-widget .label {
+  /* The block glyphs (█/□) must come from the Nerd Font: without this the bar renders
+     them in the bar's default Segoe UI fallback with different metrics and the bar
+     looks uneven (verified 2026-10-06). Same family as the cpu/ram/gpu icon group. */
+  font-family: "JetBrainsMono NFP", "JetBrainsMono NF", "Segoe UI Variable Text", sans-serif;
+  padding: 0 2px;
+}
+
+/* OpenCode logo (pre-scaled 16x20 PNG next to the widget script) as the pill icon.
+   The icon span itself carries no text; the pixmap is set via qproperty, so if the
+   pixmap ever fails to load the icon simply renders empty instead of a tofu box. */
+.opencode-go-widget .icon {
+  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/opencode-logo.png");
+  min-width: 61px;
+  max-width: 61px;
+  min-height: 11px;
+  max-height: 11px;
+  margin-right: 5px;
+}
