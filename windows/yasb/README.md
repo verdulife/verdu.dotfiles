@@ -10,9 +10,8 @@ children so a group reads as a single surface.
 left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
 center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
-        grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾)
-        clock                     (date/time, Spanish locale)
-        power_menu                (restart/shutdown/sleep/lock/hibernate)
+        grouper_sysinfo           (cpu % · memory · gpu)
+        grouper_actions           (systray collapsed ▾ | clock 00:00 | power)
 ```
 
 ## Widgets in `config.yaml`
@@ -30,10 +29,11 @@ left. `grouper_media` and `media_lite` were retired (2026-10-07): YASB v2.0.7's 
 only hides when every child is `isHidden()`, the visualizer never hides (it collapses),
 and click callbacks are per widget, so the visualizer cannot open Media Lite's popup.
 Verified against the v2.0.7 sources.
-| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu/systray |
-| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | NF icons (`\uf2db`, `\uefc5`, `\uf0e7`) |
+| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
+| `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
+| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows only the percentage (`{info[percent][total]}%`) |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
-| `clock` | `yasb.clock.ClockWidget` | `{%#d %B %Y · %H:%M h}`, `locale: es_ES`, `tooltip: false` |
+| `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; the hover tooltip is v2.0.7's built-in (full date + day + time + zone), not configurable |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click |
 

@@ -37,8 +37,7 @@ bars:
       right:
         - "opencode_go"
         - "grouper_sysinfo"
-        - "clock"
-        - "power_menu"
+        - "grouper_actions"
 
 widgets:
   komorebi_workspaces:
@@ -90,11 +89,13 @@ widgets:
   clock:
     type: "yasb.clock.ClockWidget"
     options:
-      label: "{%#d %B %Y · %H:%M h}" # %#d = day without leading zero (Windows flag)
+      label: "{%H:%M}" # just the time; the full date lives in the hover tooltip
       label_alt: "{%H:%M:%S}"
       locale: "es_ES" # month names in Spanish
       update_interval: 1000
-      tooltip: false # no hover info on the clock
+      # v2.0.7 hardcodes the tooltip contents (full date, day abbrev, time, zone)
+      # and only lets us switch it on: this is the hover of the native clock.
+      tooltip: true
       calendar:
         blur: true
         round_corners: true
@@ -180,15 +181,25 @@ widgets:
         - "cpu"
         - "memory"
         - "gpu"
-        - "systray" # tray icons stay collapsed inside the group (▾)
+      collapse_options:
+        enabled: false # always expanded, not collapsible
+
+  # Right-end cluster: tray icons (collapsed ▾) | clock | power button.
+  grouper_actions:
+    type: "yasb.grouper.GrouperWidget"
+    options:
+      widgets:
+        - "systray"
+        - "clock"
+        - "power_menu"
       collapse_options:
         enabled: false # always expanded, not collapsible
 
   cpu:
     type: "yasb.cpu.CpuWidget"
     options:
-      label: "<span class=\"icon\">\uf2db</span> {info[percent][total]}% · {info[freq][current]} MHz"
-      label_alt: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%"
+      label: "{info[percent][total]}%" # icon and freq dropped (2026-10-07)
+      label_alt: "{info[percent][total]}%"
       update_interval: 2000
       menu:
         enabled: false
