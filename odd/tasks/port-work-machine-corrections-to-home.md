@@ -1,6 +1,7 @@
 # Port the work-machine corrections to the home machine
 
-Status: applied — T0-T5 and T7 done and verified on the home machine; T6 (komorebi) deferred by decision.
+Status: applied and pushed — T0-T5, T6 and T7 done on the home machine; T6's start path
+(retry loop, dump sanitizer) still has to run at a real logon.
 Repo: `C:\Users\verdu\dotfiles`, branch `chore/apply-home-machine-corrections`
 Date: 2026-10-06
 Related: `odd/tasks/apply-dotfiles.md` (the original port), `odd/tasks/consolidate-pi-install.md`
@@ -46,7 +47,7 @@ to drop Python, any change to `auth.json` or to the subscription state.
 | T3 | YASB `audio`: `sensitivity: 70` + `auto_gain: false` | **Needed** (behaviour fix, same file as T2) | Deployed config still has `sensitivity: 50` / `auto_gain: true` |
 | T4 | `windows/powershell/user_profile.ps1` — migrated local blocks | **Partial**: keep `herdr`, `ya`/`godot` are inert | `herdr` resolves on this machine; `yazi` and Godot are not installed, so those two blocks cannot run (harmless, and the repo already notes the stale Godot path) |
 | T5 | `windows/win-terminal/settings.json` — explicit font, `startingDirectory`, hidden duplicate Nushell profile | **Adapt, never copy** | Profile lists differ (see *Problem*). No `"source": "nu"` duplicate exists here yet — WT generates it only when it materializes the profile. `defaultProfile` already points at the static Nushell GUID here |
-| T6 | komorebi hardening: `komorebi-autostart.ps1`, `komorebi.ahk`, `container-dump.ps1`, `tests/`, `README.md` | **Not symptom-driven here; optional hardening** | `komorebi-autostart.log` is all `[ok]` (`workspaces=5/5`, `ffm=Komorebi`, `resize_delta=25`), the last run is today 21:18. `%TEMP%\komorebi.state.json` is stale (2026-10-04 12:08). This machine reports **2** monitors × 5 workspaces. The new autostart also fixes the always-warning workspace check and closes the child-window paths (upstream issue family, not machine-specific) |
+| T6 | komorebi hardening: `komorebi-autostart.ps1`, `komorebi.ahk`, `container-dump.ps1`, `tests/`, `README.md` | **Not symptom-driven before the baseline; hardening now applied here** | `komorebi-autostart.log` was all `[ok]` (`workspaces=5/5`, `ffm=Komorebi`, `resize_delta=25`). The baseline snapshot then measured what the log never shows: DISPLAY1 reports a **0x1000** work area with three parked containers (`zen.exe` -983x973, `explorer.exe` -1939x457, `Ferdium.exe` -1939x-59, all alive and not minimized) and `%TEMP%\komorebi.state.json` (2026-10-04) is judged **unsafe** (`dead-hwnd:1640888`, `empty-rect:1640888`, `dead-hwnd:461170`). This machine reports **2** monitors × 5 workspaces |
 | T7 | `README.md`, `MANIFEST.md`, `windows/komorebi/README.md` | **Apply with each unit, with one adaptation** | `MANIFEST.md` now says `%USERPROFILE%\verdu.dotfiles\windows\nushell\setup-autoloads.nu`; this machine's clone is `%USERPROFILE%\dotfiles`, so the path must stay neutral or local |
 
 ## Constraints and invariants
@@ -70,7 +71,7 @@ to drop Python, any change to `auth.json` or to the subscription state.
 | T3 | Apply the YASB audio idle fix | done — same file as T2 |
 | T4 | Add the `herdr` block (and the inert `ya`/`godot` blocks) to the PowerShell profile | done — whole file copied, functions verified |
 | T5 | Merge the portable NT parts into the live `settings.json` (Nushell `startingDirectory`, keep `NFM`, leave `defaultProfile` alone) | done — one key added, dynamic profiles preserved |
-| T6 | Optional: apply the komorebi hardening after a layout snapshot, the Pester suite, and a komorebi restart | **deferred** — not symptom-driven here |
+| T6 | Apply the komorebi hardening after a layout snapshot and the Pester suite | **done on the adopt path** — the start path runs at the next logon |
 | T7 | Sync `README.md`/`MANIFEST.md` with what was actually applied, with the clone path made neutral | done |
 
 Each task: apply, then re-read the destination and compare it with the repo file, then
@@ -125,6 +126,32 @@ settings.json   ac55a87c901d919160a01d6ed6e12d43f9ed25e510b022c2b0b613ca6ce80643
   `Developer … VS 2019/2022` still present, and no work-machine profile injected. The font
   stays on `profiles.defaults` = `JetBrainsMono NFM`, which is the family registered here.
 
+- **T6 (komorebi)** — deployed in MANIFEST order (`container-dump.ps1` first, then the
+  autostart, then `komorebi.ahk`); all three byte-identical to the repo afterwards.
+  Gate: `Invoke-Pester windows/komorebi/tests` under a per-process `-ExecutionPolicy Bypass`
+  (Windows PowerShell here is Restricted, and the logon VBS already uses Bypass) →
+  **13 passed, 0 failed**.
+  Baseline `snapshot-wm.ps1 -Label before` at 23:59:00: DISPLAY1 with a `0x1000` work area
+  and three parked containers (`zen.exe` -983x973, `explorer.exe` -1939x457, `Ferdium.exe`
+  -1939x-59), DISPLAY2 with one terminal alone at 99%.
+  New autostart run on the adopt path (komorebi was already answering with `ffm=Komorebi`, so
+  no stop/start): `[ok] komorebi ready` then `[ok] layout applied: resize_delta=25
+  mouse_follows_focus=False ffm=Komorebi workspaces=5/5 monitors=2` — the `monitors=` field
+  only exists in the new code, and there was no `[FAIL]` and no ignored-class `[WARN]`.
+  The two new ignore rules are live, confirmed independently: the after snapshot's
+  `ignore-list classes` now ends with `ReunionWindowingCaptionControls,
+  InputNonClientPointerSource`, and `%TEMP%\komorebi.log.2026-10-06` logs
+  `process_command{IgnoreRule(Class, "ReunionWindowingCaptionControls")} processed` (UTC
+  clock: 21:59:44 = 23:59:44 local).
+  `komorebi.ahk` reloaded through `#SingleInstance Force` (one process afterwards, new PID
+  18128) after `AutoHotkey64.exe /validate` exited 0.
+  Post snapshot `-Label after` at 00:00:18: the same three parked containers with the same
+  hwnds and rects, and DISPLAY2 still alone at 99% → **no layout regression**. Bundles stay
+  outside the repo in `%USERPROFILE%\komorebi-evidence\`.
+- Dump verdict on real data, without deleting it: `Test-ContainerDump` on the live
+  `%TEMP%\komorebi.state.json` returns `Exists=True, Safe=False, WindowCount=2` with
+  `dead-hwnd:1640888 | empty-rect:1640888 | dead-hwnd:461170` → the next start will drop it.
+
 Adaptations accepted instead of a literal copy (they change the repo, not only the machine):
 
 - `windows/yasb/config.yaml`: `run_cmd` uses `py`, since `python` here is the Microsoft
@@ -133,7 +160,8 @@ Adaptations accepted instead of a literal copy (they change the repo, not only t
   `JetBrainsMono NFM`; the previous list named two families that do not exist here, so every
   metric fell through to Segoe.
 - `MANIFEST.md`: the `setup-autoloads.nu` example no longer hardcodes the work machine's
-  clone folder (`verdu.dotfiles`); the home clone is `dotfiles`.
+  clone folder (`verdu.dotfiles`); this clone is `dotfiles` until the pending rename to
+  `verdu.dotfiles`.
 - `README.md` gotcha 2: the JetBrains family is per machine (`NFM` here, `NFM`+`NFP` on the
   work machine), so it no longer prescribes `NFP` unconditionally.
 
@@ -141,11 +169,23 @@ Known follow-ups, not applied here:
 
 - `env.nu` calls `^fnm` unguarded: on a machine without fnm, Nushell would error at start.
   Both machines have it, so parity with the repo file was preferred.
-- The `opencode-go` entitlement on this machine, and the visual confirmation of the widget
-  in the bar (the log proves it loaded, not that it renders).
-- T6 (komorebi) stays deferred: the log here is all `[ok]`.
+- The widget's visual confirmation in the bar (the JSON and the log prove it runs, not
+  that the pill renders). The empty `opencode-go` entry in the opencode CLI store can stay:
+  the widget now reads Pi's store first and falls through on a rejected key.
+- T6 remainders: the retry loop and the dump sanitizer live in the **start** branch, so they
+  only run at the next logon (or in a controlled restart from the user's own terminal — a
+  start from an agent context can hit the foreground-lock gate). The old nuclear
+  `manage-rule exe zen.exe` stays in effect until komorebi restarts, because rules are
+  runtime state and the new script only adds.
+- Consequence of the unsafe dump: the next logon will not restore window→workspace
+  placement (deliberate, README gotcha 21).
+- Observed in the after snapshot: a second `WindowsTerminal.exe` container on DISPLAY2 ws[1]
+  (hwnd 7080006) that was not there 24 s earlier. It is a normal user window, not a child,
+  so nothing looks anomalous — worth confirming it was opened by hand.
 
 ## Next step
 
-User confirmation of T1 in a real interactive Nushell tab and of the widget pill in the
-bar; then either T6 on request or nothing further on this branch (no push, no PR).
+User confirmation of T1 in a real interactive Nushell tab and of the widget pill in the bar.
+T6 completes at the next logon, where the retry loop and the dump sanitizer run for the
+first time. The clone rename to `verdu.dotfiles` is still pending: the folder is in use by
+this session and by at least one shell.
