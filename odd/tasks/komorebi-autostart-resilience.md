@@ -147,6 +147,16 @@ log shows the failure cleanly, and the session still had no WM until a manual ru
 | 7 | Commit the work unit on `fix/komorebi-logon-retry-horizon` | done - see the work-unit commit on this branch |
 | 8 | Close: the reboot test (user action) - expect `[ok] komorebi ready` or `[warn] … attempt n/9` followed by success within ~4 min | pending - reboot is the user's call |
 
+### RDD review disposition (2026-10-06)
+
+The native review of the work-unit commit (`6b428bc`, candidate target
+`sha256:be557af5...`) could not run: the Pi host relay has no model routed for the
+`review-reliability` lens (`reviewer-config-invalid`, reproduced twice, same gap as
+lineage `review-d4dafe8e38d06729` on 2026-10-05). No approval burned, no corrections
+consumed. On 2026-10-06 the user explicitly left the candidate **unreviewed** - do not
+re-invoke inspection for it; resume only if review-reliability gets a model in the
+agent model routing config and the user asks for it.
+
 ### Live run before reboot (2026-10-06 10:53+, after the user-approved restore)
 
 ```
