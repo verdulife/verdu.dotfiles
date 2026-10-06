@@ -31,9 +31,9 @@ and click callbacks are per widget, so the visualizer cannot open Media Lite's p
 Verified against the v2.0.7 sources.
 | `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
 | `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
-| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows only the percentage (`{info[percent][total]}%`) |
+| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz) |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
-| `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; the hover tooltip is v2.0.7's built-in (full date + day + time + zone), not configurable |
+| `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click |
 

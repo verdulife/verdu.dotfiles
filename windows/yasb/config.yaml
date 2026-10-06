@@ -94,8 +94,9 @@ widgets:
       locale: "es_ES" # month names in Spanish
       update_interval: 1000
       # v2.0.7 hardcodes the tooltip contents (full date, day abbrev, time, zone)
-      # and only lets us switch it on: this is the hover of the native clock.
-      tooltip: true
+      # and offers no custom format, so the hover is off; the left click still
+      # opens the calendar popup.
+      tooltip: false
       calendar:
         blur: true
         round_corners: true
@@ -198,8 +199,8 @@ widgets:
   cpu:
     type: "yasb.cpu.CpuWidget"
     options:
-      label: "{info[percent][total]}%" # icon and freq dropped (2026-10-07)
-      label_alt: "{info[percent][total]}%"
+      label: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%" # icon kept, freq dropped
+      label_alt: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%"
       update_interval: 2000
       menu:
         enabled: false
