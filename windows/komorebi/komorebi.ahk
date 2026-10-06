@@ -14,9 +14,13 @@
 #Requires AutoHotkey v2.0.2
 #SingleInstance Force
 
-; Rescue Gecko main windows that missed their Show event (started here, in the
-; pure auto-execute section, before the first hotkey). See RescueUnmanagedWindows.
-SetTimer(RescueUnmanagedWindows, 500)
+; There is deliberately no AHK timer here forcing Gecko windows to be managed.
+; Zen/Firefox cold start emits EVENT_OBJECT_NAMECHANGE and no Show event, which used to
+; leave the main window untiled; komorebi handles that natively now through
+; `identify-object-name-change-application exe zen.exe` in komorebi-autostart.ps1 (README
+; gotcha 19). The old rescue timer was removed on 2026-10-06 after firing zero times in
+; 540 log events - and it was dangerous: `komorebic manage` acts on the FOCUSED window, so
+; it could tile a WS_CHILD helper window of the very app it was trying to rescue.
 
 Komorebic(cmd) {
     RunWait('"C:\Program Files\komorebi\bin\komorebic.exe" ' cmd, , "Hide")
@@ -236,52 +240,3 @@ HideTaskbar() {
 #!Left::return
 #!Right::return
 
-; ---- Rescue windows that missed their Show event -------------------------
-; Gecko browsers (Zen/Firefox) cold-start create their main window WITHOUT a
-; Window event Show notification, so komorebi never registers it as a tile
-; (only a TitleUpdate arrives) and the window floats until a second open.
-; Fast and light: the WinGetList criteria already restrict to zen.exe's
-; MozillaWindowClass windows (no per-window process lookup), and everything
-; else (active-window capture, handle pruning) is skipped while Zen is absent.
-RescueUnmanagedWindows() {
-    static seen := Map()
-    wins := WinGetList("ahk_class MozillaWindowClass ahk_exe zen.exe")
-    if (wins.Length = 0)
-        return
-    ; WinExist("A") returns 0 instead of throwing when there is no active
-    ; window (komorebi workspace switches leave a focus gap); never use
-    ; WinGetID("A") bare here for the same reason.
-    restore := 0
-    try
-        restore := WinExist("A")
-    catch
-        restore := 0
-    for hwnd in wins {
-        if (!DllCall("user32.dll\IsWindowVisible", "Ptr", hwnd))
-            continue
-        if (seen.Has(hwnd))
-            continue
-        ; Only the real main window (has a title); ignore bare splash frames.
-        if (WinGetTitle("ahk_id " hwnd) = "")
-            continue
-        seen[hwnd] := true
-        SetTimer(FocusManage.Bind(hwnd, restore), -250)  ; settle briefly
-    }
-    ; Forget handles that are gone so a recreated window is seen again.
-    for hwnd in seen.Clone() {
-        if (!WinExist("ahk_id " hwnd))
-            seen.Delete(hwnd)
-    }
-}
-FocusManage(hwnd, restore) {
-    ; komorebic manage acts on the FOCUSED window, so give it the rescued one,
-    ; then put the user's previous window back in front.
-    try {
-        WinActivate("ahk_id " hwnd)
-        Sleep(50)
-        Komorebic("manage")
-    } catch
-        return
-    if (restore && WinExist("ahk_id " restore))
-        WinActivate("ahk_id " restore)
-}

@@ -1,6 +1,10 @@
 # Stop komorebi from tiling Zen's child windows
 
-Status: REOPENED 2026-10-05 20:08 - the fix is deployed and the state verified clean, but the user reports the symptom persists. Not closed.
+Status: CLOSED 2026-10-06 - root cause found, fixed and measured in
+`odd/tasks/komorebi-ghost-containers.md`. Kept for the evidence trail; the reopened
+section below is what that task answered (the class rules were necessary but nowhere
+near sufficient: the state dump, the nuclear `manage-rule exe zen.exe` and the AHK
+rescue's focused-window `manage` each put the children back).
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `main`
 Date: 2026-10-05
 Related: `odd/tasks/komorebi-autostart-resilience.md` (same script, different defect)

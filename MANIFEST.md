@@ -35,6 +35,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 |---|---|
 | `windows/komorebi/komorebi.ahk` | `%USERPROFILE%\komorebi.ahk` |
 | `windows/komorebi/komorebi-autostart.ps1` | `%USERPROFILE%\komorebi-autostart.ps1` |
+| `windows/komorebi/container-dump.ps1` | `%USERPROFILE%\komorebi-container-dump.ps1` |
 | `windows/autostart/komorebi-autostart.vbs` | `%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\komorebi-autostart.vbs` |
 | `windows/yasb/config.yaml` | `%USERPROFILE%\.config\yasb\config.yaml` |
 | `windows/yasb/styles.css` | `%USERPROFILE%\.config\yasb\styles.css` |
