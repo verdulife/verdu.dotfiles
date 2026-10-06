@@ -1,8 +1,10 @@
 # Port the work-machine corrections to the home machine
 
-Status: closed — T0-T7 done. T6 is closed on the adopt path; the start branch (retry loop,
-risk dump deletion, retirement of the old `manage-rule`) gets its first real exercise at the
-next logon, and that single line of the log is the only thing left to confirm.
+Status: closed — T0-T7 done and verified, including T6's start branch, exercised at a real
+start on 2026-10-07 01:41 in the user's own terminal: the sanitizer removed the unsafe
+dump, komorebi started on the first attempt, layout applied with `monitors=2`. One open
+item recorded for another day: komorebi's native focus-follows-mouse stops acting after a
+fullscreen enter/exit until a restart.
 Repo: `C:\Users\verdu\dotfiles`, branch `chore/apply-home-machine-corrections`
 Date: 2026-10-06
 Related: `odd/tasks/apply-dotfiles.md` (the original port), `odd/tasks/consolidate-pi-install.md`
@@ -177,27 +179,25 @@ Known follow-ups, not applied here:
 - The widget's visual confirmation in the bar (the JSON and the log prove it runs, not
   that the pill renders). The empty `opencode-go` entry in the opencode CLI store can stay:
   the widget now reads Pi's store first and falls through on a rejected key.
-- T6 remainders (all three need one komorebi start; a start from an agent context can hit
-  the foreground-lock gate, so it belongs in the user's own terminal): the retry loop, the
-  deletion of the unsafe dump, and the retirement of the old nuclear `manage-rule exe
-  zen.exe`, which stays in effect until komorebi restarts because the new script only adds.
-  Post-logon check, one line each:
-  ```powershell
-  Get-Content "$HOME\komorebi-autostart.log" -Tail 12   # expect [ok] layout applied ... monitors=2
-  # and, only if the start had to fight for it, [warn] komorebi start attempt n/9 ...
-  # plus [warn] removed unsafe state dump (...) — the stale dump is judged unsafe today.
-  ```
-  To force it now instead of waiting: `komorebic stop` then
-  `powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\komorebi-autostart.ps1`.
-- Consequence of the unsafe dump: the next logon will not restore window→workspace
-  placement (deliberate, README gotcha 21).
+- T6's start branch ran at a real start (2026-10-07 01:41:43): the log shows
+  `[warn] removed unsafe state dump (empty-rect:15730594, empty-rect:4982742)` then
+  `[ok] komorebi ready` and `[ok] layout applied: ... workspaces=5/5 monitors=2` with no
+  retry. Afterwards `manage-list` is empty: the old nuclear `manage-rule exe zen.exe` is
+  gone, which was the root cause of the Zen "Save As" dialog flicker — the force-managed
+  `#32770` dialog (exe zen) fought for its size against the tile — and the restart also
+  revived focus-follows-mouse on this process.
+- OPEN, for another day: after a fullscreen enter/exit (e.g. a YouTube video), komorebi's
+  native focus-follows-mouse stops acting until a restart. Seen before the restart,
+  verified working after it, not yet diagnosed (suspects: the FFM listener against
+  fullscreen transitions, YASB `hide_on_fullscreen` dropping the bar to `HWND_BOTTOM`, or
+  the fullscreen-exit retile).
 - Observed in the after snapshot: a second `WindowsTerminal.exe` container on DISPLAY2 ws[1]
   (hwnd 7080006) that was not there 24 s earlier. It is a normal user window, not a child,
   so nothing looks anomalous — worth confirming it was opened by hand.
 
 ## Next step
 
-**T1 is confirmed by the user**: `pi` works in an interactive Nushell tab. Still open for the
-user: the widget pill in the bar (the JSON and the log prove the script runs, not that it
-renders), the post-logon log check above, and the clone rename to `verdu.dotfiles`, blocked
-because the folder is in use by this session and by at least one shell.
+**T1 is confirmed by the user** (`pi` works in an interactive Nushell tab). Remaining user
+items: the widget pill in the bar (the JSON and the log prove it runs, not that it renders),
+the fullscreen/FFM finding above, and the clone rename to `verdu.dotfiles` (blocked: the
+folder is in use by this session and by at least one shell).
