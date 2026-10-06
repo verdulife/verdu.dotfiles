@@ -259,15 +259,15 @@ widgets:
   opencode_go:
     type: "yasb.custom.CustomWidget"
     options:
-      # One-line display: percent + text bar (▰ filled / ▱ empty, 5 cells, gray) per
-      # metric, in the order 5h / Week / Month. The bars come from the script as
-      # {data[??]_bar} strings; the <font> tags give them the muted icon gray (#9aa3b2,
-      # same as the cpu/ram/gpu icons) AND force the family that actually contains the
-      # ▰/▱ glyphs (CaskaydiaCove NFP; JetBrains Mono Nerd lacks them). The icon span is
-      # the 8x10 logo (qproperty-pixmap in styles.css).
-      label: '<span class="icon"></span> {data[rolling]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[rolling_bar]}</font> 5h  {data[weekly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[weekly_bar]}</font> Week  {data[monthly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[monthly_bar]}</font> Month'
-      label_alt: '<span class="icon"></span> {data[rolling]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[rolling_bar]}</font> 5h  {data[weekly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[weekly_bar]}</font> Week  {data[monthly]}% <font face="CaskaydiaCove NFP" color="#9aa3b2">{data[monthly_bar]}</font> Month'
-      label_placeholder: "5h --  W --  M --"
+      # The whole state-dependent line comes from the script as {data[text]}
+      # (opencode_go.py -> label_text), because the left click rotates four states and
+      # the template cannot: full (5h + Week + Month) -> only 5h -> only Week -> only
+      # Month -> full. The script owns the <font> spans for the ▰/▱ bars (CaskaydiaCove
+      # NFP, the family that owns the glyphs, and the muted icon gray). The icon span
+      # is the 8x10 logo (qproperty-pixmap in styles.css).
+      label: '<span class="icon"></span> {data[text]}'
+      label_alt: '<span class="icon"></span> {data[text]}'
+      label_placeholder: "--"
       class_name: "opencode-go-widget"
       tooltip: false # no hover response: nothing appears on mouse-over
       exec_options:
@@ -276,14 +276,16 @@ widgets:
         # interpreter is installed (C:\Python310, verified 2026-10-06). The Windows Python
         # launcher resolves the installed interpreter on both machines.
         run_cmd: 'py %USERPROFILE%\.config\yasb\opencode_go.py'
-        run_interval: 300000
+        # 1 s so the click's state change paints almost instantly; each tick only
+        # reads local state/cache files and questions the API when the 15-min cache
+        # is stale.
+        run_interval: 1000
         return_format: "json"
         hide_empty: false
         use_shell: true
       callbacks:
-        # Display-only widget on purpose (2026-10-06): all clicks are inert. The old
-        # left-click popup was removed; the tokenizer/comillas lesson lives in the
-        # task notes if a click ever comes back.
-        on_left: "do_nothing"
+        # Left click rotates the pill state: the script's --next writes
+        # %TEMP%\opencode-go-usage.state and the widget's next tick (1 s) paints it.
+        on_left: 'exec py %USERPROFILE%\.config\yasb\opencode_go.py --next'
         on_middle: "do_nothing"
         on_right: "do_nothing"

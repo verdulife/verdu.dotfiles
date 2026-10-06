@@ -35,7 +35,7 @@ Verified against the v2.0.7 sources.
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | `{%#d %B %Y · %H:%M h}`, `locale: es_ES`, `tooltip: false` |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
-| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage (5h · week · month) via `opencode_go.py`; display-only (all clicks inert) |
+| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click |
 
 ## OpenCode Go widget (`opencode_go`)
 
@@ -65,6 +65,11 @@ Requirements:
   endpoint answers `403 EntitlementError` for every candidate, the widget falls
   back to the cached values (`stale: true`) and, with no cache, renders `0%` with
   empty bars. The pill itself only shows zeros; the `error` is in the JSON.
+
+Clicking the pill rotates four states: full (5h + Week + Month) -> only 5h -> only
+Week -> only Month -> full. The cycle state lives in `%TEMP%\opencode-go-usage.state`;
+`--next` rotates it, the widget re-renders on its 1 s refresh loop, and the script
+only re-questions the API when the 15-minute cache is stale.
 
 ## Fullscreen behavior
 

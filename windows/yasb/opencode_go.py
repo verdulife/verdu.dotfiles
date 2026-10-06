@@ -11,8 +11,9 @@ the opencode one answers 403 EntitlementError even though its entry is also call
 `opencode-go` (verified 2026-10-06).
 
 Output modes:
-    --json  -> JSON suitable for YASB
-    --popup -> Tkinter popup with detailed usage
+    (default) -> one compact JSON line for YASB
+    --next    -> rotate the pill state (full -> 5h -> week -> month -> full)
+    --popup   -> Tkinter popup with detailed usage
 """
 
 from __future__ import annotations
@@ -251,6 +252,60 @@ def usage_bar(percent: int, cells: int = BAR_CELLS) -> str:
     return (BAR_FULL * filled) + (BAR_EMPTY * (cells - filled))
 
 
+# Click cycle: the pill shows one of four states and the left click rotates it.
+# The state file lives in %TEMP% next to the cache; a missing or corrupt file
+# means STATE_FULL, the default.
+STATE_FULL, STATE_ROLLING, STATE_WEEKLY, STATE_MONTHLY = 0, 1, 2, 3
+STATE_COUNT = 4
+
+
+def state_path() -> Path:
+    state_dir = Path(os.environ.get("TEMP") or os.environ.get("TMP") or str(HOME))
+    return state_dir / "opencode-go-usage.state"
+
+
+def read_state() -> int:
+    try:
+        value = int(state_path().read_text(encoding="utf-8").strip())
+        return value if value in range(STATE_COUNT) else STATE_FULL
+    except Exception:
+        return STATE_FULL
+
+
+def write_state(value: int) -> None:
+    tmp = state_path().with_suffix(".tmp")
+    tmp.write_text(str(value), encoding="utf-8")
+    tmp.replace(state_path())
+
+
+def next_state() -> None:
+    """Rotate full -> 5h -> week -> month -> full (the click action)."""
+    write_state((read_state() + 1) % STATE_COUNT)
+
+
+def label_text(state: int, data: dict) -> str:
+    """The pill text for a state, bars included with their font tags.
+
+    The `<font>` spans force the family that owns the glyphs (CaskaydiaCove NFP)
+    and the muted icon gray, exactly like the old inline template did.
+    """
+    bar = lambda glyph: f'<font face="CaskaydiaCove NFP" color="#9aa3b2">{glyph}</font>'
+
+    parts = (
+        f"{data['rolling']}% {bar(data['rolling_bar'])} 5h",
+        f"{data['weekly']}%  {bar(data['weekly_bar'])} Week",
+        f"{data['monthly']}% {bar(data['monthly_bar'])} Month",
+    )
+
+    if state == STATE_ROLLING:
+        return parts[0]
+    if state == STATE_WEEKLY:
+        return parts[1]
+    if state == STATE_MONTHLY:
+        return parts[2]
+    return "  ".join(parts)
+
+
 def main_json() -> int:
     """Output compact JSON for YASB."""
     try:
@@ -265,6 +320,7 @@ def main_json() -> int:
             "monthly_bar": usage_bar(usage["monthly"]["percent"]),
             "stale": stale,
         }
+        output["text"] = label_text(read_state(), output)
 
         print(
             json.dumps(
@@ -276,20 +332,18 @@ def main_json() -> int:
         return 0
 
     except Exception as error:
-        print(
-            json.dumps(
-                {
-                    "rolling": 0,
-                    "weekly": 0,
-                    "monthly": 0,
-                    "rolling_bar": usage_bar(0),
-                    "weekly_bar": usage_bar(0),
-                    "monthly_bar": usage_bar(0),
-                    "error": str(error),
-                },
-                separators=(",", ":")
-            )
-        )
+        data = {
+            "rolling": 0,
+            "weekly": 0,
+            "monthly": 0,
+            "rolling_bar": usage_bar(0),
+            "weekly_bar": usage_bar(0),
+            "monthly_bar": usage_bar(0),
+            "error": str(error),
+        }
+        data["text"] = label_text(read_state(), data)
+
+        print(json.dumps(data, separators=(",", ":")))
 
         return 0
 
@@ -518,8 +572,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Show the detailed usage popup.",
     )
+    parser.add_argument(
+        "--next",
+        action="store_true",
+        help="Rotate the pill state: full -> 5h -> week -> month -> full.",
+    )
 
     args = parser.parse_args()
+
+    if args.next:
+        next_state()
+        sys.exit(0)
 
     sys.exit(
         popup()
