@@ -35,8 +35,8 @@ bars:
       center:
         - "audio_visualizer"
       right:
-        - "opencode_go"
         - "grouper_sysinfo"
+        - "opencode_go"
         - "grouper_actions"
 
 widgets:
@@ -217,8 +217,8 @@ widgets:
   gpu:
     type: "yasb.gpu.GpuWidget"
     options:
-      label: "<span class=\"icon\">\uf0e7</span> {info[utilization]}% · {info[temp]}°C"
-      label_alt: "<span class=\"icon\">\uf0e7</span> {info[utilization]}% | {info[mem_used]}/{info[mem_total]}"
+      label: "<span class=\"icon\">\uf108</span> {info[utilization]}% · {info[temp]}°C" # icon U+F108 fa-desktop (was fa-flash)
+      label_alt: "<span class=\"icon\">\uf108</span> {info[utilization]}% | {info[mem_used]}/{info[mem_total]}"
       update_interval: 3000
       menu:
         enabled: false
