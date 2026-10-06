@@ -9,7 +9,8 @@ children so a group reads as a single surface.
 ```
 left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
 center: grouper_media             (audio_visualizer + media_lite; hidden when idle)
-right : grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾)
+right : opencode_go               (OpenCode Go usage: 5h · week · month)
+        grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾)
         clock                     (date/time, Spanish locale)
         power_menu                (restart/shutdown/sleep/lock/hibernate)
 ```
@@ -27,6 +28,24 @@ right : grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | `{%#d %B %Y · %H:%M h}`, `locale: es_ES`, `tooltip: false` |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
+| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage (5h · week · month) via `opencode_go.py`; display-only (all clicks inert) |
+
+## OpenCode Go widget (`opencode_go`)
+
+`opencode_go.py` reads the key at
+`%USERPROFILE%\.local\share\opencode\auth.json` (entry `opencode-go`), queries
+the usage endpoint every 5 minutes and returns one JSON line: the 5h / week /
+month percentages plus their text bars. Requirements:
+
+- An interpreter the Windows launcher resolves: `run_cmd` uses `py`, not
+  `python`, because on a machine where the Microsoft Store app-execution alias
+  owns `python` that stub fails even though a real Python is installed.
+- `CaskaydiaCove NFP` for the ▰/▱ bar glyphs (the label also forces it on the
+  bar cells); see the family list in `styles.css`.
+- A key with an active OpenCode Go entitlement: without it the endpoint answers
+  `403 EntitlementError: OpenCode Go subscription required` and the widget
+  renders `0%` with empty bars. It stays in the layout on purpose — the error
+  is not silent in the JSON, but the pill itself only shows zeros.
 
 ## Fullscreen behavior
 
@@ -43,5 +62,8 @@ limitation, not a config one.
 - After changing `styles.css` or `config.yaml`, **restart YASB** (it rewrites
   files on reload; the watcher is not reliable for styles).
 - YASB requires `komorebic` on `PATH` at startup.
+- Font families in `styles.css` are per machine: check what is registered before
+  naming one, and never list an unregistered family first (the whole label falls
+  through to the Segoe default with different metrics).
 - Popups are separate windows: blur works there (not per-widget in the bar —
   Windows limitation).

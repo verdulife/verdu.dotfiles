@@ -254,10 +254,12 @@
 }
 
 .opencode-go-widget .label {
-  /* The block glyphs (█/□) must come from the Nerd Font: without this the bar renders
-     them in the bar's default Segoe UI fallback with different metrics and the bar
-     looks uneven (verified 2026-10-06). Same family as the cpu/ram/gpu icon group. */
-  font-family: "JetBrainsMono NFP", "JetBrainsMono NF", "Segoe UI Variable Text", sans-serif;
+  /* Families first-to-last: `CaskaydiaCove NFP` carries the bar glyphs (the label forces
+     it on each bar cell too); `JetBrainsMono NFM` is the JetBrains family actually
+     registered on the home machine (only NFM, no NF/NFP). Naming an unregistered family
+     first dropped every metric to the Segoe default, with metrics that did not match the
+     rest of the bar (verified 2026-10-06). */
+  font-family: "CaskaydiaCove NFP", "JetBrainsMono NFM", "Segoe UI Variable Text", sans-serif;
   padding: 0 2px;
 }
 

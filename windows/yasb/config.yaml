@@ -292,7 +292,11 @@ widgets:
       class_name: "opencode-go-widget"
       tooltip: false # no hover response: nothing appears on mouse-over
       exec_options:
-        run_cmd: 'python %USERPROFILE%\.config\yasb\opencode_go.py'
+        # `py`, not `python`: on this machine the Microsoft Store app-execution alias owns
+        # `python`, so that stub fails with a "Python not found" error even though a real
+        # interpreter is installed (C:\Python310, verified 2026-10-06). The Windows Python
+        # launcher resolves the installed interpreter on both machines.
+        run_cmd: 'py %USERPROFILE%\.config\yasb\opencode_go.py'
         run_interval: 300000
         return_format: "json"
         hide_empty: false
