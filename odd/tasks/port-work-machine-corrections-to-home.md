@@ -1,7 +1,8 @@
 # Port the work-machine corrections to the home machine
 
-Status: applied and pushed — T0-T5, T6 and T7 done on the home machine; T6's start path
-(retry loop, dump sanitizer) still has to run at a real logon.
+Status: closed — T0-T7 done. T6 is closed on the adopt path; the start branch (retry loop,
+risk dump deletion, retirement of the old `manage-rule`) gets its first real exercise at the
+next logon, and that single line of the log is the only thing left to confirm.
 Repo: `C:\Users\verdu\dotfiles`, branch `chore/apply-home-machine-corrections`
 Date: 2026-10-06
 Related: `odd/tasks/apply-dotfiles.md` (the original port), `odd/tasks/consolidate-pi-install.md`
@@ -148,6 +149,10 @@ settings.json   ac55a87c901d919160a01d6ed6e12d43f9ed25e510b022c2b0b613ca6ce80643
   Post snapshot `-Label after` at 00:00:18: the same three parked containers with the same
   hwnds and rects, and DISPLAY2 still alone at 99% → **no layout regression**. Bundles stay
   outside the repo in `%USERPROFILE%\komorebi-evidence\`.
+  The third new rule is live too: komorebi's log shows
+  `process_command{IdentifyObjectNameChangeApplication(Exe, "zen.exe")} processed` at the
+  same second, and both guards held — one `AutoHotkey64` and one `yasb` process afterwards,
+  so the per-process skip did not double them.
 - Dump verdict on real data, without deleting it: `Test-ContainerDump` on the live
   `%TEMP%\komorebi.state.json` returns `Exists=True, Safe=False, WindowCount=2` with
   `dead-hwnd:1640888 | empty-rect:1640888 | dead-hwnd:461170` → the next start will drop it.
@@ -172,11 +177,18 @@ Known follow-ups, not applied here:
 - The widget's visual confirmation in the bar (the JSON and the log prove it runs, not
   that the pill renders). The empty `opencode-go` entry in the opencode CLI store can stay:
   the widget now reads Pi's store first and falls through on a rejected key.
-- T6 remainders: the retry loop and the dump sanitizer live in the **start** branch, so they
-  only run at the next logon (or in a controlled restart from the user's own terminal — a
-  start from an agent context can hit the foreground-lock gate). The old nuclear
-  `manage-rule exe zen.exe` stays in effect until komorebi restarts, because rules are
-  runtime state and the new script only adds.
+- T6 remainders (all three need one komorebi start; a start from an agent context can hit
+  the foreground-lock gate, so it belongs in the user's own terminal): the retry loop, the
+  deletion of the unsafe dump, and the retirement of the old nuclear `manage-rule exe
+  zen.exe`, which stays in effect until komorebi restarts because the new script only adds.
+  Post-logon check, one line each:
+  ```powershell
+  Get-Content "$HOME\komorebi-autostart.log" -Tail 12   # expect [ok] layout applied ... monitors=2
+  # and, only if the start had to fight for it, [warn] komorebi start attempt n/9 ...
+  # plus [warn] removed unsafe state dump (...) — the stale dump is judged unsafe today.
+  ```
+  To force it now instead of waiting: `komorebic stop` then
+  `powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\komorebi-autostart.ps1`.
 - Consequence of the unsafe dump: the next logon will not restore window→workspace
   placement (deliberate, README gotcha 21).
 - Observed in the after snapshot: a second `WindowsTerminal.exe` container on DISPLAY2 ws[1]
@@ -185,7 +197,7 @@ Known follow-ups, not applied here:
 
 ## Next step
 
-User confirmation of T1 in a real interactive Nushell tab and of the widget pill in the bar.
-T6 completes at the next logon, where the retry loop and the dump sanitizer run for the
-first time. The clone rename to `verdu.dotfiles` is still pending: the folder is in use by
-this session and by at least one shell.
+**T1 is confirmed by the user**: `pi` works in an interactive Nushell tab. Still open for the
+user: the widget pill in the bar (the JSON and the log prove the script runs, not that it
+renders), the post-logon log check above, and the clone rename to `verdu.dotfiles`, blocked
+because the folder is in use by this session and by at least one shell.
