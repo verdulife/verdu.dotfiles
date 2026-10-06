@@ -1,0 +1,151 @@
+# Port the work-machine corrections to the home machine
+
+Status: applied — T0-T5 and T7 done and verified on the home machine; T6 (komorebi) deferred by decision.
+Repo: `C:\Users\verdu\dotfiles`, branch `chore/apply-home-machine-corrections`
+Date: 2026-10-06
+Related: `odd/tasks/apply-dotfiles.md` (the original port), `odd/tasks/consolidate-pi-install.md`
+(why `pi` depends on a Node >= 22.19 on PATH), `odd/tasks/komorebi-*.md` (work-machine findings).
+
+## Goal
+
+Bring this machine's deployed configuration up to the repo's current state, applying only
+what this machine actually needs, adapting what is machine-bound, and skipping what does
+not apply.
+
+## Problem and why verification is per item
+
+The 21 commits pulled from `origin/main` (the `188c9f3..edaf1c3` range) were written and
+verified on the **work** computer. Every deployed file on this machine still matches
+`188c9f3` byte for byte, so none of them is applied here. Two of the corrections are
+machine-bound and would be wrong if copied literally:
+
+- `windows/win-terminal/settings.json` is a full snapshot of the **work** machine
+  (it carries `archlinux`, `Developer Command Prompt for VS 18`, `Multipass`; this
+  machine has `Ubuntu`, `VS 2019`, `VS 2022`). A wholesale copy deletes this machine's
+  dynamic profiles.
+- The repo now sets `"face": "JetBrainsMono NFP"`. Only `JetBrainsMono NFM` is registered
+  on this machine (user scope, `HKCU`), so `NFP` would silently fall back to the WT default.
+
+Two prerequisites are also missing here, so two items are blocked on a decision rather
+than on code: no usable `python` on PATH, and the stored `opencode-go` key has no
+subscription entitlement on this machine (HTTP 403 `EntitlementError`).
+
+## Scope
+
+In: the seven work units below, each closed with a work-unit commit on a feature branch.
+
+Out: pushing, opening a PR, changing upstream komorebi behaviour, rewriting the YASB widget
+to drop Python, any change to `auth.json` or to the subscription state.
+
+## Verified classification
+
+| # | Repo change | Verdict here | Evidence collected at plan time |
+|---|---|---|---|
+| T1 | `windows/nushell/env.nu` — hand-written fnm hook | **Needed** — this is the `pi` fix | With the persisted PATH alone: `node` = `C:\Program Files\nodejs\node.exe` v21.7.2 and `pi --version` fails with `SyntaxError: ... 'node:module' does not provide an export named 'enableCompileCache'`. With the repo `env.nu`: `node` v24.18.0, `pi --version` = 1.0.2 |
+| T2 | YASB `opencode_go` widget (`config.yaml` + `styles.css` + `opencode_go.py` + `opencode-logo.png`) | **Wanted, blocked on entitlement** | `auth.json` has an `opencode-go` key and `CaskaydiaCove NFP` is registered (the label's glyph font). But `py opencode_go.py` returns `{"error":"HTTP Error 403: Forbidden"}`; the API answers `EntitlementError: OpenCode Go subscription required`. Also `python` is only the Microsoft Store alias stub here, while `C:\Python310\python.exe` (3.10.0) works |
+| T3 | YASB `audio`: `sensitivity: 70` + `auto_gain: false` | **Needed** (behaviour fix, same file as T2) | Deployed config still has `sensitivity: 50` / `auto_gain: true` |
+| T4 | `windows/powershell/user_profile.ps1` — migrated local blocks | **Partial**: keep `herdr`, `ya`/`godot` are inert | `herdr` resolves on this machine; `yazi` and Godot are not installed, so those two blocks cannot run (harmless, and the repo already notes the stale Godot path) |
+| T5 | `windows/win-terminal/settings.json` — explicit font, `startingDirectory`, hidden duplicate Nushell profile | **Adapt, never copy** | Profile lists differ (see *Problem*). No `"source": "nu"` duplicate exists here yet — WT generates it only when it materializes the profile. `defaultProfile` already points at the static Nushell GUID here |
+| T6 | komorebi hardening: `komorebi-autostart.ps1`, `komorebi.ahk`, `container-dump.ps1`, `tests/`, `README.md` | **Not symptom-driven here; optional hardening** | `komorebi-autostart.log` is all `[ok]` (`workspaces=5/5`, `ffm=Komorebi`, `resize_delta=25`), the last run is today 21:18. `%TEMP%\komorebi.state.json` is stale (2026-10-04 12:08). This machine reports **2** monitors × 5 workspaces. The new autostart also fixes the always-warning workspace check and closes the child-window paths (upstream issue family, not machine-specific) |
+| T7 | `README.md`, `MANIFEST.md`, `windows/komorebi/README.md` | **Apply with each unit, with one adaptation** | `MANIFEST.md` now says `%USERPROFILE%\verdu.dotfiles\windows\nushell\setup-autoloads.nu`; this machine's clone is `%USERPROFILE%\dotfiles`, so the path must stay neutral or local |
+
+## Constraints and invariants
+
+- Never copy `windows/win-terminal/settings.json` wholesale (gotcha 13).
+- Font family on this machine is `JetBrainsMono NFM`; `NFP`/`NF` are not registered here.
+- `pi` requires Node >= 22.19; after `%LOCALAPPDATA%\pi-node\current` disappeared, the fnm
+  hook in `env.nu` is the only provider on this machine. Do not undo it.
+- `nu -c` never loads `env.nu`; scripted checks must use `nu --env-config <path>`.
+- `auth.json` is read-only context; never print or copy its values.
+- Existing Pester here is 3.4.0 and the new tests use Pester 3 syntax (`Should Be`), so no
+  module install is required.
+
+## Tasks
+
+| # | Task | Status |
+|---|---|---|
+| T0 | Branch off `main` (`chore/apply-home-machine-corrections`) and record the pre-state hashes of every destination | done |
+| T1 | Copy `windows/nushell/env.nu`, then verify `pi` in a real Nushell tab | done — `pi` 1.0.2 on Node v24.18.0 |
+| T2 | Decide the `opencode-go` entitlement (and `py` vs `python`) and only then add the widget | done — added with `py`, visible; the 403 stays documented |
+| T3 | Apply the YASB audio idle fix | done — same file as T2 |
+| T4 | Add the `herdr` block (and the inert `ya`/`godot` blocks) to the PowerShell profile | done — whole file copied, functions verified |
+| T5 | Merge the portable NT parts into the live `settings.json` (Nushell `startingDirectory`, keep `NFM`, leave `defaultProfile` alone) | done — one key added, dynamic profiles preserved |
+| T6 | Optional: apply the komorebi hardening after a layout snapshot, the Pester suite, and a komorebi restart | **deferred** — not symptom-driven here |
+| T7 | Sync `README.md`/`MANIFEST.md` with what was actually applied, with the clone path made neutral | done |
+
+Each task: apply, then re-read the destination and compare it with the repo file, then
+commit that unit alone with a conventional message.
+
+## Acceptance criteria and checks
+
+- Per task: `cmp <repo file> <destination>` is clean, and the destination's mtime is newer.
+- T1: in a **new interactive Nushell tab**, `pi --version` prints a version and `node`
+  comes from `fnm_multishells\...`; `nu --env-config <dest>/env.nu -c 'node --version'`
+  is the scripted equivalent.
+- T2: `py %USERPROFILE%\.config\yasb\opencode_go.py` prints JSON with no `error` key, the
+  widget renders in the bar, and YASB restarts without validation errors.
+- T3: the audio pill collapses while nothing plays.
+- T4: a new PowerShell window starts with no error and `herdr` auto-attach behaves as before.
+- T5: WT reloads the file with no error, the Nushell tab opens in `%USERPROFILE%`, and the
+  dynamic profiles (`Ubuntu`, `VS 2019/2022`) are still present.
+- T6: `Invoke-Pester windows/komorebi/tests` passes; `snapshot-wm.ps1` shows the same
+  width share before and after; after a komorebi restart the log ends with
+  `[ok] layout applied: ... workspaces=5/5 monitors=2` and no `[warn]` line.
+- Global: no secret is written into the repo; no unrelated file is modified.
+
+## Progress and evidence
+
+Pre-state hashes (before any copy), for rollback:
+
+```
+env.nu          e9296b9594c16e9f4d3b2fac65e12a72d3f23d7b4cc0ad8c413eb8dfc9c55964
+config.yaml     483e797312b3f9bc8a8766df29e1fa45d72b88cd4becd3bf09bca09c67f0fe4f
+styles.css      3ed763fca6ef364d2485285d93f1a9d5c650ff00647a8c90488c3ddacbdbf033
+user_profile.ps1 399db1f554815959902ae4f3b58c672b8bc4464a04bbfae85002cef994fe6c79
+settings.json   ac55a87c901d919160a01d6ed6e12d43f9ed25e510b022c2b0b613ca6ce80643
+```
+
+- **T1** — `%APPDATA%\nushell\env.nu` replaced and byte-identical to the repo. Red/green on
+  the same machine, both with a PATH built only from the registry: without the file
+  `node` v21.7.2 and `pi --version` dies with the `node:module` `enableCompileCache`
+  `SyntaxError`; with it `node` v24.18.0 and `pi --version` prints `1.0.2`.
+- **T2/T3** — four files deployed (`config.yaml`, `styles.css`, `opencode_go.py`,
+  `opencode-logo.png`), all byte-identical. YASB reloaded by itself:
+  `Reloading Application because of config change` then `Successfully loaded updated config
+  and re-initialised all bars`, new PID 11032, no validation error. `py
+  %USERPROFILE%\.config\yasb\opencode_go.py` returns the JSON line; it still carries
+  `"error":"HTTP Error 403: Forbidden"` because the key on this machine answers
+  `EntitlementError: OpenCode Go subscription required`.
+- **T4** — `%USERPROFILE%\.config\powershell\user_profile.ps1` replaced; AST parse clean and
+  a dot-source under `pwsh` (with `HERDR_ENV=1` so the auto-attach block stays out) loads
+  without error and defines `ya`, `godot`, `sudo`, `vim`.
+- **T5** — one key added to the live `settings.json`
+  (`profiles.list[Nushell].startingDirectory = "%USERPROFILE%"`). Validated by parsing the
+  file: 1 Nushell profile, `defaultProfile` unchanged, `Ubuntu`, `Git Bash`,
+  `Developer … VS 2019/2022` still present, and no work-machine profile injected. The font
+  stays on `profiles.defaults` = `JetBrainsMono NFM`, which is the family registered here.
+
+Adaptations accepted instead of a literal copy (they change the repo, not only the machine):
+
+- `windows/yasb/config.yaml`: `run_cmd` uses `py`, since `python` here is the Microsoft
+  Store alias stub while `C:\Python310\python.exe` is a real interpreter.
+- `windows/yasb/styles.css`: the family list starts with `CaskaydiaCove NFP` then
+  `JetBrainsMono NFM`; the previous list named two families that do not exist here, so every
+  metric fell through to Segoe.
+- `MANIFEST.md`: the `setup-autoloads.nu` example no longer hardcodes the work machine's
+  clone folder (`verdu.dotfiles`); the home clone is `dotfiles`.
+- `README.md` gotcha 2: the JetBrains family is per machine (`NFM` here, `NFM`+`NFP` on the
+  work machine), so it no longer prescribes `NFP` unconditionally.
+
+Known follow-ups, not applied here:
+
+- `env.nu` calls `^fnm` unguarded: on a machine without fnm, Nushell would error at start.
+  Both machines have it, so parity with the repo file was preferred.
+- The `opencode-go` entitlement on this machine, and the visual confirmation of the widget
+  in the bar (the log proves it loaded, not that it renders).
+- T6 (komorebi) stays deferred: the log here is all `[ok]`.
+
+## Next step
+
+User confirmation of T1 in a real interactive Nushell tab and of the widget pill in the
+bar; then either T6 on request or nothing further on this branch (no push, no PR).
