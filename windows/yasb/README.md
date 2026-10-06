@@ -8,7 +8,7 @@ children so a group reads as a single surface.
 
 ```
 left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
-center: grouper_media             (audio_visualizer + media_lite; hidden when idle)
+center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
         grouper_sysinfo           (cpu · memory · gpu · systray collapsed ▾)
         clock                     (date/time, Spanish locale)
@@ -20,9 +20,16 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | Key | Type | Notes |
 |---|---|---|
 | `komorebi_workspaces` | `komorebi.workspaces.WorkspaceWidget` | dots via label glyphs `•`/`●`, `hide_empty_workspaces: false` (5 always) |
-| `grouper_media` | `yasb.grouper.GrouperWidget` | `hide_empty: true`; children: `audio_visualizer`, `media_lite` |
-| `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono |
-| `media_lite` | `yasb.media_lite.MediaWidget` | cover + single-line title; click → popup player (incl. per-app volume) |
+| `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono; collapses to 0 px when quiet, so the center is empty without audio |
+
+## Center: the audio visualizer alone
+
+The center holds only `audio_visualizer`. Its idle state is a collapse to zero width
+(not `hide()`), so the center renders nothing when nothing plays and no empty pill is
+left. `grouper_media` and `media_lite` were retired (2026-10-07): YASB v2.0.7's grouper
+only hides when every child is `isHidden()`, the visualizer never hides (it collapses),
+and click callbacks are per widget, so the visualizer cannot open Media Lite's popup.
+Verified against the v2.0.7 sources.
 | `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu/systray |
 | `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | NF icons (`\uf2db`, `\uefc5`, `\uf0e7`) |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |

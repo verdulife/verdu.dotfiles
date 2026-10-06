@@ -33,7 +33,7 @@ bars:
       left:
         - "komorebi_workspaces"
       center:
-        - "grouper_media"
+        - "audio_visualizer"
       right:
         - "opencode_go"
         - "grouper_sysinfo"
@@ -133,40 +133,19 @@ widgets:
         hibernate: ["\uf28e", "Hibernate"]
         cancel: ["", "Cancel"]
 
-  # --- Media group: Media Lite + audio visualizer (one pill) ---
-  grouper_media:
-    type: "yasb.grouper.GrouperWidget"
-    options:
-      widgets:
-        - "audio_visualizer"
-        - "media_lite"
-      hide_empty: true
-      collapse_options:
-        enabled: false
-
-  media_lite:
-    type: "yasb.media_lite.MediaWidget"
-    options:
-      class_name: "media-lite"
-      show_thumbnail: true
-      show_title: true
-      show_artist: false # single line of text
-      image_size: 24
-      thumbnail_corner_radius: 6
-      max_label_size: 18
-      tooltip: false # no hover info on the media pill
-      callbacks:
-        on_left: "toggle_media_menu"
-      media_menu:
-        blur: true
-        round_corners: true
-        round_corners_type: "normal"
-        border_color: "System"
-        direction: "down"
-        offset_top: 6
-        offset_left: 0
-        image_size: 120
-        thumbnail_corner_radius: 12
+  # --- Center pill: the audio visualizer ALONE (2026-10-07) -------------------
+  # Retired here: the old group [audio_visualizer + media_lite, hide_empty: true]
+  # always left an empty pill when silent. YASB v2.0.7 (main too) hides the grouper
+  # only when every child reports isHidden(), and the audio visualizer never hides:
+  # by design it COLLAPSES to 0 px on idle so it keeps the shared WASAPI stream
+  # alive. The collapse renders nothing, so the visualizer alone leaves the center
+  # empty when nothing plays - no grouper needed.
+  # media_lite went with the group. Its popup cannot be wired to the visualizer's
+  # click: callbacks are per widget in v2.0.7 and the visualizer registers none
+  # (only default/do_nothing/exec), so "click the visualizer -> media menu" is not
+  # expressible in config. Reinstating it means either a separate media pill or an
+  # upstream change (cross-widget callbacks, or a grouper that treats a collapsed
+  # child as hidden).
 
   audio_visualizer:
     type: "yasb.audio_visualizer.AudioVisualizerWidget"
