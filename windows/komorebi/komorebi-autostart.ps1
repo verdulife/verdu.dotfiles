@@ -194,6 +194,23 @@ if ($ready) {
     foreach ($rule in $ignoredClasses) {
         & $komorebic ignore-rule class $rule | Out-Null
     }
+
+    # Managed override (manage-rule = managed_override in komorebi's window_is_eligible).
+    # It is the ONLY way past that gate, whose core test is
+    #   (WS_CAPTION && WS_EX_WINDOWEDGE) && !WS_EX_DLGMODALFRAME && !WS_EX_LAYERED:
+    # CorelDRAW paints its own title bar, so its frame carries WS_THICKFRAME | WS_SYSMENU
+    # | WS_MINIMIZEBOX | WS_MAXIMIZEBOX and NO WS_CAPTION. Every event for it is dropped
+    # at the top of process_event, so it is never tiled, nothing appears in the log at the
+    # default info level, and even `komorebic manage` on the focused window is refused
+    # (measured 2026-10-07: St=0x170f0000, Ex=0x00040100; every window komorebi does
+    # manage, e.g. VersaWorks/WindowsTerminal/Zen, has WS_CAPTION=True).
+    # By CLASS, never by exe: CorelDRW.exe also owns layered `Dial Wheel` popups, ComboLBox,
+    # IME, DDE and `Afx:...:0` helper frames, and the override bypasses the layered test
+    # too, so an exe-wide rule would tile that junk - the same mistake as the retired
+    # `manage-rule exe zen.exe`. Legacy matching is starts_with/ends_with, so `CorelDRAW`
+    # covers `CorelDRAW25` and survives the next version bump.
+    & $komorebic manage-rule class CorelDRAW | Out-Null
+
     foreach ($mon in $monitors) {
         & $komorebic ensure-workspaces $mon $workspaces | Out-Null
         foreach ($ws in 0..($workspaces - 1)) {

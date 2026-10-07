@@ -30,7 +30,8 @@ misaligns.
 
 `resize-delta 25` · `border-width 6` · `border-offset -1` · `border-style rounded`
 · focused border `64,64,64` (renders ~#2f2f2f because komorebi darkens ~27%)
-· unfocused `0,0,0` · `mouse-follows-focus disable` · `manage-rule exe zen.exe`
+· unfocused `0,0,0` · `mouse-follows-focus disable` ·
+`identify-object-name-change-application exe zen.exe` · `manage-rule class CorelDRAW`
 · 5 workspaces/monitor · workspacePadding 4 · containerPadding 0.
 
 ## Focus follows mouse (why it is in AHK, not masir)
@@ -77,3 +78,22 @@ It is a HM-style Toggle: `Super` = the Windows key.
   Note: in AutoHotkey v2 the timer must pass its arguments with
   `FocusManage.Bind(hwnd, restore)` — arrow closures do **not** capture local
   variables, and a bare `Bind()` call silently kills the script.
+- **A window without `WS_CAPTION` is never managed, and no command will force it.**
+  komorebi's eligibility gate ends with
+  `(style.contains(WS_CAPTION) && ex_style.contains(WS_EX_WINDOWEDGE)) &&
+  !ex_style.contains(WS_EX_DLGMODALFRAME) && (allow_layered ||
+  !ex_style.contains(WS_EX_LAYERED))`, so a window that draws its own title bar and
+  omits the system caption bit is dropped before anything is logged. **CorelDRAW is
+  exactly this case**: its frame (`CorelDRAW25`, the window that actually holds the
+  document) measured `St=0x170f0000` / `Ex=0x00040100` — `WS_THICKFRAME`, `WS_SYSMENU`,
+  `WS_MINIMIZEBOX`, `WS_MAXIMIZEBOX`, `WS_EX_APPWINDOW`, `WS_EX_WINDOWEDGE`, **no
+  `WS_CAPTION`** — while every window komorebi does tile has `WS_CAPTION=True`. The only
+  escape is `managed_override`, i.e. `komorebic manage-rule`, which the autostart now
+  applies **by class** (`manage-rule class CorelDRAW`, matching `CorelDRAW25` via the
+  legacy `starts_with` match). Do not widen it to `exe CorelDRW.exe`: that app also owns
+  layered `Dial Wheel` popups, `ComboLBox`, IME, DDE and `Afx:...:0` helpers, and the
+  override bypasses the layered test as well, so an exe-wide rule tiles that junk.
+  There is no `unmanage-rule`; rules are runtime state, so reverting means restarting
+  komorebi. To see the verdict for any window, start komorebi with
+  `--log-level debug`: it prints `ignoring (exe: …, title: …, event: …)` plus the full
+  decision record.
