@@ -273,7 +273,8 @@ widgets:
     options:
       # The whole state-dependent line comes from the script as {data[text]}
       # (opencode_go.py -> label_text), because the left click rotates four states and
-      # the template cannot: full (5h + W + M) -> only 5h -> only W -> only M -> full.
+      # the template cannot: full (5h + W + M) -> only 5h -> only Week -> only Month ->
+      # full (the single states spell the words out; the full one abbreviates).
       # The script owns the <font> spans for the ▰/▱ bars (CaskaydiaCove NFP, the family
       # that owns the glyphs, and the muted icon gray). The icon span is the 8x10 logo
       # (qproperty-pixmap in styles.css).

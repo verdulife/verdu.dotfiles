@@ -49,6 +49,11 @@ Requested formats (live values at plan time were 5h 8%, week 22%, month 59%):
 - [x] T3 Verify: deterministic render check of the four states plus a live script run.
 - [x] T4 Update `windows/yasb/README.md` (state line format + right-click behavior).
 - [x] T5 Deploy to `%USERPROFILE%\.config\yasb`, restart YASB, check `yasb.log`.
+- [x] T6 Follow-up (same day, requested before the review landed): spell the words out in
+      the single-metric states — `Week` / `Month` instead of `W` / `M`. The full state
+      keeps the abbreviations, because that is the line that has to stay dense.
+      Live after the copy alone: the widget re-runs the script every second, and the
+      `config.yaml` edit was comment-only, so no reload was needed.
 
 ## Evidence
 
@@ -94,3 +99,19 @@ and the `__pycache__` that importing the script leaves in `windows/yasb/` was de
 
 Not verified by automation: the actual browser tab opened by a right click — the
 mechanism is proven, the visual confirmation is a human click.
+
+### T6 re-check (single states spell the words out)
+
+Re-ran the same four-state render after the follow-up edit, tags stripped:
+
+```
+FULL  | 5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%
+5h    | 5h ▰▱▱▱▱ 8% (Resets in 1h 27m)
+WEEK  | Week ▰▰▱▱▱ 22% (Resets in 4d 11h)
+MONTH | Month ▰▰▰▱▱ 59% (Resets in 6d 22h)
+```
+
+Deployed copy re-verified live and it already painted the word form
+(`Week ▰▰▱▱▱ 22% (Resets in 4d 12h)`, `stale: false`, no `error`), which also shows the
+state file had rotated to `WEEK` on a left click in the meantime. 0 error lines in
+`yasb.log` since the restart.

@@ -67,8 +67,8 @@ Requirements:
   back to the cached values (`stale: true`) and, with no cache, renders `0%` with
   empty bars. The pill itself only shows zeros; the `error` is in the JSON.
 
-Clicking the pill rotates four states: full (5h + W + M) -> only 5h -> only W ->
-only M -> full. The cycle state lives in `%TEMP%\opencode-go-usage.state`;
+Clicking the pill rotates four states: full (5h + W + M) -> only 5h -> only Week
+-> only Month -> full. The cycle state lives in `%TEMP%\opencode-go-usage.state`;
 `--next` rotates it, the widget re-renders on its 1 s refresh loop, and the script
 only re-questions the API when the 15-minute cache is stale.
 
@@ -78,11 +78,14 @@ state rotates):
 ```
 full        5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%
 single      5h ▰▱▱▱▱ 8% (Resets in 1h 29m)
+single      Week ▰▰▱▱▱ 22% (Resets in 4d 12h)
+single      Month ▰▰▰▱▱ 59% (Resets in 6d 23h)
 ```
 
-The reset countdown only fits the single-metric states; the full state stays a
-dense three-metric line. `label_text()` in the script owns both shapes, so the
-label template in `config.yaml` is just `<span class="icon"></span> {data[text]}`.
+The full state abbreviates `W` and `M` to stay a dense three-metric line; the
+single-metric states have room for the words. The reset countdown only fits the
+single-metric states. `label_text()` in the script owns both shapes, so the label
+template in `config.yaml` is just `<span class="icon"></span> {data[text]}`.
 
 Right click opens the OpenCode Go console page in the default browser:
 `on_right: 'exec start "" "https://opencode.ai/console/wrk_..."'`. YASB tokenizes a

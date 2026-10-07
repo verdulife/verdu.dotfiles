@@ -312,9 +312,12 @@ def label_text(state: int, data: dict) -> str:
     Two shapes, per the request of 2026-10-07:
         full   -> "5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%"
         single -> "5h ▰▱▱▱▱ 8% (Resets in 6d 4h)"
-    The reset countdown only fits the single-metric states; the full state stays a dense
-    three-metric line. Both shapes use the same BAR_CELLS-wide bar so the pill does not
-    change width when the state rotates.
+                  "Week ▰▰▱▱▱ 22% (Resets in 4d 12h)"
+                  "Month ▰▰▰▱▱ 59% (Resets in 6d 23h)"
+    The full state abbreviates (W, M) to stay a dense three-metric line; the
+    single-metric states have room for the words. The reset countdown only fits the
+    single-metric states. Both shapes use the same BAR_CELLS-wide bar so the pill does
+    not change width when the state rotates.
     """
     bar = lambda glyph: f'<font face="CaskaydiaCove NFP" color="#9aa3b2">{glyph}</font>'
 
@@ -325,9 +328,9 @@ def label_text(state: int, data: dict) -> str:
     if state == STATE_ROLLING:
         return metric("5h", "rolling", with_reset=True)
     if state == STATE_WEEKLY:
-        return metric("W", "weekly", with_reset=True)
+        return metric("Week", "weekly", with_reset=True)
     if state == STATE_MONTHLY:
-        return metric("M", "monthly", with_reset=True)
+        return metric("Month", "monthly", with_reset=True)
 
     return "  ".join(
         (
