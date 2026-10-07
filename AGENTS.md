@@ -65,6 +65,10 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "layout applied" = confi
 
 ## Rules
 
+- **Commit directly to `main` — do not create feature branches.** This is a personal
+  repo and it does not warrant them (user decision, repeated). Keep history linear
+  and fast-forward; a one-commit detour belongs on `main` too. Push stays the user's
+  decision.
 - No secrets: no tokens/keys.
 - Keep the README's "Gotchas" list honest — append when you discover something.
 - Commit logical units with conventional messages.

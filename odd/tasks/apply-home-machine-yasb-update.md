@@ -1,7 +1,7 @@
 # Apply the home-machine YASB update to the work machine
 
 Status: done — T1-T6 complete and verified live on 2026-10-07
-Repo: `C:\Users\verdu\verdu.dotfiles`, branch `chore/apply-home-machine-yasb-update`
+Repo: `C:\Users\verdu\verdu.dotfiles`, branch `main` (personal repo — commits land on `main` directly, no feature branches)
 Date: 2026-10-07
 Related: `odd/tasks/port-work-machine-corrections-to-home.md` (the reverse direction, `188c9f3..edaf1c3`), `odd/tasks/apply-dotfiles.md` (the original port), `odd/tasks/komorebi-autostart-resilience.md` (the logon defect still open below)
 
@@ -40,9 +40,10 @@ Two incoming notes are home-machine-specific but harmless:
 In: the fast-forward of `main`, the three changed YASB files at their manifest
 destinations, the YASB restart, the komorebi stack restart, and this record.
 
-Out: pushing, opening a PR, merging into `main` (all the user's decisions), any
-change to `auth.json`, and any change to the incoming shared docs (their
-home-machine statements are accurate about the home machine).
+Out: pushing (at the close of this pass `main` was ahead of `origin/main` by one
+commit, and push is the user's decision), any change to `auth.json`, and any
+change to the incoming shared docs (their home-machine statements are accurate
+about the home machine).
 
 ## Prerequisite check (measured before the deploy)
 
@@ -62,7 +63,7 @@ home-machine statements are accurate about the home machine).
 | T3 | Verify the widget at runtime (`py`, entitlement, `--next` rotation) | done — live data + 4 states |
 | T4 | Restart YASB and verify the bar layout | done — 0 ERROR, 0 WARNING, pipe connected, widget executing |
 | T5 | Restart the komorebi stack and verify the layout | done — `[ok]` both lines, 1 monitor × 5 workspaces |
-| T6 | Record this pass and commit it on the feature branch | done |
+| T6 | Record this pass and commit it on `main` | done |
 
 ## Verification results
 
@@ -161,4 +162,4 @@ a manual launch.
 - T5 — autostart run: `[ok] komorebi ready` 10:17:04, `[ok] layout applied …`
   10:17:05; `komorebic state` parses with `resize_delta=25`, `monitors: 1`,
   `DISPLAY1`, 5 workspaces, `focus_follows_mouse: Komorebi`.
-- T6 — this document, committed on `chore/apply-home-machine-yasb-update`.
+- T6 — this document, committed on `main` (`fa0ee8e`).
