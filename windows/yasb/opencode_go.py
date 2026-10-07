@@ -311,19 +311,22 @@ def label_text(state: int, data: dict) -> str:
 
     Two shapes, per the request of 2026-10-07:
         full   -> "5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%"
-        single -> "5h ▰▱▱▱▱ 8% (Resets in 6d 4h)"
-                  "Week ▰▰▱▱▱ 22% (Resets in 4d 12h)"
-                  "Month ▰▰▰▱▱ 59% (Resets in 6d 23h)"
+        single -> "5h ▰▱▱▱▱ 8% (1h 27m)"
+                  "Week ▰▰▱▱▱ 22% (4d 11h)"
+                  "Month ▰▰▰▱▱ 59% (6d 22h)"
     The full state abbreviates (W, M) to stay a dense three-metric line; the
     single-metric states have room for the words. The reset countdown only fits the
-    single-metric states. Both shapes use the same BAR_CELLS-wide bar so the pill does
-    not change width when the state rotates.
+    single-metric states, and it is word-free there: the parentheses next to the percent
+    already read as "resets in", and "Resets in " cost 10 of the 19 characters the
+    countdown occupied. The verbose wording still lives in the `--popup` window. Both
+    shapes use the same BAR_CELLS-wide bar so the pill does not change width when the
+    state rotates.
     """
     bar = lambda glyph: f'<font face="CaskaydiaCove NFP" color="#9aa3b2">{glyph}</font>'
 
     def metric(name: str, key: str, with_reset: bool = False) -> str:
         text = f"{name} {bar(data[f'{key}_bar'])} {data[key]}%"
-        return f"{text} (Resets in {data[f'{key}_reset']})" if with_reset else text
+        return f"{text} ({data[f'{key}_reset']})" if with_reset else text
 
     if state == STATE_ROLLING:
         return metric("5h", "rolling", with_reset=True)

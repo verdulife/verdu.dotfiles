@@ -20,6 +20,13 @@ Requested formats (live values at plan time were 5h 8%, week 22%, month 59%):
 - Right click opens the OpenCode Go dashboard:
   `https://opencode.ai/console/wrk_01KR0RFFBT5FCG3YTKPGW9JTSB`
 
+Follow-up (T6-T7, same day):
+
+- Single states spell the metric out (`Week`, `Month`) instead of `W` / `M`.
+- The reset countdown lost its words: `(4d 11h)`, not `(Resets in 4d 11h)` — the
+  parentheses next to the percent already read as "resets in", and the words were 10 of
+  the 19 characters the countdown occupied. The verbose form stays in `--popup`.
+
 ## Decisions taken at plan time
 
 - **Bar width stays 5 cells** in every state. The request wrote 5 underscores for the
@@ -54,6 +61,9 @@ Requested formats (live values at plan time were 5h 8%, week 22%, month 59%):
       keeps the abbreviations, because that is the line that has to stay dense.
       Live after the copy alone: the widget re-runs the script every second, and the
       `config.yaml` edit was comment-only, so no reload was needed.
+- [x] T7 Shorten the countdown to `(4d 11h)`: drop the `Resets in` words from the label
+      only. `format_reset()` and the `--popup` window are untouched, so the verbose
+      wording still exists wherever there is room for it.
 
 ## Evidence
 
@@ -130,3 +140,23 @@ Both declines returned `lineage_created: false` and `mutation_performed: false`,
 native verdict exists for this work** and none may be claimed. A decline is
 candidate-scoped: it is not the RDD kill switch, and it never lowers the bar below the
 RDD-off path. Delivery of the committed range stays a human decision (nothing pushed).
+
+After the third decline the human stated the disposition explicitly: **the work is left
+unreviewed**. The label follow-up (T6-T7) is covered by that statement, so no further
+`review inspect` was run for it. Reversing it is a one-line decision by the human; the
+kill switch for the clone remains `gentle-ai review mode disable --scope clone`.
+
+### T7 re-check (countdown without words)
+
+Same four-state render after the edit, tags stripped, with measured lengths:
+
+```
+FULL  | 5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%     (37)
+5h    | 5h ▰▱▱▱▱ 8% (1h 26m)                        (20)
+WEEK  | Week ▰▰▱▱▱ 22% (4d 10h)                     (23)
+MONTH | Month ▰▰▰▱▱ 59% (6d 21h)                    (24)
+```
+
+The single states lost 10-11 characters (33-35 -> 23-24). A missing `resetsAt` still
+falls back to `(Unknown)` instead of raising. Deployed copy re-verified live
+(`Month ▰▰▰▰▱ 61% (6d 20h)`, `stale: false`, no `error`), 0 error lines in `yasb.log`.

@@ -77,15 +77,20 @@ state rotates):
 
 ```
 full        5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%
-single      5h ▰▱▱▱▱ 8% (Resets in 1h 29m)
-single      Week ▰▰▱▱▱ 22% (Resets in 4d 12h)
-single      Month ▰▰▰▱▱ 59% (Resets in 6d 23h)
+single      5h ▰▱▱▱▱ 8% (1h 29m)
+single      Week ▰▰▱▱▱ 22% (4d 12h)
+single      Month ▰▰▰▱▱ 59% (6d 23h)
 ```
 
 The full state abbreviates `W` and `M` to stay a dense three-metric line; the
 single-metric states have room for the words. The reset countdown only fits the
-single-metric states. `label_text()` in the script owns both shapes, so the label
-template in `config.yaml` is just `<span class="icon"></span> {data[text]}`.
+single-metric states, and it is word-free there: the parentheses next to the percent
+already read as "resets in", and the words cost 10 of the 19 characters the countdown
+occupied (`(4d 12h)` instead of `(Resets in 4d 12h)`). `label_text()` in the script owns
+both shapes, so the label template in `config.yaml` is just
+`<span class="icon"></span> {data[text]}`. The verbose "Resets in ..." wording still
+appears per metric in the `--popup` window, which no mouse button opens any more — run
+`py %USERPROFILE%\.config\yasb\opencode_go.py --popup` when you want the long form.
 
 Right click opens the OpenCode Go console page in the default browser:
 `on_right: 'exec start "" "https://opencode.ai/console/wrk_..."'`. YASB tokenizes a
