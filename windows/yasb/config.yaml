@@ -273,10 +273,10 @@ widgets:
     options:
       # The whole state-dependent line comes from the script as {data[text]}
       # (opencode_go.py -> label_text), because the left click rotates four states and
-      # the template cannot: full (5h + Week + Month) -> only 5h -> only Week -> only
-      # Month -> full. The script owns the <font> spans for the ▰/▱ bars (CaskaydiaCove
-      # NFP, the family that owns the glyphs, and the muted icon gray). The icon span
-      # is the 8x10 logo (qproperty-pixmap in styles.css).
+      # the template cannot: full (5h + W + M) -> only 5h -> only W -> only M -> full.
+      # The script owns the <font> spans for the ▰/▱ bars (CaskaydiaCove NFP, the family
+      # that owns the glyphs, and the muted icon gray). The icon span is the 8x10 logo
+      # (qproperty-pixmap in styles.css).
       label: '<span class="icon"></span> {data[text]}'
       label_alt: '<span class="icon"></span> {data[text]}'
       label_placeholder: "--"
@@ -300,4 +300,12 @@ widgets:
         # %TEMP%\opencode-go-usage.state and the widget's next tick (1 s) paints it.
         on_left: 'exec py %USERPROFILE%\.config\yasb\opencode_go.py --next'
         on_middle: "do_nothing"
-        on_right: "do_nothing"
+        # Right click opens the OpenCode Go dashboard (this account's console page) in
+        # the default browser. YASB runs `exec` as `Popen(args, shell=True)` after
+        # tokenizing the string with `".+?"|[^ ]+` and stripping the quotes, so
+        # `start "" "url"` reaches cmd as `start " " url`: the title slot holds a
+        # single space (the regex eats the empty ""), which `start` still accepts, and
+        # the URL stays the target. Without that first quoted argument `start` would
+        # treat the URL itself as the window title and open a console instead of the
+        # browser (measured on this machine). The URL must stay quoted and space-free.
+        on_right: 'exec start "" "https://opencode.ai/console/wrk_01KR0RFFBT5FCG3YTKPGW9JTSB"'

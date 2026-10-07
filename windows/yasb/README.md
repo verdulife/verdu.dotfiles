@@ -35,7 +35,7 @@ Verified against the v2.0.7 sources.
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
-| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click |
+| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 
 ## OpenCode Go widget (`opencode_go`)
 
@@ -49,7 +49,8 @@ Verified against the v2.0.7 sources.
 
 A key the endpoint rejects falls through to the next candidate, so an entitled
 key in either store is enough. It queries every 5 minutes and returns one JSON
-line: the 5h / week / month percentages plus their text bars. The cache lives in
+line: the 5h / week / month percentages with their text bars and reset countdowns.
+The cache lives in
 `%TEMP%\opencode-go-usage.cache.json` on purpose: next to the script it would sit
 in the directory YASB watches for config changes and could poke the bar into
 reloading every interval.
@@ -66,10 +67,31 @@ Requirements:
   back to the cached values (`stale: true`) and, with no cache, renders `0%` with
   empty bars. The pill itself only shows zeros; the `error` is in the JSON.
 
-Clicking the pill rotates four states: full (5h + Week + Month) -> only 5h -> only
-Week -> only Month -> full. The cycle state lives in `%TEMP%\opencode-go-usage.state`;
+Clicking the pill rotates four states: full (5h + W + M) -> only 5h -> only W ->
+only M -> full. The cycle state lives in `%TEMP%\opencode-go-usage.state`;
 `--next` rotates it, the widget re-renders on its 1 s refresh loop, and the script
 only re-questions the API when the 15-minute cache is stale.
+
+Label shapes (same 5-cell bar in both, so the pill does not change width when the
+state rotates):
+
+```
+full        5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%
+single      5h ▰▱▱▱▱ 8% (Resets in 1h 29m)
+```
+
+The reset countdown only fits the single-metric states; the full state stays a
+dense three-metric line. `label_text()` in the script owns both shapes, so the
+label template in `config.yaml` is just `<span class="icon"></span> {data[text]}`.
+
+Right click opens the OpenCode Go console page in the default browser:
+`on_right: 'exec start "" "https://opencode.ai/console/wrk_..."'`. YASB tokenizes a
+callback with `".+?"|[^ ]+` and strips the quotes before `Popen(args, shell=True)`,
+so the empty `""` arrives as a single space — still a valid `start` window title,
+which keeps the URL in the target slot. Drop that first quoted argument and `start`
+takes the URL as the title and opens a console instead of the browser. If the URL
+ever gains a space or a `&`, replace the callback with an `exec` on a small script:
+the tokenizer and `cmd` both break on those.
 
 ## Fullscreen behavior
 

@@ -13,7 +13,9 @@ the opencode one answers 403 EntitlementError even though its entry is also call
 Output modes:
     (default) -> one compact JSON line for YASB
     --next    -> rotate the pill state (full -> 5h -> week -> month -> full)
-    --popup   -> Tkinter popup with detailed usage
+    --popup   -> Tkinter popup with detailed usage. Still works, but nothing in the bar
+                 calls it any more: the widget's left click rotates the state and its
+                 right click opens the OpenCode Go dashboard in the browser.
 """
 
 from __future__ import annotations
@@ -283,27 +285,57 @@ def next_state() -> None:
     write_state((read_state() + 1) % STATE_COUNT)
 
 
+def metrics_json(usage: dict) -> dict:
+    """Flatten normalized usage into the label's data keys: percent, bar, reset.
+
+    The label template only reads `{data[...]}` values, so everything the pill paints
+    travels here: the percent, its text bar, and the human-readable reset countdown for
+    each metric.
+    """
+    output = {}
+
+    for name in ("rolling", "weekly", "monthly"):
+        percent = usage[name]["percent"]
+        output[name] = percent
+        output[f"{name}_bar"] = usage_bar(percent)
+        output[f"{name}_reset"] = format_reset(usage[name].get("resetsAt"))
+
+    return output
+
+
 def label_text(state: int, data: dict) -> str:
     """The pill text for a state, bars included with their font tags.
 
     The `<font>` spans force the family that owns the glyphs (CaskaydiaCove NFP)
     and the muted icon gray, exactly like the old inline template did.
+
+    Two shapes, per the request of 2026-10-07:
+        full   -> "5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%"
+        single -> "5h ▰▱▱▱▱ 8% (Resets in 6d 4h)"
+    The reset countdown only fits the single-metric states; the full state stays a dense
+    three-metric line. Both shapes use the same BAR_CELLS-wide bar so the pill does not
+    change width when the state rotates.
     """
     bar = lambda glyph: f'<font face="CaskaydiaCove NFP" color="#9aa3b2">{glyph}</font>'
 
-    parts = (
-        f"{data['rolling']}% {bar(data['rolling_bar'])} 5h",
-        f"{data['weekly']}%  {bar(data['weekly_bar'])} Week",
-        f"{data['monthly']}% {bar(data['monthly_bar'])} Month",
-    )
+    def metric(name: str, key: str, with_reset: bool = False) -> str:
+        text = f"{name} {bar(data[f'{key}_bar'])} {data[key]}%"
+        return f"{text} (Resets in {data[f'{key}_reset']})" if with_reset else text
 
     if state == STATE_ROLLING:
-        return parts[0]
+        return metric("5h", "rolling", with_reset=True)
     if state == STATE_WEEKLY:
-        return parts[1]
+        return metric("W", "weekly", with_reset=True)
     if state == STATE_MONTHLY:
-        return parts[2]
-    return "  ".join(parts)
+        return metric("M", "monthly", with_reset=True)
+
+    return "  ".join(
+        (
+            metric("5h", "rolling"),
+            metric("W", "weekly"),
+            metric("M", "monthly"),
+        )
+    )
 
 
 def main_json() -> int:
@@ -311,15 +343,8 @@ def main_json() -> int:
     try:
         usage, stale = get_usage()
 
-        output = {
-            "rolling": usage["rolling"]["percent"],
-            "weekly": usage["weekly"]["percent"],
-            "monthly": usage["monthly"]["percent"],
-            "rolling_bar": usage_bar(usage["rolling"]["percent"]),
-            "weekly_bar": usage_bar(usage["weekly"]["percent"]),
-            "monthly_bar": usage_bar(usage["monthly"]["percent"]),
-            "stale": stale,
-        }
+        output = metrics_json(usage)
+        output["stale"] = stale
         output["text"] = label_text(read_state(), output)
 
         print(
@@ -332,15 +357,13 @@ def main_json() -> int:
         return 0
 
     except Exception as error:
-        data = {
-            "rolling": 0,
-            "weekly": 0,
-            "monthly": 0,
-            "rolling_bar": usage_bar(0),
-            "weekly_bar": usage_bar(0),
-            "monthly_bar": usage_bar(0),
-            "error": str(error),
-        }
+        data = metrics_json(
+            {
+                name: {"percent": 0, "resetsAt": None}
+                for name in ("rolling", "weekly", "monthly")
+            }
+        )
+        data["error"] = str(error)
         data["text"] = label_text(read_state(), data)
 
         print(json.dumps(data, separators=(",", ":")))
