@@ -115,3 +115,18 @@ Deployed copy re-verified live and it already painted the word form
 (`Week ▰▰▱▱▱ 22% (Resets in 4d 12h)`, `stale: false`, no `error`), which also shows the
 state file had rotated to `WEEK` on a left click in the meantime. 0 error lines in
 `yasb.log` since the restart.
+
+### Review disposition (honest record)
+
+RDD is on, so `review inspect` was run for each candidate. Consent was **declined by the
+human in the host UI for both of them**:
+
+| candidate | target | consent result |
+|---|---|---|
+| after `690c4d0`/`7043e55` | `sha256:878220a1…f22d4` | `consent-declined-this-candidate`, risk `high` (`code that starts other processes in windows/yasb/config.yaml`) |
+| after `1256beb` | `sha256:f79b90f5…4fa13` | `consent-declined-this-candidate`, risk `high` (same evidence) |
+
+Both declines returned `lineage_created: false` and `mutation_performed: false`, so **no
+native verdict exists for this work** and none may be claimed. A decline is
+candidate-scoped: it is not the RDD kill switch, and it never lowers the bar below the
+RDD-off path. Delivery of the committed range stays a human decision (nothing pushed).
