@@ -52,6 +52,9 @@ Requested formats (live values at plan time were 5h 8%, week 22%, month 59%):
 
 ## Evidence
 
+Work unit: `690c4d0` — `feat(yasb): reshape the opencode pill labels and open the dashboard on right click`
+(script + config + README + this task doc; not pushed).
+
 Housekeeping before the checks: the temporary probe files under `%TEMP%` were removed,
 and the `__pycache__` that importing the script leaves in `windows/yasb/` was deleted
 (it is not gitignored).
