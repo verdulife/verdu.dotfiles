@@ -16,8 +16,8 @@
 
 ; There is deliberately no AHK timer here forcing Gecko windows to be managed.
 ; Zen/Firefox cold start emits EVENT_OBJECT_NAMECHANGE and no Show event, which used to
-; leave the main window untiled; komorebi handles that natively now through
-; `identify-object-name-change-application exe zen.exe` in komorebi-autostart.ps1 (README
+; leave the main window untiled; komorebi handles that natively now through the
+; `object_name_change_applications` entry (`exe zen.exe`) in komorebi.json (README
 ; gotcha 19). The old rescue timer was removed on 2026-10-06 after firing zero times in
 ; 540 log events - and it was dangerous: `komorebic manage` acts on the FOCUSED window, so
 ; it could tile a WS_CHILD helper window of the very app it was trying to rescue.
@@ -72,13 +72,15 @@ ResizeDirectional(axis, arrow) {
     Komorebic("resize-edge " edge " " sizing)
 }
 
-; ---- Focus follows mouse (native) -----------------------------------------
-; Handled by komorebi itself: the autostart starts komorebi with --ffm and runs
-; `focus-follows-mouse enable -i komorebi`. It only focuses komorebi-managed
-; windows, so context menus, the desktop and the taskbar are never touched.
-; (The previous AHK WinActivate timer broke context menus by activating the
-; menu's #32768 popup window - that is why FFM no longer lives here.)
-; komorebi's own mouse-follows-focus must stay OFF (the autostart disables it).
+; ---- Focus follows mouse (masir daemon) -----------------------------------
+; Not implemented here, and not implemented by komorebi either: the autostart
+; starts the `masir` daemon once komorebi is ready. masir reads komorebi's
+; managed-window file and only raises windows komorebi manages, so context
+; menus, the desktop and the taskbar are never touched.
+; (komorebi's own --ffm hook died for good when a video went fullscreen, and the
+; AHK WinActivate timer before it broke context menus by activating the menu's
+; #32768 popup window - that is why FFM lives in its own process now.)
+; komorebi's own mouse-follows-focus must stay OFF (it is set in komorebi.json).
 
 ; No per-app #HotIf gate: every binding below is Win-prefixed, so app shortcuts built
 ; on Ctrl/Alt/Shift or bare keys cannot collide with them. Adobe Illustrator was

@@ -89,6 +89,13 @@ machine before.
 - `windows/nushell/setup-autoloads.nu` regenerates tool-generated files; it is
   run, not copied.
 - After a config change in the repo, re-copy only the affected file.
+- `windows/komorebi/spy-dialog.ps1`, `windows/komorebi/snapshot-wm.ps1` and
+  `windows/komorebi/tests/` are **repo-only** diagnostic tools (window-class spy,
+  layout measuring, Pester tests); they are never copied. The `windows/komorebi/`
+  rows in the table above are the only komorebi files that get deployed.
+- `windows/komorebi/komorebi.json` is komorebi's **configuration** and is applied
+  by komorebi itself (`komorebi.exe --config`); `komorebi-autostart.ps1` is only the
+  logon supervisor and does not re-apply it.
 - `windows/win-terminal/settings.json` is a full snapshot that carries
   per-machine dynamic profiles (WSL distro names, Visual Studio versions) and a
   machine-local `defaultProfile` GUID. On a different machine, **merge** it —
