@@ -78,7 +78,12 @@ explicitly historical ("why not").
 
 ## Still open for a future pass
 
-- `windows/komorebi/tests/container-dump.Tests.ps1` was not run in this pass
-  (nothing it tests changed), and there is no test covering `komorebi.json`.
+- `windows/komorebi/tests/container-dump.Tests.ps1` passes 13/13 after this pass
+  (Pester 3.4.0; it needs `-ExecutionPolicy Bypass` on this machine, otherwise the
+  harness refuses to load the file). Nothing it covers changed, but it is the only
+  executable check in the repo and it does run green.
+- There is still **no test covering `komorebi.json`**: validation is `komorebic
+  check` plus a live `replace-configuration` diff, both manual. A JSON-schema check
+  in the test suite would be the natural next guard.
 - The GH/PR-facing story in `MANIFEST.md` prerequisites was only corrected where
   it was factually wrong; no re-verification of the winget package list.
