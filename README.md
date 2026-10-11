@@ -22,9 +22,10 @@ verdu.dotfiles/
 ├── MANIFEST.md           ← WHERE EVERY FILE GOES (the contract for copying)
 ├── README.md
 ├── AGENTS.md
+├── odd/                  ← ODD work records: process history, never deployed
 ├── shared/
 │   ├── starship.toml     ← Starship prompt (both OSes)
-│   └── nvim/             ← Neovim config (vim-plug based)
+│   └── nvim/             ← Neovim config (LazyVim, lazy.nvim)
 ├── windows/
 │   ├── komorebi/
 │   │   ├── komorebi.json             ← the WM config: monitors, paddings, borders, rules
@@ -32,6 +33,8 @@ verdu.dotfiles/
 │   │   ├── komorebi-autostart.ps1    ← logon supervisor: start, verify, log
 │   │   ├── container-dump.ps1        ← refuses to replay a state dump komorebi must not
 │   │   ├── snapshot-wm.ps1           ← repo-only: measure the layout before/after a fix
+│   │   ├── spy-dialog.ps1            ← repo-only: discover a dialog's window class
+│   │   ├── tests/                    ← repo-only: Pester tests for container-dump.ps1
 │   │   └── README.md
 │   ├── yasb/
 │   │   ├── config.yaml               ← YASB v2 bar: widgets, groupers, pills
@@ -39,6 +42,8 @@ verdu.dotfiles/
 │   │   └── README.md
 │   ├── win-terminal/settings.json    ← Windows Terminal
 │   ├── powershell/                   ← PS7 profile + user_profile.ps1
+│   ├── nushell/                      ← Nushell config (+ setup-autoloads.nu: run, not copied)
+│   ├── herdr/config.toml             ← Herdr (agent multiplexer)
 │   └── autostart/komorebi-autostart.vbs  ← windowless logon launcher
 └── linux/
     ├── hyprland/        ← placeholder (Arch machine config goes here)
@@ -149,7 +154,7 @@ See `windows/yasb/README.md` for the widget map and styling notes.
 
 ```powershell
 komorebic state          # WM alive + layout JSON
-Get-Process komorebi,yasb,AutoHotkey64
+Get-Process komorebi,masir,yasb,AutoHotkey64   # masir = focus-follows-mouse; if it is missing, FFM is dead
 Get-Content "$HOME\komorebi-autostart.log" -Tail 5   # what the autostart did at logon, and why
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 # sanity: the bar renders at the top; Super+arrows focuses tiles

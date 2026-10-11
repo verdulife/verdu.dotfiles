@@ -15,12 +15,18 @@ linux/
 
 ## Install (once populated)
 
+The same contract as Windows: **copy files to their destinations, no symlinks**
+(this repo ships no symlink manager and wants none — see `AGENTS.md`, Rules).
+`MANIFEST.md`'s Linux table is the source of truth for the destinations; once the
+Arch configs land, copy each row:
+
 ```bash
 git clone <this-repo> ~/verdu.dotfiles
-ln -sf ~/verdu.dotfiles/shared/starship.toml ~/.config/starship.toml
-rsync -a ~/verdu.dotfiles/shared/nvim/ ~/.config/nvim/
-ln -sf ~/verdu.dotfiles/linux/hyprland/hyprland.conf ~/.config/hypr/hyprland.conf
-ln -sf ~/verdu.dotfiles/linux/waybar/* ~/.config/waybar/   # adjust after import
+cp ~/verdu.dotfiles/shared/starship.toml ~/.config/starship.toml
+cp -r ~/verdu.dotfiles/shared/nvim/. ~/.config/nvim/
+mkdir -p ~/.config/hypr ~/.config/waybar
+cp ~/verdu.dotfiles/linux/hyprland/* ~/.config/hypr/
+cp ~/verdu.dotfiles/linux/waybar/* ~/.config/waybar/
 ```
 
 ## Correspondence with the Windows stack

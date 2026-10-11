@@ -20,6 +20,13 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 |---|---|---|
 | `komorebi_workspaces` | `komorebi.workspaces.WorkspaceWidget` | dots via label glyphs `•`/`●`, `hide_empty_workspaces: false` (5 always) |
 | `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono; collapses to 0 px when quiet, so the center is empty without audio |
+| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
+| `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
+| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz) |
+| `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
+| `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
+| `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
+| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 
 ## Center: the audio visualizer alone
 
@@ -29,13 +36,6 @@ left. `grouper_media` and `media_lite` were retired (2026-10-07): YASB v2.0.7's 
 only hides when every child is `isHidden()`, the visualizer never hides (it collapses),
 and click callbacks are per widget, so the visualizer cannot open Media Lite's popup.
 Verified against the v2.0.7 sources.
-| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
-| `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
-| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz) |
-| `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
-| `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
-| `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
-| `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 
 ## OpenCode Go widget (`opencode_go`)
 

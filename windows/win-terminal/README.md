@@ -1,9 +1,12 @@
 # Windows Terminal
 
 `settings.json` is the live Windows Terminal configuration (profiles, key
-bindings including the `Super+Enter`-bound split, fonts).
+bindings — pane split on `Alt+Shift+D` — and fonts).
 
 Notes:
+- `Super+Enter` opening a terminal is **not** a Windows Terminal binding: it is
+  the AHK hotkey in `windows/komorebi/komorebi.ahk`. Windows Terminal's own
+  bindings are the `actions`/`keybindings` in this file.
 - Profiles reference locally-installed fonts (e.g. `JetBrainsMono NF`) — make
   sure the Nerd Font package (DEVCOM.JetBrainsMonoNerdFont) is installed first.
 - Per-machine bits (window layout, launch size, default profiles) may need a

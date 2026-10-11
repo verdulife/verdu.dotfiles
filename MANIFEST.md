@@ -89,6 +89,10 @@ machine before.
 - `windows/nushell/setup-autoloads.nu` regenerates tool-generated files; it is
   run, not copied.
 - After a config change in the repo, re-copy only the affected file.
+- `odd/` is ODD work records (process history): never deployed, and never a source
+  of truth — if a record disagrees with a config or with `README.md`, the config
+  or `README.md` wins. The three documents the install path depends on are
+  `MANIFEST.md` (where files go), `README.md` (what they do) and `AGENTS.md`.
 - `windows/komorebi/spy-dialog.ps1`, `windows/komorebi/snapshot-wm.ps1` and
   `windows/komorebi/tests/` are **repo-only** diagnostic tools (window-class spy,
   layout measuring, Pester tests); they are never copied. The `windows/komorebi/`

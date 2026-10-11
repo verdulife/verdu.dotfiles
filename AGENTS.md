@@ -6,8 +6,9 @@ MANIFEST.md to install** — it is the file→destination contract.
 ## What this repo is
 
 Portable personal configuration: a Windows tiling-desktop stack (komorebi +
-AutoHotkey + YASB + Windows Terminal + PowerShell) and shared tools (Starship,
-Neovim). Linux folders are placeholders until the Arch configs land.
+masir + AutoHotkey + YASB + Windows Terminal + Nushell + PowerShell) and shared
+tools (Starship, Neovim). Linux folders are placeholders until the Arch configs
+land. `odd/` holds ODD work records — process history, never deployed.
 
 ## Install = copy, per MANIFEST.md
 
@@ -27,7 +28,7 @@ Delete the destination files from the manifest.
 
 ```powershell
 komorebic state
-Get-Process komorebi,yasb,AutoHotkey64
+Get-Process komorebi,masir,yasb,AutoHotkey64   # masir = focus-follows-mouse
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..." = the static config took effect
 ```
@@ -62,8 +63,12 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
 | Workspaces/gaps/borders/colours, monitors, dialog & manage rules | `windows/komorebi/komorebi.json` (+ `spy-dialog.ps1` repo-only to discover dialog classes) |
 | Logon order, retry window, per-process guards, verification | `windows/komorebi/komorebi-autostart.ps1` |
 | Bar widgets/groups/pill look | `windows/yasb/config.yaml` + `styles.css` |
+| Windows Terminal (profiles, keys) | `windows/win-terminal/settings.json` |
+| Shell profiles (PS7, Nushell) | `windows/powershell/` · `windows/nushell/` |
+| Agent multiplexer (Herdr) | `windows/herdr/config.toml` |
 | Prompt | `shared/starship.toml` |
 | Neovim | `shared/nvim/` |
+| Why a past change was made | `odd/tasks/` (process records, never deployed) |
 
 ## Workflow
 
