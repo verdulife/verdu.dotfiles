@@ -1,16 +1,28 @@
 # Komorebi setup autostart - launched at logon, hidden window.
 # Order: AHK + YASB FIRST (they do not depend on komorebi) -> drop an unsafe state dump
-# (komorebi replays it at start, BYPASSING the ignore rules) -> komorebi (WM)
-# -> wait until it answers -> layout -> masir (FFM daemon) -> verify, including any ignored-class
-# container that still made it into the fresh state.
+# (komorebi replays it at start, BYPASSING the ignore rules) -> komorebi WITH the static
+# config (komorebi.json) -> wait until it answers -> masir (FFM daemon) -> verify,
+# including any ignored-class container that still made it into the fresh state.
 # Remove autostart by deleting komorebi-autostart.vbs (Startup folder) and this file.
+#
+# What lives where (the division of responsibility):
+#   - komorebi.json is the single source of truth for CONFIGURATION: monitors +
+#     workspaces, display_index_preferences (dual monitor), paddings, borders/colours,
+#     resize_delta, mouse_follows_focus, ignore/manage rules and the Zen object-name-change
+#     application. It is applied by komorebi itself via `--config`.
+#   - THIS script is a RESILIENCE SUPERVISOR, for the things upstream does not solve: the
+#     logon foreground lock (retry with backoff), the unsafe state dump, per-process guards
+#     against Windows "restart apps" double launches, explicit ordering (AHK/YASB first,
+#     masir after komorebi), verification and the log. It no longer re-applies the
+#     configuration one command at a time.
 #
 # Why the wait: on a fresh boot komorebi's IPC socket can take several seconds to
 # come up. A blind `Start-Sleep 3` before the komorebic calls silently failed on
 # busy logons (and after Windows 11 "restart apps" re-launched a bare komorebi),
 # leaving komorebi on its defaults. This script stops any previous instance, starts
-# komorebi, waits until the socket answers, then starts the masir FFM daemon,
-# verifies what it applied, and writes $env:USERPROFILE\komorebi-autostart.log.
+# komorebi with the static config, waits until the socket answers, then starts the
+# masir FFM daemon, verifies what it applied, and writes
+# $env:USERPROFILE\komorebi-autostart.log.
 #
 # Why the long retry horizon (2026-10-06): AllowSetForegroundWindow only succeeds when
 # the caller may already set the foreground window. At logon none of the conditions
@@ -30,6 +42,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 $komorebic   = 'C:\Program Files\komorebi\bin\komorebic.exe'
 $komorebi    = 'C:\Program Files\komorebi\bin\komorebi.exe'
+$komorebiJson = "$env:USERPROFILE\komorebi.json"   # deployed by MANIFEST; the static config
 $ahk         = "$env:LOCALAPPDATA\Programs\AutoHotkey\v2\AutoHotkey64.exe"
 $ahkScript   = "$env:USERPROFILE\komorebi.ahk"
 $yasb        = 'C:\Program Files\yasb\yasb.exe'
@@ -60,11 +73,17 @@ if (Test-Path $containerDump) { . $containerDump }
 # whole left half of workspace 2 while Ferdium and Zen were squeezed into the right half.
 # Signature of the whole family: GetAncestor(hwnd, GA_ROOT) != hwnd. Discover new classes
 # with windows/komorebi/spy-dialog.ps1 (repo-only tool).
-# One list, because three places must agree: the `ignore-rule class` calls below, the
-# state-dump sanitizer before the start, and the post-start check that names anything that
-# slipped in anyway.
+# This list mirrors `ignore_rules` in komorebi.json, which is what komorebi enforces; it is
+# kept here because THREE places must agree: the state-dump sanitizer before the start, the
+# post-start check that names anything that slipped in anyway, and the config itself.
 $ignoredClasses = @("#32770", "TaskDialog", "MozillaDialogClass", "MozillaDropShadowWindowClass",
                     "ReunionWindowingCaptionControls", "InputNonClientPointerSource")
+
+# Expected values for the verification below. They MIRROR komorebi.json, the single source
+# of truth for configuration: if the static config failed to apply, these checks fail and
+# the log says so. Keep them in sync with komorebi.json.
+$expectedResizeDelta = 25
+$expectedWorkspaces  = 5
 
 function Write-Log([string]$msg) {
     "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File -FilePath $log -Append -Encoding utf8
@@ -90,8 +109,8 @@ if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
 # --- AllowSetForegroundWindow bail) are told apart, and an instance that already
 # --- answers is ADOPTED rather than restarted (FFM is masir's job now, so an
 # --- answering instance is fine regardless of komorebi's focus_follows_mouse). Without
-# --- this every config command
-# --- below fails silently against a not-yet-ready socket (the bug this fixes).
+# --- this every command below fails silently against a not-yet-ready socket (the bug
+# --- this fixes).
 $attempts = 9
 $backoff  = @(5, 10, 20, 30, 30, 30, 30, 30)   # s between attempts (attempt n waits backoff[n-1]); horizon ~240 s
 $ready    = $false
@@ -132,8 +151,9 @@ for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
         }
     }
 
-    # hidden console: komorebi.exe is a console app (started WITHOUT --ffm; FFM is masir's job)
-    Start-Process -FilePath $komorebi -WindowStyle Hidden `
+    # hidden console: komorebi.exe is a console app. Started WITHOUT --ffm (FFM is masir's
+    # job) and WITH the static config, so komorebi applies its own configuration.
+    Start-Process -FilePath $komorebi -ArgumentList '--config', $komorebiJson -WindowStyle Hidden `
         -RedirectStandardOutput $komorebiOut -RedirectStandardError $komorebiErr
 
     foreach ($i in 1..12) {                      # up to ~6 s per attempt
@@ -155,112 +175,43 @@ for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
 if ($ready) {
     Write-Log '[ok] komorebi ready'
 
-    # --- Layout preferences (re-applied at every login) ---
-    $monitors      = 0, 1     # monitor indexes (zero-based); a superset is fine (a nonexistent index fails silently) - the check below uses the monitors komorebi reports
-    $workspaces    = 5        # workspaces per monitor (matches Win+1..5 bindings)
-    $workspacePadding = 4     # px: margin from the screen edge
-    $containerPadding = 0     # px: gap between adjacent tiles (each tile adds one side)
-    # Visible tile inset = workspacePadding + containerPadding + (borderWidth + borderOffset).
-    # The border grows INWARD, so its outer edge stays at workspacePadding + containerPadding (4px)
-    # and keeps lining up with the YASB bar's 4px box. Content inset with these values = 4 + 0 + (6 - 1) = 9px.
-    $borderWidth   = 6        # px: window border width (komorebi default is 8)
-    $borderOffset  = -1       # px: komorebi default; part of the inset formula above
-    $borderStyle   = 'rounded' # 'rounded' = Windows 11-style corners, 'square' = Win10, 'system' = OS default
-    $resizeStep    = 25       # px per resize key press
-
-    & $komorebic resize-delta $resizeStep | Out-Null
-    & $komorebic border-width $borderWidth | Out-Null
-    & $komorebic border-offset -- $borderOffset | Out-Null   # '--' so -1 is not parsed as a flag
-    & $komorebic border-style $borderStyle | Out-Null
-
-    # Border colours (RGB 0-255): focused = dark gray, unfocused = pure black (inverted look)
-    $borderFocusedRgb   = @(64, 64, 64)   # focused window: RENDERS as ~#2f2f2f (komorebi darkens borders ~27%)
-    $borderUnfocusedRgb = @(0, 0, 0)      # unfocused window (pure black)
-    foreach ($kind in 'single', 'stack', 'monocle', 'floating') {
-        & $komorebic border-colour -w $kind $borderFocusedRgb[0] $borderFocusedRgb[1] $borderFocusedRgb[2] | Out-Null
-    }
-    foreach ($kind in 'unfocused', 'unfocused-locked') {
-        & $komorebic border-colour -w $kind $borderUnfocusedRgb[0] $borderUnfocusedRgb[1] $borderUnfocusedRgb[2] | Out-Null
-    }
-
-    # Zen is Gecko-based: it emits EVENT_OBJECT_NAMECHANGE on launch and never a Show
-    # event, so komorebi never registers a cold-started window and it stays untiled. The
-    # supported fix is to teach komorebi to treat this exe's name change as a window
-    # identity event. The old `manage-rule exe zen.exe` force-managed whatever window was
-    # focused and IGNORED the ignore rules, which is how Zen's WS_CHILD helper windows got
-    # tiled (and why the AHK rescue existed as a workaround).
-    & $komorebic identify-object-name-change-application exe zen.exe | Out-Null
-
-    # Floating rules (ignore-rule = the window is left unmanaged, floating above tiles).
-    # The class list and the rationale for every entry live in $ignoredClasses at the top,
-    # because the dump sanitizer and the post-start check share that one list.
-    foreach ($rule in $ignoredClasses) {
-        & $komorebic ignore-rule class $rule | Out-Null
-    }
-
-    # Managed override (manage-rule = managed_override in komorebi's window_is_eligible).
-    # It is the ONLY way past that gate, whose core test is
-    #   (WS_CAPTION && WS_EX_WINDOWEDGE) && !WS_EX_DLGMODALFRAME && !WS_EX_LAYERED:
-    # CorelDRAW paints its own title bar, so its frame carries WS_THICKFRAME | WS_SYSMENU
-    # | WS_MINIMIZEBOX | WS_MAXIMIZEBOX and NO WS_CAPTION. Every event for it is dropped
-    # at the top of process_event, so it is never tiled, nothing appears in the log at the
-    # default info level, and even `komorebic manage` on the focused window is refused
-    # (measured 2026-10-07: St=0x170f0000, Ex=0x00040100; every window komorebi does
-    # manage, e.g. VersaWorks/WindowsTerminal/Zen, has WS_CAPTION=True).
-    # By CLASS, never by exe: CorelDRW.exe also owns layered `Dial Wheel` popups, ComboLBox,
-    # IME, DDE and `Afx:...:0` helper frames, and the override bypasses the layered test
-    # too, so an exe-wide rule would tile that junk - the same mistake as the retired
-    # `manage-rule exe zen.exe`. Legacy matching is starts_with/ends_with, so `CorelDRAW`
-    # covers `CorelDRAW25` and survives the next version bump.
-    & $komorebic manage-rule class CorelDRAW | Out-Null
-
-    foreach ($mon in $monitors) {
-        & $komorebic ensure-workspaces $mon $workspaces | Out-Null
-        foreach ($ws in 0..($workspaces - 1)) {
-            & $komorebic container-padding $mon $ws $containerPadding | Out-Null
-            & $komorebic workspace-padding  $mon $ws $workspacePadding | Out-Null
-        }
-    }
-
-    # Focus-follows-mouse: the standalone masir daemon, NOT komorebi's built-in FFM.
-    # komorebi's "Komorebi" FFM (--ffm + `focus-follows-mouse enable -i komorebi`) dies
-    # permanently after a video fullscreen: Windows silently drops its low-level mouse
-    # hook, and a toggle cannot reinstall it - verified 2026-10-11 on komorebi v0.1.41.
-    # masir runs in its own process with its own hook and only focuses windows listed in
-    # komorebi's managed-window file (%LOCALAPPDATA%\komorebi\komorebi.hwnd.json), so it
-    # keeps the same "only managed windows" guarantee without sharing komorebi's lock.
-    # masir must start AFTER komorebi so that file already exists (it reads it once at
-    # startup). komorebi's mouse-follows-focus (cursor warp) must stay disabled.
-    & $komorebic mouse-follows-focus disable | Out-Null
+    # --- Focus-follows-mouse: the standalone masir daemon, NOT komorebi's built-in FFM.
+    # --- komorebi's "Komorebi" FFM (--ffm + `focus-follows-mouse enable -i komorebi`) dies
+    # --- permanently after a video fullscreen: Windows silently drops its low-level mouse
+    # --- hook, and a toggle cannot reinstall it - verified 2026-10-11 on komorebi v0.1.41.
+    # --- masir runs in its own process with its own hook and only focuses windows listed in
+    # --- komorebi's managed-window file (%LOCALAPPDATA%\komorebi\komorebi.hwnd.json), so it
+    # --- keeps the same "only managed windows" guarantee without sharing komorebi's lock.
+    # --- masir must start AFTER komorebi so that file already exists (it reads it once at
+    # --- startup). komorebi's mouse-follows-focus (cursor warp) is disabled in komorebi.json.
     if (-not (Get-Process masir -ErrorAction SilentlyContinue)) {
         Start-Process -FilePath $masir -WindowStyle Hidden `
             -RedirectStandardOutput $masirOut -RedirectStandardError $masirErr
     }
 
-    # --- Verify what we just applied (fields readable from `state`) ---
+    # --- Verify what komorebi applied from the static config (fields readable from `state`) ---
     $state = (& $komorebic state 2>$null) -join "`n"
     $s = $null
     try { $s = $state | ConvertFrom-Json } catch { }
     $masirOk = $null -ne (Get-Process masir -ErrorAction SilentlyContinue)
-    if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus) {
+    if ($s -and $s.resize_delta -eq $expectedResizeDelta -and -not $s.mouse_follows_focus) {
         $wsMonitors = @($s.monitors.elements).Count
         $wsPerMon   = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
         $wsTotal    = ($wsPerMon | Measure-Object -Sum).Sum
-        # Compare against the monitors komorebi actually reports, never against the
-        # $monitors list above: that list is a superset of monitor indexes, so on a
-        # single-monitor machine it warned "expected 2x5" at every logon. A log that
-        # always warns is a log nobody reads, and this is the first log to read when
-        # the layout is missing.
-        if ($wsTotal -eq ($wsMonitors * $workspaces)) {
-            Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk workspaces=$($wsPerMon -join '/') monitors=$wsMonitors"
+        # Compare against the monitors komorebi actually reports, never against a fixed
+        # list: that list is a superset of monitor indexes, so on a single-monitor machine
+        # it warned "expected 2x5" at every logon. A log that always warns is a log nobody
+        # reads, and this is the first log to read when the layout is missing.
+        if ($wsTotal -eq ($wsMonitors * $expectedWorkspaces)) {
+            Write-Log "[ok] config applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk workspaces=$($wsPerMon -join '/') monitors=$wsMonitors"
         } else {
-            Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected ${wsMonitors}x$workspaces)"
+            Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected ${wsMonitors}x$expectedWorkspaces)"
         }
     } else {
         Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk"
     }
 
-    # Whatever the layout pass says, name every container whose class komorebi was told to
+    # Whatever the config says, name every container whose class komorebi was told to
     # ignore: that is the signature of a restored stale dump or of a forced manage landing
     # on a child window, and this line is the only thing that tells the next session whether
     # the fix actually held. Exit codes stay as they were - this is diagnostics, not policy.
@@ -272,7 +223,7 @@ if ($ready) {
         }
     }
 } else {
-    Write-Log "[FAIL] komorebi not ready after $attempts attempts (~240 s); layout NOT applied (see $komorebiErr)"
+    Write-Log "[FAIL] komorebi not ready after $attempts attempts (~240 s); config NOT applied (see $komorebiErr)"
 }
 
 # Report komorebi's outcome as the script's exit code, so a failure is still visible

@@ -34,6 +34,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 
 | Repo file | Destination (Windows) |
 |---|---|
+| `windows/komorebi/komorebi.json` | `%USERPROFILE%\komorebi.json` |
 | `windows/komorebi/komorebi.ahk` | `%USERPROFILE%\komorebi.ahk` |
 | `windows/komorebi/komorebi-autostart.ps1` | `%USERPROFILE%\komorebi-autostart.ps1` |
 | `windows/komorebi/container-dump.ps1` | `%USERPROFILE%\komorebi-container-dump.ps1` |
