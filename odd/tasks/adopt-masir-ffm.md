@@ -61,3 +61,24 @@ autostart so it survives the next logon.
 - masir started by the autostart (fresh PID), reads `%LOCALAPPDATA%\komorebi\komorebi.hwnd.json`, zero errors in stderr (captured to `%TEMP%\masir.err`).
 - Hover + a YouTube fullscreen verified stable when masir handles FFM.
 - Commit: fix(km): run focus-follows-mouse via masir instead of komorebi --ffm
+
+## Post-reboot acceptance (real logon, 2026-10-11)
+
+The Result above is session-scoped: the autostart was run by hand. This is the
+first real logon after the change (boot 14:37:01, logon 15:01:48) and it is the
+cleanest one in the whole log.
+
+- `komorebi-autostart.log`, first entry with no warning of any kind: no
+  `[warn] removed unsafe state dump`, no `[WARN] workspaces unexpected`
+  (2026-10-07), no `[FAIL] verification` (2026-10-09).
+  `15:02:36 [ok] komorebi ready` /
+  `15:02:37 [ok] config applied: resize_delta=25 mouse_follows_focus=False masir=True workspaces=5/5 monitors=2`.
+- Start order came out right: AutoHotkey64 15:02:31, yasb 15:02:32, komorebi
+  15:02:35, masir 15:02:36 - masir after komorebi, which is what reading
+  `komorebi.hwnd.json` once at startup requires.
+- `%LOCALAPPDATA%\komorebi\komorebi.hwnd.json` written 15:16:41 (masir live and
+  bound); `%TEMP%\masir.err` empty.
+- YASB came up clean: pipe server, audio visualizer, `KomorebiEventListener`
+  connected, no errors in `yasb.log`.
+- User-observed after the reboot: the bar stays hidden, hover focus survives
+  fullscreen, and both monitors behave.

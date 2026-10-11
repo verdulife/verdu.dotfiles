@@ -75,6 +75,21 @@ supervisor only supervises.
 - `komorebi.exe` command line now: `--config C:\Users\verdu\komorebi.json`.
 - 0 `ignored-class container present` lines; AHK, YASB, komorebi, masir all up.
 
+## Post-reboot acceptance (real logon, 2026-10-11)
+
+The restart above was driven by the script. A real reboot (boot 14:37:01, logon
+15:01:48) exercised the logon path for the first time, and the supervisor's
+verification agreed with `komorebi.json` with nothing to report:
+
+- `[ok] config applied: resize_delta=25 mouse_follows_focus=False masir=True workspaces=5/5 monitors=2`
+  - the `config applied` wording (static file), not the old `layout applied` (CLI
+  re-application), so the logon genuinely went through `--config`.
+- No unsafe state dump to purge, so the state-dump guard had nothing to do.
+- `state`: DISPLAY2 at 0,0 (1920x1080, `work_area` top=40 for the bar) is still
+  the main monitor, 5 workspaces per monitor on 2 monitors.
+- Conclusion: the `$expected*` constants in the autostart are still in sync with
+  `komorebi.json`; the coupling noted above held on a cold path.
+
 ## Phase B handoff (the "a conciencia" cleanup, not done here)
 
 Stale items found, to fix in the cleanup pass:
