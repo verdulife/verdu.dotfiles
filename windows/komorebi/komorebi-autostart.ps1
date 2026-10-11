@@ -1,7 +1,7 @@
 # Komorebi setup autostart - launched at logon, hidden window.
 # Order: AHK + YASB FIRST (they do not depend on komorebi) -> drop an unsafe state dump
-# (komorebi replays it at start, BYPASSING the ignore rules) -> komorebi (WM, with --ffm)
-# -> wait until it answers -> layout + FFM -> verify, including any ignored-class
+# (komorebi replays it at start, BYPASSING the ignore rules) -> komorebi (WM)
+# -> wait until it answers -> layout -> masir (FFM daemon) -> verify, including any ignored-class
 # container that still made it into the fresh state.
 # Remove autostart by deleting komorebi-autostart.vbs (Startup folder) and this file.
 #
@@ -9,7 +9,7 @@
 # come up. A blind `Start-Sleep 3` before the komorebic calls silently failed on
 # busy logons (and after Windows 11 "restart apps" re-launched a bare komorebi),
 # leaving komorebi on its defaults. This script stops any previous instance, starts
-# komorebi with --ffm (custom focus-follows-mouse), waits until the socket answers,
+# komorebi, waits until the socket answers, then starts the masir FFM daemon,
 # verifies what it applied, and writes $env:USERPROFILE\komorebi-autostart.log.
 #
 # Why the long retry horizon (2026-10-06): AllowSetForegroundWindow only succeeds when
@@ -39,6 +39,9 @@ $log         = "$env:USERPROFILE\komorebi-autostart.log"
 # our own redirects of the console output for exactly that case.
 $komorebiOut = "$env:TEMP\komorebi.out"
 $komorebiErr = "$env:TEMP\komorebi.err"
+$masir       = 'C:\Program Files\masir\bin\masir.exe'   # FFM daemon (winget LGUG2Z.masir)
+$masirOut    = "$env:TEMP\masir.out"
+$masirErr    = "$env:TEMP\masir.err"
 $containerDump = "$env:USERPROFILE\komorebi-container-dump.ps1"   # deployed alongside this script
 # Dot-sourced here, next to the other deployed paths: `komorebic stop` writes a state
 # dump that komorebi replays at start BYPASSING the ignore rules, so a dump written while
@@ -85,8 +88,9 @@ if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
 # --- input or after ~200 s, which is why the horizon is ~4 min and no longer ~10 s.
 # --- "not answering yet" (socket still starting) and "already dead" (the
 # --- AllowSetForegroundWindow bail) are told apart, and an instance that already
-# --- answers is ADOPTED rather than restarted - unless it lacks --ffm, in which case
-# --- it is stopped and started again with --ffm. Without this every config command
+# --- answers is ADOPTED rather than restarted (FFM is masir's job now, so an
+# --- answering instance is fine regardless of komorebi's focus_follows_mouse). Without
+# --- this every config command
 # --- below fails silently against a not-yet-ready socket (the bug this fixes).
 $attempts = 9
 $backoff  = @(5, 10, 20, 30, 30, 30, 30, 30)   # s between attempts (attempt n waits backoff[n-1]); horizon ~240 s
@@ -100,9 +104,8 @@ for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
     if ($adoptRaw) {
         $a = $null
         try { $a = $adoptRaw | ConvertFrom-Json } catch { }
-        $ffmOn = $null -ne $a.focus_follows_mouse -and $a.focus_follows_mouse -ne $false
-        if ($ffmOn) { $ready = $true; break }
-        Write-Log "[warn] an instance is running without --ffm; restarting it with --ffm"
+        if ($null -ne $a) { $ready = $true; break }
+        Write-Log "[warn] an instance is running but not answering; restarting it"
     }
 
     # Clean slate for our own start: stop any instance and kill a lingering one.
@@ -129,8 +132,8 @@ for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
         }
     }
 
-    # hidden console: komorebi.exe is a console app
-    Start-Process -FilePath $komorebi -ArgumentList '--ffm' -WindowStyle Hidden `
+    # hidden console: komorebi.exe is a console app (started WITHOUT --ffm; FFM is masir's job)
+    Start-Process -FilePath $komorebi -WindowStyle Hidden `
         -RedirectStandardOutput $komorebiOut -RedirectStandardError $komorebiErr
 
     foreach ($i in 1..12) {                      # up to ~6 s per attempt
@@ -219,20 +222,27 @@ if ($ready) {
         }
     }
 
-    # Focus-follows-mouse: komorebi's OWN custom implementation (requires --ffm above).
-    # It only focuses komorebi-managed windows, so context menus, the desktop and the
-    # taskbar are never touched - an AHK WinActivate timer used to break context menus
-    # by activating the menu's #32768 popup window, which is why FFM now lives here.
-    # komorebi's mouse-follows-focus (cursor warp on focus change) must stay disabled.
-    & $komorebic focus-follows-mouse enable -i komorebi | Out-Null
+    # Focus-follows-mouse: the standalone masir daemon, NOT komorebi's built-in FFM.
+    # komorebi's "Komorebi" FFM (--ffm + `focus-follows-mouse enable -i komorebi`) dies
+    # permanently after a video fullscreen: Windows silently drops its low-level mouse
+    # hook, and a toggle cannot reinstall it - verified 2026-10-11 on komorebi v0.1.41.
+    # masir runs in its own process with its own hook and only focuses windows listed in
+    # komorebi's managed-window file (%LOCALAPPDATA%\komorebi\komorebi.hwnd.json), so it
+    # keeps the same "only managed windows" guarantee without sharing komorebi's lock.
+    # masir must start AFTER komorebi so that file already exists (it reads it once at
+    # startup). komorebi's mouse-follows-focus (cursor warp) must stay disabled.
     & $komorebic mouse-follows-focus disable | Out-Null
+    if (-not (Get-Process masir -ErrorAction SilentlyContinue)) {
+        Start-Process -FilePath $masir -WindowStyle Hidden `
+            -RedirectStandardOutput $masirOut -RedirectStandardError $masirErr
+    }
 
     # --- Verify what we just applied (fields readable from `state`) ---
     $state = (& $komorebic state 2>$null) -join "`n"
     $s = $null
     try { $s = $state | ConvertFrom-Json } catch { }
-    $ffmOk = $null -ne $s.focus_follows_mouse -and $s.focus_follows_mouse -ne $false
-    if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus -and $ffmOk) {
+    $masirOk = $null -ne (Get-Process masir -ErrorAction SilentlyContinue)
+    if ($s -and $s.resize_delta -eq $resizeStep -and -not $s.mouse_follows_focus) {
         $wsMonitors = @($s.monitors.elements).Count
         $wsPerMon   = @($s.monitors.elements | ForEach-Object { @($_.workspaces.elements).Count })
         $wsTotal    = ($wsPerMon | Measure-Object -Sum).Sum
@@ -242,12 +252,12 @@ if ($ready) {
         # always warns is a log nobody reads, and this is the first log to read when
         # the layout is missing.
         if ($wsTotal -eq ($wsMonitors * $workspaces)) {
-            Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse) workspaces=$($wsPerMon -join '/') monitors=$wsMonitors"
+            Write-Log "[ok] layout applied: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk workspaces=$($wsPerMon -join '/') monitors=$wsMonitors"
         } else {
             Write-Log "[WARN] workspaces unexpected: $($wsPerMon -join '/') (expected ${wsMonitors}x$workspaces)"
         }
     } else {
-        Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) ffm=$($s.focus_follows_mouse)"
+        Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk"
     }
 
     # Whatever the layout pass says, name every container whose class komorebi was told to

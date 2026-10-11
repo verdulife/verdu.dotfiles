@@ -10,6 +10,7 @@ Prerequisites (install once, manually, via winget — not part of the copy):
 
 ```
 winget install -e --id LGUG2Z.komorebi
+winget install -e --id LGUG2Z.masir
 winget install -e --id AutoHotkey.AutoHotkey
 winget install -e --id AmN.yasb
 winget install -e --id DEVCOM.JetBrainsMonoNerdFont
