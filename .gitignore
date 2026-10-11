@@ -17,3 +17,7 @@ Desktop.ini
 # Giant spell dictionaries (GentlemanNvim ships huge wordlists; only the
 # compiled .spl is needed at runtime)
 shared/nvim/spell/*.txt
+
+# Tool-generated stray: opencode-pi resolves its cache path to the literal
+# "undefined" when it runs from this directory. Harmless, never commit it.
+undefined/
