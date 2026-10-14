@@ -163,3 +163,46 @@ deliberately not taken here.
 - `nu -i -c '…'`-style shortcuts do not apply here, but the analogous trap exists in
   komorebi: `komorebic check` validates only `$HOME\komorebi.json`; point
   `KOMOREBI_CONFIG_HOME` at a mirror to validate a different copy.
+
+## Verification 2026-10-14 later (the user reported it still fails)
+
+The owner reported that a cold Word launch still does not tile and asked for a
+verification with **no changes**. Read-only checks (`komorebic state`, the log, a
+P/Invoke enumeration of the Office windows) sharpened the section above:
+
+1. **Nothing is broken and no restart is needed.** komorebi has not restarted
+   (PID 17368, started 09:57:17), so the `replace-configuration` from 15:59Z is still
+   the live configuration. A restart would replay the same rules over the same events.
+2. **The rule fires.** Every `Show winevent="ObjectNameChange"` before 15:59Z belongs
+   to `zen.exe`/`MozillaWindowClass` (the pre-existing rule); after it, `WINWORD.EXE`
+   /`OpusApp` (hwnd 200076, 2950992) and Excel `XLMAIN` (hwnd 723580) appear. The
+   class rules match and the conversion works.
+3. **A cold launch that lands on Office's start screen cannot be fixed from
+   `komorebi.json`** — this is now proven, not a hypothesis. The owner's three
+   attempts (16:17:25Z, 16:43:34Z, 16:51:39Z = 18:17, 18:43, 18:51 local) produce, for
+   Word, only: `TitleUpdate/ObjectNameChange` for the **splash** (`MsoSplash`,
+   "Abriendo - Word") and `Hide/ObjectHide` (sometimes `Destroy/ObjectDestroy`) for
+   the `OpusApp` frame titled `Word`. The frame itself never emits
+   `ObjectNameChange`, `Show` or `FocusChange`: it is created already visible with its
+   title set, so Windows reports neither a name change nor a show. `Hide` removes, it
+   never adds (`process_event.rs`), so nothing tiles it.
+4. Still supported by measurement: a document window in a running Word tiles
+   (16:02:13Z) and Excel frames convert (16:03:48Z, 16:17:25Z).
+5. Two gates to remember for the next measurement: `should_manage` discards
+   **cloaked** windows unless the event is `Hide`/`Cloak`, and the conversion is
+   skipped while the window is **minimised** (upstream #941). Office cloaks its frame
+   in bursts while loading, so a conversion arriving during a cloak is dropped and
+   never retried.
+
+### Next measurement (one action, next session)
+
+Open a real `.docx` — double-click the document, not the Word icon — with Word cold
+or warm, while reading the log at the same time:
+
+- if `Show winevent="ObjectNameChange"` appears for the `OpusApp` frame and
+  `komorebic state` lists it, the real workflow is covered and only the start screen
+  stays outside, which is acceptable;
+- if it does not, the remaining levers are Office's own "show the start screen"
+  option (Word → Options → General) and a manual `komorebic manage`. The AHK rescue
+  timer stays retired — `odd/tasks/corel-window-not-managed.md` records why it is
+  dangerous (`komorebic manage` acts on the focused window and can tile a helper).
