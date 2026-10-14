@@ -56,6 +56,30 @@ Two of those values are duplicated on purpose in `komorebi-autostart.ps1` as
 `$expectedWorkspaces`): if the config ever fails to apply, the checks fail and the
 log says so. **Change `resize_delta` or the workspace count in both files.**
 
+### One file per machine — read this before copying
+
+`komorebi.json` carries machine-specific monitor data, so the tracked copy and a
+machine's deployed copy are **not** expected to be byte-identical, and the
+`MANIFEST.md` copy rule applies to the *shared* keys only.
+
+| | tracked file in this repo | this machine's deployed file |
+|---|---|---|
+| `display_index_preferences` | `{ "0": "CNK51707R2", "1": "CNK6180S06" }` | `{ "0": "CZK83705DT" }` |
+| monitor blocks | 2 (workspaces `I`–`V` and `1`–`5`) | 1 (workspaces `I`–`V`) |
+| which machine | the **home** machine | the **work** machine (`HWP26FC`, Radeon RX 580) |
+
+`CZK83705DT` is the live `serial_number_id` of this machine's single panel, so the
+deployed file is the one that matches the hardware here; the tracked file describes
+the two-monitor machine. Copying the tracked file verbatim onto a different machine
+rewrites its monitor mapping.
+
+**The rule**: shared keys — `ignore_rules`, `manage_rules`,
+`object_name_change_applications`, paddings, borders, colours, `resize_delta` — are
+written into **both** copies (that is what `MANIFEST.md`'s copy contract means here);
+the `display_index_preferences` map and the `monitors` blocks follow the destination's
+hardware and are edited by hand. Decision and evidence:
+`odd/tasks/komorebi-config-per-machine.md`.
+
 ## Focus follows mouse (masir — not komorebi, not AHK)
 
 FFM is the standalone `masir` daemon (winget `LGUG2Z.masir`), started by the
