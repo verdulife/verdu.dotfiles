@@ -44,7 +44,9 @@
   "mouse_follows_focus": false,
 
   "object_name_change_applications": [
-    { "kind": "Exe", "id": "zen.exe", "matching_strategy": "Equals" }
+    { "kind": "Exe",   "id": "zen.exe", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "OpusApp", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "XLMAIN",  "matching_strategy": "Equals" }
   ],
 
   "ignore_rules": [

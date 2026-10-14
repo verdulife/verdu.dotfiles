@@ -13,7 +13,8 @@ Start-menu suppression).
   with `--config`. Monitors and workspaces, `display_index_preferences` (the
   dual-monitor mapping), paddings, borders/colours, `resize_delta`,
   `mouse_follows_focus: false`, the dialog `ignore_rules`, the CorelDRAW
-  `manage_rules` and the Zen `object_name_change_applications`. **Change a look or
+  `manage_rules` and the `object_name_change_applications` list (Zen, plus the Word
+  and Excel frames — see the gotcha on Office). **Change a look or
   behaviour knob here**, not in the script.
 - `komorebi.ahk` — AHK v2 script: Win-prefixed hotkeys, `~LWin` dummy keystroke (no
   Start menu on a lone Win press), `HideTaskbar` watchdog. Focus-follows-mouse is not
@@ -45,7 +46,8 @@ it to a **running** instance without logging out, run
 `resize_delta 25` · `border_width 6` · `border_offset -1` · `border_style Rounded`
 · focused border `{64,64,64}` (renders ~#2f2f2f because komorebi darkens ~27%)
 · unfocused `{0,0,0}` · `mouse_follows_focus false` ·
-`object_name_change_applications`: `exe zen.exe` · `manage_rules`: `class CorelDRAW`
+`object_name_change_applications`: `exe zen.exe`, `class OpusApp` (Word),
+`class XLMAIN` (Excel) · `manage_rules`: `class CorelDRAW`
 (`StartsWith`, so it matches `CorelDRAW25`) · `ignore_rules`: the dialog/child
 classes in the gotcha below · 2 monitors × 5 workspaces · per-workspace padding 4/0.
 
@@ -137,6 +139,24 @@ It is a HM-style Toggle: `Super` = the Windows key.
   reverting means editing that file and restarting komorebi. To see the verdict for any
   window, start komorebi with `--log-level debug`: it prints
   `ignoring (exe: …, title: …, event: …)` plus the full decision record.
+- **Office frames never send a `Show`, so they need the object-name-change lever, not
+  a manage rule.** Word (`OpusApp`) and Excel (`XLMAIN`) frames pass
+  `window_is_eligible` on their own — measured 2026-10-14, `style 0x16cf0000` /
+  `ex_style 0x00000110` (the minimized variant adds `WS_MINIMIZE`: `0x36cf0000`):
+  `WS_CAPTION` and `WS_EX_WINDOWEDGE` set, neither
+  `WS_EX_DLGMODALFRAME` nor `WS_EX_LAYERED`. What is missing is the **event**: Office
+  creates the frame already visible, so Windows reports only
+  `EVENT_OBJECT_NAMECHANGE` (logged as `event="TitleUpdate"`) and `should_manage` is
+  never reached. `komorebi/src/window_manager_event.rs` maps `ObjectNameChange` to
+  `Show` — i.e. runs the gate — for whatever matches
+  `object_name_change_applications`, and only while the window is **not** minimized
+  (upstream #941). That is why the frame tiles on a restore from the taskbar either
+  way, but never on a cold open, and why this list is the lever here: a `manage_rules`
+  entry (the CorelDRAW lever) is only consulted once a `Show` has already arrived, so
+  it would do nothing. **By class, not by exe**: `WINWORD.EXE` also owns `MsoSplash`,
+  `_WwB`, `_WwO`, `OleDdeWndClass`, `MsoStdCompMgr`, `AcroStubUnloadWClass`,
+  `OfficePowerManagerWindow`, `HardwareMonitorWindowClass`, `MSCTFIME UI`, `IME` and
+  `ARC Event Window 00`, and `EXCEL.EXE` its own set (`ComboLBox`, …).
 - **Configuration lives in exactly one place.** `komorebi.json` is applied by komorebi
   (`--config`); the logon script supervises and verifies but re-applies nothing, so a
   knob that is only in a doc or only in the script does not exist. Two schema details
