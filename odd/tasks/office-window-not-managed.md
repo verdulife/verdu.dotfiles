@@ -142,7 +142,11 @@ file matches the other machine. A literal "copy per `MANIFEST.md`" would therefo
 overwrite this machine's monitor mapping with the other machine's.
 
 Consequence for this work unit: the two Office rules were written into **both**
-files; nothing else in the deployed file was touched. Reconciling the drift (two
+files; nothing else in the deployed file was touched.
+
+**Decided 2026-10-14 (same day): leave the two files as they are and document the
+rule** — the tracked file stays the home machine's, this machine's deployed file keeps
+its own monitor block. See `odd/tasks/komorebi-config-per-machine.md`. Reconciling the drift (two
 per-machine configs, or a documented local override) is a separate decision and was
 deliberately not taken here.
 
