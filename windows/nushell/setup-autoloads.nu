@@ -3,7 +3,7 @@
 # the CLI tools). These files are tool-generated (@ starship init nu etc.) and embed
 # machine-specific paths, so they are NOT stored in the repo.
 #
-# Requirements on PATH: nu, starship, zoxide, atuin, carapace
+# Requirements on PATH: nu, starship, zoxide
 #
 # Usage:  nu setup-autoloads.nu
 
@@ -27,20 +27,10 @@ if (which zoxide | is-empty) {
     print "✓ zoxide.nu"
 }
 
-# --- atuin (history) -------------------------------------------------------
-if (which atuin | is-empty) {
-    print "⚠️  atuin not found on PATH — skipping atuin.nu"
-} else {
-    ^atuin init nu | save -f ($autoload | path join "atuin.nu")
-    print "✓ atuin.nu"
-}
-
-# --- carapace (completions; embeds user cache path, generated per-user) ----
-if (which carapace | is-empty) {
-    print "⚠️  carapace not found on PATH — skipping carapace.nu"
-} else {
-    ^carapace _carapace nushell | save -f ($autoload | path join "carapace.nu")
-    print "✓ carapace.nu"
-}
+# --- (no atuin, no carapace) -----------------------------------------------
+# Deliberately absent: atuin re-bound Ctrl+R and Up to its own TUI and carapace
+# replaced the external completer, which moved the editing flow away from
+# PSReadLine's. Nushell's native history menu, history walk and completion menu
+# are what `config.nu` documents. See odd/tasks/nushell-native-line-editor.md.
 
 print "Autoloads regenerated in: " + $autoload

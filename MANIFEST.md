@@ -17,8 +17,6 @@ winget install -e --id DEVCOM.JetBrainsMonoNerdFont
 winget install -e --id Nushell.Nushell --scope user
 winget install -e --id Schniz.fnm
 winget install -e --id ajeetdsouza.zoxide
-winget install -e --id Atuinsh.Atuin
-winget install -e --id rsteube.Carapace
 winget install -e --id junegunn.fzf
 winget install -e --id sharkdp.bat
 winget install -e --id jqlang.jq
@@ -53,9 +51,10 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/herdr/config.toml` | `%APPDATA%\herdr\config.toml` |
 
 > `windows/nushell/setup-autoloads.nu` is NOT copied; run it once after copying,
-> from a shell where `nu`, `starship`, `zoxide`, `atuin` and `carapace` are on
-> PATH, to regenerate `%APPDATA%\nushell\vendor\autoload\*.nu` (tool-generated,
-> embeds per-machine paths):
+> from a shell where `nu`, `starship` and `zoxide` are on PATH, to regenerate
+> `%APPDATA%\nushell\vendor\autoload\*.nu` (tool-generated, embeds per-machine
+> paths). atuin and carapace are deliberately not integrated — see
+> `odd/tasks/nushell-native-line-editor.md`:
 >
 > ```powershell
 > nu "<path-to-the-clone>\windows\nushell\setup-autoloads.nu"

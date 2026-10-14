@@ -138,8 +138,8 @@ See `windows/yasb/README.md` for the widget map and styling notes.
   disabled). Installed to `%LOCALAPPDATA%\nvim` on Windows (Neovim ignores
   `~/.config/nvim` there). First launch bootstraps lazy.nvim and all plugins.
 - `windows/nushell/` — Nushell config (`config.nu`, `env.nu`) + `setup-autoloads.nu`
-  which regenerates the tool-generated `vendor/autoload/*.nu` (starship/zoxide/
-  atuin/carapace) at the destination. `env.nu` also wires **fnm** into Nushell by
+  which regenerates the tool-generated `vendor/autoload/*.nu` (starship/zoxide)
+  at the destination. `env.nu` also wires **fnm** into Nushell by
   hand: fnm has no nushell target and `fnm env --json` reports no `PATH`, so the
   file loads the JSON and prepends `FNM_MULTISHELL_PATH` itself. fnm is therefore a
   prerequisite (see `MANIFEST.md`).
