@@ -22,8 +22,16 @@ Start-menu suppression).
   per-app `#HotIf` gate: every binding is Win-prefixed, so application shortcuts
   cannot collide with them.
 - `komorebi-autostart.ps1` — logon **supervisor**: starts AHK/YASB, starts komorebi
-  with `komorebi.json`, waits for it, starts `masir`, verifies the applied config
-  and logs the outcome. It deliberately re-applies nothing.
+  with `komorebi.json`, waits for it, starts `masir`, verifies the applied config and
+  YASB's komorebi subscription, and logs the outcome. It deliberately re-applies
+  nothing, and it dot-sources the two deployed helpers below.
+- `yasb-subscription.ps1` — dot-sourced helper (deployed as
+  `%USERPROFILE%\komorebi-yasb-subscription.ps1`). It reads `yasb.log` to decide whether
+  the current YASB process really subscribed to komorebi, and re-subscribes the pending
+  pipe when it did not. See the gotcha below.
+- `container-dump.ps1` — dot-sourced helper (deployed as
+  `%USERPROFILE%\komorebi-container-dump.ps1`): deletes an unsafe komorebi state dump
+  before komorebi replays it.
 - `../autostart/komorebi-autostart.vbs` — windowless logon launcher.
 
 ## The border formula (READ FIRST)
@@ -192,3 +200,27 @@ It is a HM-style Toggle: `Super` = the Windows key.
 - **Workspace names do not reach the bar.** The YASB `komorebi_workspaces` widget draws
   fixed glyphs (`•`/`●`), so naming the workspaces `I…V` / `1…5` in `komorebi.json`
   changed nothing visually — that is why the names exist without a doc caveat.
+- **A logon can hand YASB a komorebi subscription that komorebi silently drops, and the
+  widget then disappears.** YASB creates a pipe (`yasb-<uuid1>`), runs
+  `komorebic subscribe <pipe>` — fire-and-forget: it exits 0 even when komorebi never
+  accepts the message — and then blocks in `ConnectNamedPipe` with **no timeout**. If that
+  one message is lost, nothing retries and nothing is logged at the default level, and
+  because `config.yaml` sets `hide_if_offline: true` the pill is not even drawn as
+  "offline": the bar simply has no workspaces. It happened at two logons, with two
+  different causes: on **2026-10-18 10:09** YASB subscribed about 14 s before komorebi was
+  listening (`komorebi.sock` came up only after the supervisor restarted it, since its init
+  stalled ~40 s); on **2026-10-20 21:20** komorebi was healthy and logged `could not
+  acquire window manager lock, not processing message: AddSubscriberPipe` — the logon
+  window storm held the state lock and the message was dropped without a reply. The
+  supervisor now reads the newest `Created named pipe` from `yasb.log`, requires a later
+  `Komorebi connected to named pipe: <same uuid>`, and runs `komorebic subscribe <pipe>`
+  when it is missing, so `komorebi-autostart.log` says `[ok] yasb subscription ok`,
+  `[ok] yasb subscription repaired` or `[FAIL] yasb workspaces widget offline ...`. To fix
+  a live session by hand, take the uuid from `Created named pipe yasb-...` in `yasb.log`
+  and run `komorebic subscribe yasb-<uuid>`: it revives the pending pipe without
+  restarting the bar. `yasbc reload` also works but restarts the whole bar, and its
+  single-instance guard can abort (`Timeout waiting for previous instance. Aborting
+  start.`, 2026-10-18 10:47). The upstream fix is not available: komorebi offers no
+  retry/queue for a dropped `AddSubscriberPipe` (`komorebic --help` has only
+  `subscribe-pipe`, `subscribe-socket`, `unsubscribe-*`) and the YASB widget schema has no
+  retry or timeout key.

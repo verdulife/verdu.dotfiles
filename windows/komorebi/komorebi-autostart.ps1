@@ -12,9 +12,9 @@
 #     application. It is applied by komorebi itself via `--config`.
 #   - THIS script is a RESILIENCE SUPERVISOR, for the things upstream does not solve: the
 #     logon foreground lock (retry with backoff), the unsafe state dump, per-process guards
-#     against Windows "restart apps" double launches, explicit ordering (AHK/YASB first,
-#     masir after komorebi), verification and the log. It no longer re-applies the
-#     configuration one command at a time.
+#     against Windows "restart apps" double launches, the YASB komorebi-subscription
+#     guard, explicit ordering (AHK/YASB first, masir after komorebi), verification and
+#     the log. It no longer re-applies the configuration one command at a time.
 #
 # Why the wait: on a fresh boot komorebi's IPC socket can take several seconds to
 # come up. A blind `Start-Sleep 3` before the komorebic calls silently failed on
@@ -56,12 +56,17 @@ $masir       = 'C:\Program Files\masir\bin\masir.exe'   # FFM daemon (winget LGU
 $masirOut    = "$env:TEMP\masir.out"
 $masirErr    = "$env:TEMP\masir.err"
 $containerDump = "$env:USERPROFILE\komorebi-container-dump.ps1"   # deployed alongside this script
+$yasbSubscription = "$env:USERPROFILE\komorebi-yasb-subscription.ps1"   # deployed alongside this script
 # Dot-sourced here, next to the other deployed paths: `komorebic stop` writes a state
 # dump that komorebi replays at start BYPASSING the ignore rules, so a dump written while
 # a child window was managed resurrects that container and the layout hole returns
 # (README gotcha 19). This one file knows which dumps are unsafe; loading it before
 # anything starts means no start can glide past a stale dump.
 if (Test-Path $containerDump) { . $containerDump }
+# Same guarded dot-source, same reason: a partially copied deployment must still leave a
+# working logon. Loaded before anything starts, so the subscription check below can never
+# be the reason a session has no window manager.
+if (Test-Path $yasbSubscription) { . $yasbSubscription }
 
 # Windows komorebi must never manage. Matching is by CLASS, never by exe - matching by exe
 # would also float the app's MAIN window. #32770 = standard Windows common dialog (Save As /
@@ -90,9 +95,15 @@ function Write-Log([string]$msg) {
 }
 
 # --- Hotkeys + status bar first, guarded per process. Deliberately NOT gated on
-# --- komorebi: a window-manager failure must not also cost the hotkeys and the bar,
-# --- and YASB's komorebi widget reconnects by itself when komorebi appears (yasb.log:
-# --- pipe subscribe failed at sign-in, connected the moment komorebi answered).
+# --- komorebi: a window-manager failure must not also cost the hotkeys and the bar.
+# --- CORRECTION 2026-10-20: this used to claim YASB's komorebi widget "reconnects by
+# --- itself when komorebi appears", with a yasb.log line as proof. It does not, and that
+# --- belief is exactly why two logins ran half the day with a dead widget:
+# --- `komorebic subscribe` is fire-and-forget, so a subscription komorebi DROPS
+# --- (contended state lock, 2026-10-20 21:20) or never receives (socket not up yet,
+# --- 2026-10-18 10:09) still exits 0, and YASB then waits in ConnectNamedPipe forever.
+# --- The subscription is verified and repaired once komorebi is ready (below, and in
+# --- yasb-subscription.ps1); it is not left to YASB to notice.
 # --- Guarded per process because Windows may have re-launched them already via
 # --- "restart apps after sign-in"; starting them twice would double them.
 if (-not (Get-Process AutoHotkey64 -ErrorAction SilentlyContinue)) {
@@ -209,6 +220,30 @@ if ($ready) {
         }
     } else {
         Write-Log "[FAIL] verification: resize_delta=$($s.resize_delta) mouse_follows_focus=$($s.mouse_follows_focus) masir=$masirOk"
+    }
+
+    # --- YASB's komorebi subscription: verify it, and repair it when it is missing. The
+    # --- bar is started BEFORE komorebi on purpose (a WM failure must not cost the bar),
+    # --- and this is the price of that ordering. Neither tool retries and neither logs at
+    # --- the default level: komorebi drops an AddSubscriberPipe that arrives while its
+    # --- state lock is busy and answers nothing, komorebic exits 0 anyway, and YASB then
+    # --- blocks in ConnectNamedPipe with no timeout, so the widget just disappears
+    # --- (hide_if_offline: true). Evidence and the full mechanism: yasb-subscription.ps1.
+    if (Get-Process yasb -ErrorAction SilentlyContinue) {
+        if (Get-Command Repair-YasbKomorebiSubscription -ErrorAction SilentlyContinue) {
+            $sub = Repair-YasbKomorebiSubscription -Komorebic $komorebic -Path "$env:USERPROFILE\.config\yasb\yasb.log"
+            if ($sub.Action -eq 'ok') {
+                Write-Log "[ok] yasb subscription ok: $($sub.Pipe)"
+            } elseif ($sub.Action -eq 'repaired') {
+                Write-Log "[ok] yasb subscription repaired after $($sub.Attempts) attempt(s): $($sub.Pipe)"
+            } elseif ($sub.Action -eq 'offline') {
+                Write-Log "[FAIL] yasb workspaces widget offline: no komorebi subscription for $($sub.Pipe). Fix it by hand with: $($sub.Detail)"
+            } else {
+                Write-Log "[warn] yasb: $($sub.Detail); subscription not verified"
+            }
+        }
+    } else {
+        Write-Log '[warn] yasb is not running; its komorebi subscription was not verified'
     }
 
     # Whatever the config says, name every container whose class komorebi was told to
