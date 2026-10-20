@@ -5,6 +5,7 @@ verified against the live `yasb.log`; runtime proof at the next logon.
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `main`
 Date: 2026-10-20
 Related: `odd/tasks/komorebi-autostart-resilience.md` (the supervisor this extends)
+Commit: `44a61c8` (rebased onto f9f88b0) - module, tests, supervisor, README, MANIFEST and this record are one work unit
 
 ## Goal
 
