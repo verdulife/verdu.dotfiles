@@ -274,3 +274,15 @@
   max-height: 11px;
   margin-right: 5px;
 }
+
+/* ---- Pi agents ---- */
+.pi-agents-widget .widget-container {
+  padding: 0 6px;
+}
+
+.pi-agents-widget .label {
+  /* Same family order as the rest of the bar; the state words are coloured by
+     the script (<font color=...>), so no colour belongs here. */
+  font-family: "CaskaydiaCove NFP", "JetBrainsMono NFM", "Segoe UI Variable Text", sans-serif;
+  padding: 0 2px;
+}

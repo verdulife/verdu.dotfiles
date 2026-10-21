@@ -32,6 +32,7 @@ bars:
     widgets:
       left:
         - "komorebi_workspaces"
+        - "pi_agents"
       center:
         - "audio_visualizer"
       right:
@@ -310,3 +311,41 @@ widgets:
         # treat the URL itself as the window title and open a console instead of the
         # browser (measured on this machine). The URL must stay quoted and space-free.
         on_right: 'exec start "" "https://opencode.ai/console/wrk_01KR0RFFBT5FCG3YTKPGW9JTSB"'
+
+  # --- Pi agents: one segment per live Pi session (2026-10-21) -------------
+  # "Project (state) | Project (state) | ..." built by pi_agents.py from
+  # ~/.pi/agent/gentle-agents/presence (heartbeat <= 15 s means live) and the
+  # tail of each session transcript (which tool ran last, whether the turn is
+  # still open).
+  #
+  # No mouse wheel: a custom widget cannot receive wheel events. YASB
+  # implements wheelEvent only in komorebi/glazewm workspaces, komorebi stack,
+  # brightness, media and media_lite, and CustomWidget dispatches just left /
+  # middle / right. So the overflow is paged: the pill shows at most three
+  # segments plus " +N", and a left click advances to the next page (the cursor
+  # lives in %TEMP%\pi-agents.page).
+  #
+  # label is "{data}" and NOT "{data[text]}": YASB formats the template before it
+  # checks hide_empty, and a failed format leaves the literal template painted.
+  # With a plain JSON string, an empty script output hides the pill completely,
+  # so a machine with no live session shows no empty surface.
+  pi_agents:
+    type: "yasb.custom.CustomWidget"
+    options:
+      label: "{data}"
+      label_alt: "{data}"
+      label_placeholder: ""
+      class_name: "pi-agents-widget"
+      tooltip: false
+      exec_options:
+        run_cmd: 'py %USERPROFILE%\.config\yasb\pi_agents.py'
+        run_interval: 2000 # states move fast; the script only reads small local files
+        return_format: "json"
+        hide_empty: true
+        use_shell: true
+      callbacks:
+        on_left: 'exec py %USERPROFILE%\.config\yasb\pi_agents.py --next'
+        on_middle: "do_nothing"
+        # pyw, not py: the popup must not flash a console window, and YASB
+        # spawns callbacks with Popen(shell=True) and no CREATE_NO_WINDOW.
+        on_right: 'exec pyw %USERPROFILE%\.config\yasb\pi_agents.py --popup'

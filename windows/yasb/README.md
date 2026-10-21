@@ -8,6 +8,7 @@ children so a group reads as a single surface.
 
 ```
 left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
+       pi_agents                  (live Pi sessions: Project (state) | ...)
 center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
         grouper_sysinfo           (cpu % · memory · gpu)
@@ -27,6 +28,7 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
+| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project (state)` per session, left click pages the overflow, right click opens the detail table |
 
 ## Center: the audio visualizer alone
 
@@ -121,3 +123,56 @@ limitation, not a config one.
   through to the Segoe default with different metrics).
 - Popups are separate windows: blur works there (not per-widget in the bar —
   Windows limitation).
+
+## Pi agents widget (`pi_agents`)
+
+`pi_agents.py` enumerates the Pi sessions running on this machine and paints one
+segment per session:
+
+```
+verdu.dotfiles (working) | vre-mcp (idle) | dante-store (planning)
+```
+
+Sources (local files only, no network):
+
+| Source | What it gives |
+|---|---|
+| `%USERPROFILE%\.pi\agent\gentle-agents\presence\*.header.json` | one record per running Pi session: `label`, `heartbeat`, `counts{running,queued,waiting}` |
+| `...\<hash>.<incarnation>.activity.json` | that session's child tasks (`agent`, `label`, `status`) |
+| `%USERPROFILE%\.pi\agent\sessions\<project>\<iso>_<sessionId>.jsonl` | the transcript tail: last tool call and whether the turn is still open |
+
+A session is **live** while `now - heartbeat <= 15 s` (the window Pi's own presence
+publisher uses). Records are grouped by `sessionHash` (`sha256(sessionId)`) and the
+newest incarnation wins, so a killed session's leftovers never render. The
+transcript is matched by hashing the id in its filename.
+
+States, first match wins:
+
+| State | Meaning |
+|---|---|
+| `offline` | the presence record reports `unavailable` |
+| `blocked` | `counts.waiting > 0` or a child task is `waiting` |
+| `planning` / `exploring` / `implementing` / `checking` / `deciding` | phase inferred from the last tool call, mirroring `gentle-pi`'s `odd-phase-inference.ts` (`todo` → planning, `read`/`grep` → exploring, `edit`/`write` → implementing, `bash` running a checker → checking, `ask_user_*` → deciding) |
+| `working` | the turn is open but no tool implies a phase |
+| `idle` | the last record is an assistant message with `stopReason: stop` |
+
+Order: `blocked` first, then the working states (phase before plain `working`),
+then `idle`; ties by newest heartbeat.
+
+### No horizontal scroll — paging instead
+
+A custom widget **cannot** receive mouse-wheel events: YASB implements
+`wheelEvent` only in `komorebi/workspaces`, `komorebi/stack`, `glazewm/workspaces`,
+`brightness`, `media` and `media_lite`, and `CustomWidget` dispatches only
+left/middle/right. So the width is bounded by paging: at most **three** segments,
+then ` +N` for the hidden ones. **Left click** advances to the next page (cursor in
+`%TEMP%\pi-agents.page`); **right click** opens a table with every live session
+(project, state, phase, child task, model, session id, uptime).
+
+With no live session the script prints an empty JSON string, and `hide_empty: true`
+hides the pill, so nothing empty is left in the bar. The label template is
+`"{data}"` and not `"{data[text]}"` on purpose: YASB formats the template *before*
+it checks `hide_empty`, so a failed format (a `None` payload) would leave the
+literal template painted.
+
+Tests: `py -B -m unittest discover -s windows/yasb -p "test_*.py"` from the repo root.
