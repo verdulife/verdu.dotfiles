@@ -114,3 +114,17 @@ copies were identical to `HEAD` (no drift). YASB restarted at 20:09:46 (v2.0.7);
 `dante-store (checking) | verdu.dotfiles (working) | verdu.dotfiles (idle)` in
 the left cluster with the existing widgets untouched. `dante-store (checking)`
 sorts first because a specific phase outranks plain `working` (S4).
+
+L11 (review disposition, 2026-10-21): the work is left **unreviewed** by
+candidate-scoped decision. `gentle_review inspect` offered `review.start` for
+target `sha256:6965635bf402e94040de1fb78c5c4576a3fe7ac6877a0a79d79e54010490caa5`
+(7 paths, 1201 changed lines, base `f9f88b0`, committed-only). The first START
+omitted `baseRef`/`committedOnly`, so the facade projected `current-changes` and
+blocked with `empty_candidate_base_ref_required` (no lineage); the retry carried
+the offered base ref and the consent answer came back
+`consent-declined-this-candidate`, with `lineage_created: false`,
+`mutation_performed: false`, `correction_budget: 0`. Provider risk evidence named
+"code that starts other processes in windows/yasb/config.yaml" (the widget's
+`run_cmd` and its two `exec` callbacks). Nothing was reviewed, nothing was
+corrected, and no authority was burned. Delivery is unaffected: both commits are
+on `main`, unpushed.
