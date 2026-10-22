@@ -144,3 +144,20 @@ ship the Qt SVG plugin). Rasterized with `magick -density 1200 ... -resize 18x18
 first, so the mark is monochrome white; the coloured version was rejected after
 seeing it in the bar. Verified by screenshot after a YASB restart (PID 19196, 0
 ERROR/WARNING lines in `yasb.log`).
+
+L15 (user, 2026-10-22, verbatim):
+> quiero quitar el "|" que separa los agentes y si existen versalitas, usarlas para el estado sin los "()"
+
+L16 (evidence, 2026-10-22, findings): real small caps do not exist here. A
+`fontTools` sweep over the registered Nerd Fonts (`CaskaydiaCove NF/NFP/NFM`,
+`JetBrainsMono NF/NFP/NFM/NL`) reports the Unicode small-caps block missing for
+`b c d e f k m n o p r t w` (all families), i.e. `ᴡᴏʀᴋɪɴɢ` would be tofu; and Qt
+rich text ignores `font-variant: small-caps` (a local PyQt6 render showed no
+metric change). Faux small caps are the honest equivalent.
+
+L17 (decision, 2026-10-22): `SEPARATOR = "&nbsp;&nbsp;"` (a gap, no glyph) and
+`_segment()` emits `Project <span style="font-size:9px; letter-spacing:1px"><font
+color=...>STATE</font></span>`; the parentheses are gone. Verified in the bar by
+screenshot after a restart: `dante-store WORKING   verdu.dotfiles WORKING`, 0
+ERROR/WARNING lines in `yasb.log`. Tests updated (45 OK), including assertions
+that the label contains neither `|` nor `(`.

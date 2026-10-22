@@ -45,7 +45,15 @@ LIVE_MS = 15_000
 # anything longer is reachable with a left click (see README).
 MAX_ITEMS = 3
 
-SEPARATOR = " | "
+SEPARATOR = "&nbsp;&nbsp;"
+
+# Small caps are "faux": no Nerd Font on this machine carries the Unicode
+# small-caps block (fontTools: CaskaydiaCove NF/NFP/NFM and JetBrainsMono NF*
+# lack the glyphs for b c d e f k m n o p r t w, so a word such as "working"
+# cannot be spelled in small caps) and Qt rich text ignores
+# `font-variant: small-caps`, so the state is upper case at ~70% of the label
+# size, which is what faux small caps are.
+STATE_FONT_SIZE = 9
 
 # How much of a transcript tail is parsed. Session files reach several MB, and
 # only the last few records decide the state.
@@ -472,7 +480,11 @@ def format_label(sessions: list[Session], page: int, max_items: int) -> tuple[st
 
 def _segment(session: Session) -> str:
     color = STATE_COLORS.get(session.state, "#c0c0c0")
-    return f'{html.escape(session.label)} (<font color="{color}">{session.state}</font>)'
+    state = session.state.upper()
+    return (
+        f'{html.escape(session.label)} <span style="font-size:{STATE_FONT_SIZE}px; letter-spacing:1px">'
+        f'<font color="{color}">{state}</font></span>'
+    )
 
 
 def error_payload() -> str:

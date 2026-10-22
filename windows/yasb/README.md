@@ -8,7 +8,7 @@ children so a group reads as a single surface.
 
 ```
 left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
-       pi_agents                  (live Pi sessions: Project (state) | ...)
+       pi_agents                  (live Pi sessions: Project STATE ...)
 center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
         grouper_sysinfo           (cpu % · memory · gpu)
@@ -28,7 +28,7 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
-| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project (state)` per session, Pi mark icon from `pi-logo.png`; left click pages the overflow, right click opens the detail table |
+| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click pages the overflow, right click opens the detail table |
 
 ## Center: the audio visualizer alone
 
@@ -130,8 +130,15 @@ limitation, not a config one.
 segment per session:
 
 ```
-verdu.dotfiles (working) | vre-mcp (idle) | dante-store (planning)
+🅿 dante-store WORKING   verdu.dotfiles WORKING   vre-mcp IDLE
 ```
+
+No separator glyph: segments are separated by a gap (`&nbsp;&nbsp;`) and each one
+ends with its state. The state is **faux small caps** — upper case at 9 px with
+1 px letter spacing, inside the pill's ~13 px label. Real small caps are not
+available: no Nerd Font on this machine carries the Unicode small-caps block
+(CaskaydiaCove NF/NFP/NFM and JetBrainsMono NF* lack `ᴡ ᴏ ʀ ᴋ ɴ`, checked with
+`fontTools`), and Qt rich text ignores `font-variant: small-caps`.
 
 Sources (local files only, no network):
 

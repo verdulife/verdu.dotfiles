@@ -313,7 +313,7 @@ widgets:
         on_right: 'exec start "" "https://opencode.ai/console/wrk_01KR0RFFBT5FCG3YTKPGW9JTSB"'
 
   # --- Pi agents: one segment per live Pi session (2026-10-21) -------------
-  # "Project (state) | Project (state) | ..." built by pi_agents.py from
+  # "Project STATE   Project STATE   ..." built by pi_agents.py from
   # ~/.pi/agent/gentle-agents/presence (heartbeat <= 15 s means live) and the
   # tail of each session transcript (which tool ran last, whether the turn is
   # still open).

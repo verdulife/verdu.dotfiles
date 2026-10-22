@@ -200,15 +200,18 @@ class LabelTests(unittest.TestCase):
                           phase=state if state in pa.STATE_RANK and state not in {"working", "idle", "blocked", "offline"} else None,
                           child=None, model=None, started_at=None, session_id=None)
 
-    def test_two_sessions_render_name_and_state(self):
+    def test_two_sessions_render_name_and_small_caps_state(self):
         text, page, pages = pa.format_label([self.session("verdu.dotfiles", "working"),
                                              self.session("vre-mcp", "idle")], 0, 3)
         self.assertEqual(
             text,
-            'verdu.dotfiles (<font color="#8fb3d9">working</font>) | '
-            'vre-mcp (<font color="#7f8c8d">idle</font>)',
+            'verdu.dotfiles <span style="font-size:9px; letter-spacing:1px"><font color="#8fb3d9">WORKING</font></span>'
+            '&nbsp;&nbsp;'
+            'vre-mcp <span style="font-size:9px; letter-spacing:1px"><font color="#7f8c8d">IDLE</font></span>',
         )
         self.assertEqual((page, pages), (0, 1))
+        self.assertNotIn("|", text)
+        self.assertNotIn("(", text)
 
     def test_overflow_shows_the_hidden_count(self):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
@@ -219,7 +222,7 @@ class LabelTests(unittest.TestCase):
     def test_second_page_shows_the_rest(self):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
         text, page, pages = pa.format_label(sessions, 1, 3)
-        self.assertTrue(text.startswith("p3 ("), text)
+        self.assertTrue(text.startswith("p3 <span"), text)
         self.assertTrue(text.endswith(" +3"), text)
         self.assertEqual((page, pages), (1, 2))
 
@@ -227,7 +230,7 @@ class LabelTests(unittest.TestCase):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
         text, page, _ = pa.format_label(sessions, 7, 3)
         self.assertEqual(page, 1)
-        self.assertTrue(text.startswith("p3 ("), text)
+        self.assertTrue(text.startswith("p3 <span"), text)
 
     def test_no_sessions_render_nothing(self):
         self.assertEqual(pa.format_label([], 0, 3), ("", 0, 0))
