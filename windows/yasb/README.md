@@ -30,6 +30,30 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 | `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click pages the overflow, right click opens the detail table |
 
+## System info icons (CPU / RAM / GPU)
+
+The three sysinfo widgets open with a wordmark PNG instead of a Nerd Font glyph:
+the label's icon span is empty (`<span class="icon"></span>`) and `styles.css` sets
+`qproperty-pixmap` per widget class (`.cpu-widget`, `.memory-widget`,
+`.gpu-widget`), pointing at absolute paths under `C:/Users/verdu/.config/yasb/`
+(the stylesheet resolves relative paths against the YASB working directory).
+
+`cpu-icon.png`, `ram-icon.png`, `gpu-icon.png` are 28x8 with a transparent
+background and `#F2F4F7` blocks, rendered by `make_sysinfo_icons.py` from the
+1024x384 FigCraft exports (art on a 14x4 grid of 64px cells). The script reads
+the grid and repaints each filled cell as 2x2 px instead of resampling, because
+plain downscaling loses the 2px gaps between cells and smears the strokes.
+
+The rules set a fixed 28x8 `min`/`max` size on the span: `qproperty-pixmap` alone
+leaves the label at zero width. To change the size, run
+`py -B make_sysinfo_icons.py --cell <n>` in this folder (14*n wide, 4*n tall) and
+match the three size values in `styles.css`. A missing PNG simply renders an empty
+icon, never a tofu box.
+
+At this size the letters are 4 cells wide, so `CPU` and `GPU` read cleanly while
+the `M` of `RAM` (identical to an `H` except for its top bump) still reads as
+`RAH`. That is the source art, not the scaling: a legible `M` needs 5 columns.
+
 ## Center: the audio visualizer alone
 
 The center holds only `audio_visualizer`. Its idle state is a collapse to zero width

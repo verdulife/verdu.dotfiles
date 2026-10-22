@@ -197,11 +197,14 @@ widgets:
       collapse_options:
         enabled: false # always expanded, not collapsible
 
+  # CPU / memory / GPU icons are the CPU-RAM-GPU wordmark PNGs, not bar glyphs:
+  # the icon span carries no text and styles.css sets its pixmap (qproperty-pixmap),
+  # so a failed load degrades to no icon instead of a tofu box.
   cpu:
     type: "yasb.cpu.CpuWidget"
     options:
-      label: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%" # icon kept, freq dropped
-      label_alt: "<span class=\"icon\">\uf2db</span> {info[percent][total]}%"
+      label: "<span class=\"icon\"></span> {info[percent][total]}%" # icon kept, freq dropped
+      label_alt: "<span class=\"icon\"></span> {info[percent][total]}%"
       update_interval: 2000
       menu:
         enabled: false
@@ -209,8 +212,8 @@ widgets:
   memory:
     type: "yasb.memory.MemoryWidget"
     options:
-      label: "<span class=\"icon\">\uefc5</span> {virtual_mem_percent}%"
-      label_alt: "<span class=\"icon\">\uefc5</span> VIRT {virtual_mem_percent}% SWAP {swap_mem_percent}%"
+      label: "<span class=\"icon\"></span> {virtual_mem_percent}%"
+      label_alt: "<span class=\"icon\"></span> VIRT {virtual_mem_percent}% SWAP {swap_mem_percent}%"
       update_interval: 3000
       menu:
         enabled: false
@@ -222,8 +225,8 @@ widgets:
       # something is wrong): a left click toggles to label_alt, the detail
       # state. GpuWidget defaults on_left to toggle_label, so no callbacks
       # block is needed.
-      label: "<span class=\"icon\">\uf108</span> {info[utilization]}%" # icon U+F108 fa-desktop (was fa-flash)
-      label_alt: "<span class=\"icon\">\uf108</span> {info[utilization]}% · {info[temp]}°C · {info[mem_used]}/{info[mem_total]}"
+      label: "<span class=\"icon\"></span> {info[utilization]}%"
+      label_alt: "<span class=\"icon\"></span> {info[utilization]}% · {info[temp]}°C · {info[mem_used]}/{info[mem_total]}"
       update_interval: 3000
       menu:
         enabled: false

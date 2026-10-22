@@ -45,6 +45,9 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/yasb/pi_agents.py` | `%USERPROFILE%\.config\yasb\pi_agents.py` |
 | `windows/yasb/pi-logo.png` | `%USERPROFILE%\.config\yasb\pi-logo.png` |
 | `windows/yasb/opencode-logo.png` | `%USERPROFILE%\.config\yasb\opencode-logo.png` |
+| `windows/yasb/cpu-icon.png` | `%USERPROFILE%\.config\yasb\cpu-icon.png` |
+| `windows/yasb/ram-icon.png` | `%USERPROFILE%\.config\yasb\ram-icon.png` |
+| `windows/yasb/gpu-icon.png` | `%USERPROFILE%\.config\yasb\gpu-icon.png` |
 | `windows/win-terminal/settings.json` | `%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json` |
 | `windows/powershell/Microsoft.PowerShell_profile.ps1` | `%USERPROFILE%\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` |
 | `windows/powershell/user_profile.ps1` | `%USERPROFILE%\.config\powershell\user_profile.ps1` |

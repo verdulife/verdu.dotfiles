@@ -110,6 +110,30 @@
   margin-right: 4px;
 }
 
+/* ---- System info icons: CPU / RAM / GPU wordmark PNGs ----
+   The label's icon span carries no text; each widget sets its wordmark as the
+   span's pixmap. The PNGs are rendered from the source block grid at 2px per
+   cell (28x8), so the bar does no runtime scaling; qproperty-pixmap needs the
+   matching fixed min/max size or the label collapses to zero width. */
+.cpu-widget .icon,
+.memory-widget .icon,
+.gpu-widget .icon {
+  min-width: 28px;
+  max-width: 28px;
+  min-height: 8px;
+  max-height: 8px;
+  margin-right: 5px;
+}
+.cpu-widget .icon {
+  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/cpu-icon.png");
+}
+.memory-widget .icon {
+  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/ram-icon.png");
+}
+.gpu-widget .icon {
+  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/gpu-icon.png");
+}
+
 /* Media Lite: spacing between cover and text + its popup */
 .media-lite-widget .widget-container {
   padding: 0 6px;
