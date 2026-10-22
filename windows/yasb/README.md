@@ -28,7 +28,7 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
-| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project (state)` per session, left click pages the overflow, right click opens the detail table |
+| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project (state)` per session, Pi mark icon from `pi-logo.png`; left click pages the overflow, right click opens the detail table |
 
 ## Center: the audio visualizer alone
 
@@ -174,5 +174,24 @@ hides the pill, so nothing empty is left in the bar. The label template is
 `"{data}"` and not `"{data[text]}"` on purpose: YASB formats the template *before*
 it checks `hide_empty`, so a failed format (a `None` payload) would leave the
 literal template painted.
+
+### Icon
+
+The pill starts with the Pi mark: `<span class="icon"></span>` in the label plus a
+`qproperty-pixmap` rule in `styles.css` pointing at
+`C:/Users/verdu/.config/yasb/pi-logo.png` (absolute, because the stylesheet resolves
+relative paths against the YASB working directory). The PNG is 18x18 with a
+transparent background, rasterized from the supplied `pi-logo-on-dark.svg`:
+
+The mark is **monochrome white**: all three `fill` values of the supplied
+`pi-logo-on-dark.svg` are rewritten to `#FFFFFF` before rasterizing, so the
+internal pieces read as one white glyph on the dark pill instead of three colours.
+
+    sed -e 's/#F09082/#FFFFFF/; s/#4D9ABF/#FFFFFF/; s/#F1BE58/#FFFFFF/' \
+        pi-logo-on-dark.svg > pi-logo-white.svg
+    magick -background none -density 1200 pi-logo-white.svg -resize 18x18 -depth 8 -strip pi-logo.png
+
+No SVG at runtime on purpose: the frozen YASB build is not guaranteed to ship the Qt
+SVG image plugin, and the same rule pattern already works for `opencode_go`.
 
 Tests: `py -B -m unittest discover -s windows/yasb -p "test_*.py"` from the repo root.

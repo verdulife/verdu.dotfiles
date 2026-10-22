@@ -128,3 +128,19 @@ the offered base ref and the consent answer came back
 `run_cmd` and its two `exec` callbacks). Nothing was reviewed, nothing was
 corrected, and no authority was burned. Delivery is unaffected: both commits are
 on `main`, unpushed.
+
+L12 (user, 2026-10-21, verbatim):
+> en mi escritorio te he dejado un svg del logotipo de pi. quiero añadirlo al inicio igual que lo hicimos en el de opencode
+
+L13 (user, 2026-10-21, verbatim):
+> me gusta que le has quitado el fondo negro, pero podrias hacer que todas las piezas internas sean blancas?
+
+L14 (evidence, 2026-10-21): icon added with the `opencode_go` pattern — an empty
+`<span class="icon"></span>` in the label plus `.pi-agents-widget .icon {
+qproperty-pixmap: url("C:/Users/verdu/.config/yasb/pi-logo.png") }` at 18x18 with a
+transparent background (no SVG at runtime: the frozen build is not guaranteed to
+ship the Qt SVG plugin). Rasterized with `magick -density 1200 ... -resize 18x18
+-depth 8 -strip`. Per L13 the three `fill` values are rewritten to `#FFFFFF`
+first, so the mark is monochrome white; the coloured version was rejected after
+seeing it in the bar. Verified by screenshot after a YASB restart (PID 19196, 0
+ERROR/WARNING lines in `yasb.log`).

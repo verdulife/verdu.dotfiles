@@ -286,3 +286,15 @@
   font-family: "CaskaydiaCove NFP", "JetBrainsMono NFM", "Segoe UI Variable Text", sans-serif;
   padding: 0 2px;
 }
+
+/* Pi mark (18x18 PNG rasterized from pi-logo-on-dark.svg, transparent
+   background) as the pill icon. The icon span itself carries no text, so if the
+   pixmap ever fails to load the icon renders empty rather than as tofu. */
+.pi-agents-widget .icon {
+  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/pi-logo.png");
+  min-width: 18px;
+  max-width: 18px;
+  min-height: 18px;
+  max-height: 18px;
+  margin-right: 6px;
+}

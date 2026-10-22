@@ -42,6 +42,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/yasb/styles.css` | `%USERPROFILE%\.config\yasb\styles.css` |
 | `windows/yasb/opencode_go.py` | `%USERPROFILE%\.config\yasb\opencode_go.py` |
 | `windows/yasb/pi_agents.py` | `%USERPROFILE%\.config\yasb\pi_agents.py` |
+| `windows/yasb/pi-logo.png` | `%USERPROFILE%\.config\yasb\pi-logo.png` |
 | `windows/yasb/opencode-logo.png` | `%USERPROFILE%\.config\yasb\opencode-logo.png` |
 | `windows/win-terminal/settings.json` | `%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json` |
 | `windows/powershell/Microsoft.PowerShell_profile.ps1` | `%USERPROFILE%\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` |

@@ -332,8 +332,11 @@ widgets:
   pi_agents:
     type: "yasb.custom.CustomWidget"
     options:
-      label: "{data}"
-      label_alt: "{data}"
+      # The icon span carries no text: the Pi mark is set as a pixmap by
+      # .pi-agents-widget .icon in styles.css, so a failed load degrades to an
+      # empty slot instead of a tofu box (same trick as opencode_go).
+      label: '<span class="icon"></span> {data}'
+      label_alt: '<span class="icon"></span> {data}'
       label_placeholder: ""
       class_name: "pi-agents-widget"
       tooltip: false
