@@ -23,7 +23,7 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono; collapses to 0 px when quiet, so the center is empty without audio |
 | `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
 | `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
-| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz) |
+| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz). GPU shows utilization only; the temperature and the memory detail live in `label_alt`, one left click away (`GpuWidget` defaults `on_left` to `toggle_label`) |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
@@ -78,12 +78,30 @@ Label shapes (same 5-cell bar in both, so the pill does not change width when th
 state rotates):
 
 ```
-full        5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%
+full        5h <circle 1/8> 8%  W <circle 2/8> 22%  M <circle 5/8> 59%
 single      5h ▰▱▱▱▱ 8% (1h 29m)
 single      Week ▰▰▱▱▱ 22% (4d 12h)
 single      Month ▰▰▰▱▱ 59% (6d 23h)
 ```
 
+### The full state uses an eight-step circle, not the text bar
+
+`5h`, `W` and `M` in the full state are painted with Material Design's
+`circle-slice-1` .. `circle-slice-8` (U+F0A9E .. U+F0AA5): a donut whose inner
+wedge is exactly 1/8 .. 8/8 full (measured on the installed TTF: 12.3 / 25.6 /
+38.8 / 51.1 / 63.9 / 75.6 / 88.0 / 100 %). The percent is rounded to the nearest
+eighth and floored at 1/8, because there is no 0/8 glyph.
+
+Two things the first attempt got wrong and the script now does on purpose:
+
+- The glyph is rendered at **15 px** (`SLICE_FONT_PX`) although the label is
+  ~13 px. The donut's inner hole is about 4 px at bar size, so an eighth of it
+  is invisible; the extra size is what makes 1/8 and 2/8 tell apart.
+- The glyph uses **`#d7dce2`**, not the muted `#9aa3b2` of the text bars: ring
+  and wedge share one colour, so the muted gray hid the filled part.
+
+The single-metric states (`5h`, `Week`, `Month`, with their reset countdown)
+still use the `BAR_CELLS`-wide text bar.
 The full state abbreviates `W` and `M` to stay a dense three-metric line; the
 single-metric states have room for the words. The reset countdown only fits the
 single-metric states, and it is word-free there: the parentheses next to the percent

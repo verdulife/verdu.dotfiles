@@ -218,8 +218,12 @@ widgets:
   gpu:
     type: "yasb.gpu.GpuWidget"
     options:
-      label: "<span class=\"icon\">\uf108</span> {info[utilization]}% · {info[temp]}°C" # icon U+F108 fa-desktop (was fa-flash)
-      label_alt: "<span class=\"icon\">\uf108</span> {info[utilization]}% | {info[mem_used]}/{info[mem_total]}"
+      # Temperature stays off the pill (too wide, and it only matters when
+      # something is wrong): a left click toggles to label_alt, the detail
+      # state. GpuWidget defaults on_left to toggle_label, so no callbacks
+      # block is needed.
+      label: "<span class=\"icon\">\uf108</span> {info[utilization]}%" # icon U+F108 fa-desktop (was fa-flash)
+      label_alt: "<span class=\"icon\">\uf108</span> {info[utilization]}% · {info[temp]}°C · {info[mem_used]}/{info[mem_total]}"
       update_interval: 3000
       menu:
         enabled: false
