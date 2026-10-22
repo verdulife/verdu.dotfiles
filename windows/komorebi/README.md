@@ -12,9 +12,9 @@ Start-menu suppression).
 - `komorebi.json` — the static komorebi configuration, applied by komorebi itself
   with `--config`. Monitors and workspaces, `display_index_preferences` (the
   dual-monitor mapping), paddings, borders/colours, `resize_delta`,
-  `mouse_follows_focus: false`, the dialog `ignore_rules`, the CorelDRAW
-  `manage_rules` and the `object_name_change_applications` list (Zen, plus the Word
-  and Excel frames — see the gotcha on Office). **Change a look or
+  `mouse_follows_focus: false`, the dialog `ignore_rules`, the CorelDRAW and
+  VectorCraft `manage_rules` and the `object_name_change_applications` list (Zen, plus
+  the Word and Excel frames — see the gotcha on Office). **Change a look or
   behaviour knob here**, not in the script.
 - `komorebi.ahk` — AHK v2 script: Win-prefixed hotkeys, `~LWin` dummy keystroke (no
   Start menu on a lone Win press), `HideTaskbar` watchdog. Focus-follows-mouse is not
@@ -56,8 +56,11 @@ it to a **running** instance without logging out, run
 · unfocused `{0,0,0}` · `mouse_follows_focus false` ·
 `object_name_change_applications`: `exe zen.exe`, `class OpusApp` (Word),
 `class XLMAIN` (Excel) · `manage_rules`: `class CorelDRAW`
-(`StartsWith`, so it matches `CorelDRAW25`) · `ignore_rules`: the dialog/child
-classes in the gotcha below · 2 monitors × 5 workspaces · per-workspace padding 4/0.
+(`StartsWith`, so it matches `CorelDRAW25`) and the composite `class "Window Class"` +
+`exe vectorcraft.exe` (see the `WS_CAPTION` gotcha; a `manage_rules` entry is either a
+single rule or an array of rules that must **all** match) · `ignore_rules`: the
+dialog/child classes in the gotcha below · 2 monitors × 5 workspaces · per-workspace
+padding 4/0.
 
 Two of those values are duplicated on purpose in `komorebi-autostart.ps1` as
 *expected* values for the post-start verification (`$expectedResizeDelta`,
@@ -167,6 +170,20 @@ It is a HM-style Toggle: `Super` = the Windows key.
   matching `CorelDRAW25`). Do not widen it to `exe CorelDRW.exe`: that app also owns
   layered `Dial Wheel` popups, `ComboLBox`, IME, DDE and `Afx:...:0` helpers, and the
   override bypasses the layered test as well, so an exe-wide rule tiles that junk.
+  **VectorCraft 0.13.1 is the same defect with a different owner**: its main window
+  (`Window Class` — both it and `figcraft.exe` are tao/winit apps, and `figcraft` tiles
+  fine) measured `St=0x160f0000` / `Ex=0x00040110` on 2026-10-22 — `WS_VISIBLE`,
+  `WS_CLIPSIBLINGS`, `WS_CLIPCHILDREN`, `WS_SYSMENU`, `WS_THICKFRAME`,
+  `WS_MINIMIZEBOX`, `WS_MAXIMIZEBOX`, `WS_EX_WINDOWEDGE`, `WS_EX_APPWINDOW`,
+  `WS_EX_ACCEPTFILES`, owner 0, not cloaked, **no `WS_CAPTION`** (the single bit that
+  fails the gate). Its rule is therefore the composite `class "Window Class"` **and**
+  `exe vectorcraft.exe` (both `Equals`) — not an `exe` rule: the same process owns a
+  visible 16×16 `Winit Thread Event Target` top-level with `Ex=0x080800a0`
+  (`WS_EX_LAYERED`) and a `wgpu Device Class …` helper, and `managed_override`
+  bypasses the layered test, so an exe-wide rule would land a ghost tile on that junk
+  (the CorelDRAW trap again). Unlike Office, the app **does** send `EVENT_OBJECT_SHOW`
+  for the main window: a cold open lands in a container from the manage rule alone, so
+  it needs no `object_name_change_applications` entry.
   There is no `unmanage-rule`; the rules are applied at start from `komorebi.json`, so
   reverting means editing that file and restarting komorebi. To see the verdict for any
   window, start komorebi with `--log-level debug`: it prints

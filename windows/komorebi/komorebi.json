@@ -59,6 +59,10 @@
   ],
 
   "manage_rules": [
-    { "kind": "Class", "id": "CorelDRAW", "matching_strategy": "StartsWith" }
+    { "kind": "Class", "id": "CorelDRAW", "matching_strategy": "StartsWith" },
+    [
+      { "kind": "Class", "id": "Window Class",    "matching_strategy": "Equals" },
+      { "kind": "Exe",   "id": "vectorcraft.exe", "matching_strategy": "Equals" }
+    ]
   ]
 }
