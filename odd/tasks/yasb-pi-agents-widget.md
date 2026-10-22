@@ -161,3 +161,42 @@ color=...>STATE</font></span>`; the parentheses are gone. Verified in the bar by
 screenshot after a restart: `dante-store WORKING   verdu.dotfiles WORKING`, 0
 ERROR/WARNING lines in `yasb.log`. Tests updated (45 OK), including assertions
 that the label contains neither `|` nor `(`.
+
+L18 (user, 2026-10-22, verbatim):
+> ahora solo pregunta, podriamos hacer que al clicar en el widget de los agentes de pi, haga focus en la terminal que lo contiene?
+> no es lo que busco. tenemos que confirmar si hay alguna manera de poder clicar cada agente de forma invividual o descartamos esta funcionalidad
+> ok, pue anotamos, commit y push
+
+L19 (investigation, 2026-10-22): per-agent clicks are **discarded**. Three
+blockers, all verified, not assumed:
+
+1. The grouper cannot have dynamic children:
+   `GrouperWidgetConfig.widgets: list[str] = []` (yasb main,
+   `src/core/validation/widgets/yasb/grouper.py:15`). Sessions are dynamic, so
+   the most that could exist is a fixed number of slots (`pi_agent_1..N`),
+   each bound to the Nth live session — scaffolding, not the feature.
+2. There is no session -> process mapping: the presence header carries
+   `schema, sessionHash, incarnation, label, heartbeat, generation, counts,
+   digest, unavailable` and no `pid`; and the Pi processes are
+   `node ...\pi-launcher.js -c` with no session id in the command line
+   (observed PIDs 10604, 11864, 27088 with three live sessions).
+3. Even with a pid there would be no tab to focus: Pi nulls the terminal
+   title on purpose — `setTitle: () => { }` in
+   `pi-coding-agent/dist/core/extensions/runner.js:146` — so Windows Terminal
+   tab titles cannot identify a session, and the window title only reflects the
+   active tab (observed "Help" on the single WT window, PID 7412).
+
+Consequence: with one Windows Terminal window holding several tabs, every
+per-session click would focus the same window, so N clickable slots would add
+nothing over a single click target. Making it real needs `pid` in the presence
+publisher (a package patch that `pi update` can overwrite), the session id in
+the terminal title, and UI Automation to select the tab: a package-level
+project, not a widget change.
+
+L20 (decision, 2026-10-22): option A stays **available but not implemented** —
+one click on the pill brings the terminal window forward (enumerate
+`pi-launcher.js` processes, walk `ParentProcessId` to the process with a
+`MainWindowHandle`, `ShowWindow(SW_RESTORE)` + `SetForegroundWindow`), with
+left = focus, middle = page, right = detail table. The user did not ask for it
+now; the pill remains read-only with left = page, right = popup. Nothing in the
+widget changed for this line of investigation.
