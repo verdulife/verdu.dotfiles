@@ -37,8 +37,9 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
 
 - **komorebi border formula**: visible inset =
   `workspace_padding + container_padding + (border_width + border_offset)`.
-  The values live in `windows/komorebi/komorebi.json`; `windows/komorebi/README.md`
-  documents the formula; editing them shifts tile↔bar alignment.
+  The values live in the two `windows/komorebi/komorebi.<machine>.json` variants;
+  `windows/komorebi/README.md` documents the formula; editing them shifts
+  tile↔bar alignment.
 - **YASB restarts** after style/config edits — that's how edits take effect.
 - **Nerd Font family = "JetBrainsMono NF"** (Propo = `NFP`, use first for icons).
 - **`mouse_follows_focus` stays OFF**; **focus-follows-mouse is the `masir` daemon**
@@ -46,9 +47,16 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
   file and only raises managed tiles). Do not go back to komorebi's `--ffm` (its mouse
   hook dies after a fullscreen video and a toggle cannot reinstall it) nor to an AHK
   polling timer (it killed context menus by activating their `#32768` popup).
-- **komorebi configuration lives in `windows/komorebi/komorebi.json`** (monitors,
-  `display_index_preferences`, paddings, borders, colours, ignore/manage rules),
-  applied by komorebi itself with `--config`. `komorebi-autostart.ps1` only supervises
+- **komorebi configuration lives in `windows/komorebi/komorebi.home.json` and
+  `windows/komorebi/komorebi.work.json`** — one per machine, both tracked and both
+  kept current (monitors, `display_index_preferences`, paddings, borders, colours,
+  ignore/manage rules), applied by komorebi itself with `--config`. **Copy exactly
+  one**: `home` on the two-monitor machine, `work` on the single-monitor one, both to
+  `%USERPROFILE%\komorebi.json`. Every key except `display_index_preferences` and
+  `monitors` is shared and must stay identical;
+  `windows/komorebi/tests/config-variants.Tests.ps1` fails when they drift (run it:
+  `powershell -ExecutionPolicy Bypass -Command "Invoke-Pester windows/komorebi/tests"`).
+  `komorebi-autostart.ps1` only supervises
   (retry, state-dump guard, ordering, verification, log) and re-applies nothing; it
   duplicates `resize_delta` and the workspace count purely as verification
   expectations, so keep those two in sync with the JSON.
@@ -60,7 +68,7 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
 | Want to change | File |
 |---|---|
 | WM hotkeys, taskbar, Win key | `windows/komorebi/komorebi.ahk` |
-| Workspaces/gaps/borders/colours, monitors, dialog & manage rules | `windows/komorebi/komorebi.json` (+ `spy-dialog.ps1` repo-only to discover dialog classes) |
+| Workspaces/gaps/borders/colours, monitors, dialog & manage rules | `windows/komorebi/komorebi.<machine>.json` — both variants, or the drift gate fails (+ `spy-dialog.ps1` repo-only to discover dialog classes) |
 | Logon order, retry window, per-process guards, verification | `windows/komorebi/komorebi-autostart.ps1` |
 | Bar widgets/groups/pill look | `windows/yasb/config.yaml` + `styles.css` |
 | Windows Terminal (profiles, keys) | `windows/win-terminal/settings.json` |

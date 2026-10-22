@@ -1,21 +1,26 @@
 # komorebi + AutoHotkey (Windows)
 
-The window-manager half of the Windows desktop. `komorebi.json` is the single
-source of truth for the WM's **configuration** (monitors, workspaces, paddings,
-borders, colours, rules) and komorebi applies it itself; `komorebi-autostart.ps1`
-is the **logon supervisor** that starts everything and verifies it;
-`komorebi.ahk` holds the hotkeys and the desktop behaviour (hidden taskbar,
-Start-menu suppression).
+The window-manager half of the Windows desktop. The deployed `komorebi.json` is the
+single source of truth for the WM's **configuration** (monitors, workspaces, paddings,
+borders, colours, rules) and komorebi applies it itself; it is tracked as **one variant
+per machine** (`komorebi.home.json`, `komorebi.work.json` — see "Two variants, one per
+machine" below); `komorebi-autostart.ps1` is the **logon supervisor** that starts
+everything and verifies it; `komorebi.ahk` holds the hotkeys and the desktop behaviour
+(hidden taskbar, Start-menu suppression).
 
 ## Files
 
-- `komorebi.json` — the static komorebi configuration, applied by komorebi itself
-  with `--config`. Monitors and workspaces, `display_index_preferences` (the
-  dual-monitor mapping), paddings, borders/colours, `resize_delta`,
-  `mouse_follows_focus: false`, the dialog `ignore_rules`, the CorelDRAW and
-  VectorCraft `manage_rules` and the `object_name_change_applications` list (Zen, plus
-  the Word and Excel frames — see the gotcha on Office). **Change a look or
-  behaviour knob here**, not in the script.
+- `komorebi.home.json` / `komorebi.work.json` — the static komorebi configuration,
+  tracked **one variant per machine** (two-monitor home, single-monitor work — see
+  "Two variants, one per machine" below) and deployed as
+  `%USERPROFILE%\komorebi.json`, where komorebi applies it itself with `--config`.
+  Monitors and workspaces, `display_index_preferences` (the monitor serial mapping),
+  paddings, borders/colours, `resize_delta`, `mouse_follows_focus: false`, the dialog
+  `ignore_rules`, the CorelDRAW and VectorCraft `manage_rules` and the
+  `object_name_change_applications` list (Zen, plus the Word and Excel frames — see the
+  gotcha on Office). Only the monitors and the serial mapping are per-machine; every
+  other key is shared and identical in both variants. **Change a look or behaviour knob
+  here**, not in the script.
 - `komorebi.ahk` — AHK v2 script: Win-prefixed hotkeys, `~LWin` dummy keystroke (no
   Start menu on a lone Win press), `HideTaskbar` watchdog. Focus-follows-mouse is not
   here and not in komorebi — the `masir` daemon does it (see below) — and there is no
@@ -44,10 +49,11 @@ exactly on the YASB bar's 4 px box — that is what keeps bar and tiles aligned.
 Change `border_width`/`border_offset` and re-derive the paddings, or the bar
 misaligns.
 
-## Configuration (`komorebi.json`)
+## Configuration (`komorebi.home.json` / `komorebi.work.json`)
 
-`komorebi.json` is the source of truth. komorebi applies it at start; to re-apply
-it to a **running** instance without logging out, run
+The deployed `%USERPROFILE%\komorebi.json` is the source of truth, and whichever variant
+matches the machine is its tracked source (see the next section). komorebi applies it at
+start; to re-apply it to a **running** instance without logging out, run
 `komorebic replace-configuration "$HOME\komorebi.json"` and compare
 `komorebic state` (`komorebic check` validates the file in place). Shipped values:
 
@@ -59,37 +65,62 @@ it to a **running** instance without logging out, run
 (`StartsWith`, so it matches `CorelDRAW25`) and the composite `class "Window Class"` +
 `exe vectorcraft.exe` (see the `WS_CAPTION` gotcha; a `manage_rules` entry is either a
 single rule or an array of rules that must **all** match) · `ignore_rules`: the
-dialog/child classes in the gotcha below · 2 monitors × 5 workspaces · per-workspace
-padding 4/0.
+dialog/child classes in the gotcha below · monitors: 2 × 5 workspaces in
+`komorebi.home.json`, 1 × 5 in `komorebi.work.json` (the per-machine half) ·
+per-workspace padding 4/0.
 
 Two of those values are duplicated on purpose in `komorebi-autostart.ps1` as
 *expected* values for the post-start verification (`$expectedResizeDelta`,
 `$expectedWorkspaces`): if the config ever fails to apply, the checks fail and the
 log says so. **Change `resize_delta` or the workspace count in both files.**
 
-### One file per machine — read this before copying
+### Two variants, one per machine — read this before copying
 
-`komorebi.json` carries machine-specific monitor data, so the tracked copy and a
-machine's deployed copy are **not** expected to be byte-identical, and the
-`MANIFEST.md` copy rule applies to the *shared* keys only.
+The repo tracks **both** machines' configurations and keeps both current. They are
+copied to the same destination (`%USERPROFILE%\komorebi.json`), so choosing the right
+one is part of the install, not an afterthought:
 
-| | tracked file in this repo | this machine's deployed file |
+| | `komorebi.home.json` | `komorebi.work.json` |
 |---|---|---|
 | `display_index_preferences` | `{ "0": "CNK51707R2", "1": "CNK6180S06" }` | `{ "0": "CZK83705DT" }` |
 | monitor blocks | 2 (workspaces `I`–`V` and `1`–`5`) | 1 (workspaces `I`–`V`) |
 | which machine | the **home** machine | the **work** machine (`HWP26FC`, Radeon RX 580) |
 
-`CZK83705DT` is the live `serial_number_id` of this machine's single panel, so the
-deployed file is the one that matches the hardware here; the tracked file describes
-the two-monitor machine. Copying the tracked file verbatim onto a different machine
-rewrites its monitor mapping.
+**Which variant is this machine?** `komorebic state` prints a `serial_number_id` per
+monitor: `CZK83705DT` is the work machine's single panel (`device=HWP26FC`,
+`device_id=HWP26FC-5&19f65d6f&0&UID781`), while `CNK51707R2` and `CNK6180S06` are the
+home machine's two panels. Copy the matching variant to `%USERPROFILE%\komorebi.json`
+and **never copy the other one**.
 
-**The rule**: shared keys — `ignore_rules`, `manage_rules`,
-`object_name_change_applications`, paddings, borders, colours, `resize_delta` — are
-written into **both** copies (that is what `MANIFEST.md`'s copy contract means here);
-the `display_index_preferences` map and the `monitors` blocks follow the destination's
-hardware and are edited by hand. Decision and evidence:
-`odd/tasks/komorebi-config-per-machine.md`.
+Why the hard "never": `display_index_preferences` and the `monitors` blocks follow the
+destination's hardware, and the wrong copy does not fail loudly — an unknown serial
+simply never matches, so the local mapping is lost silently and the panel(s) lose their
+workspace assignment.
+
+**The rule (enforced, not aspirational)**: every key *except*
+`display_index_preferences` and `monitors` — `ignore_rules`, `manage_rules` (including
+the composite VectorCraft rule), `object_name_change_applications`, paddings, borders,
+colours, `resize_delta`, `mouse_follows_focus`, `$schema` — carries the same value in
+**both** variants. `tests/config-variants.Tests.ps1` is the drift gate: it parses both
+files, requires the same top-level key set, compares every shared key as data
+(`ConvertTo-Json -Depth 20 -Compress`, so a nested rule list is compared as a list, not
+as text), and asserts the two per-machine keys exist and differ. A failure names the
+offending key and both values — write the missing value into the other variant. Run it
+from Windows PowerShell after touching either file (the policy on these machines is
+Restricted, so bypass it per process):
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "Invoke-Pester windows/komorebi/tests"
+```
+
+`komorebic check -k <path-to-a-variant>` validates a variant in place without touching
+the deployed file (exit 0 for both on 2026-10-22), which is how a change can be proven
+before the copy. The two variants also differ in bytes — `komorebi.work.json` is a
+byte-faithful copy of what that machine deploys (LF, and no trailing newline; with
+`core.autocrlf=true` a fresh clone may materialise it as CRLF, which the JSON does not
+care about — `diff --strip-trailing-cr` is the check), `komorebi.home.json` is CRLF — and
+the gate compares data, so that never fails it.
+Decision, mechanism and evidence: `odd/tasks/komorebi-config-per-machine.md`.
 
 ## Focus follows mouse (masir — not komorebi, not AHK)
 
@@ -206,7 +237,8 @@ It is a HM-style Toggle: `Super` = the Windows key.
   `_WwB`, `_WwO`, `OleDdeWndClass`, `MsoStdCompMgr`, `AcroStubUnloadWClass`,
   `OfficePowerManagerWindow`, `HardwareMonitorWindowClass`, `MSCTFIME UI`, `IME` and
   `ARC Event Window 00`, and `EXCEL.EXE` its own set (`ComboLBox`, …).
-- **Configuration lives in exactly one place.** `komorebi.json` is applied by komorebi
+- **Configuration lives in exactly one place.** The deployed `komorebi.json` — one of
+  the two tracked variants — is applied by komorebi
   (`--config`); the logon script supervises and verifies but re-applies nothing, so a
   knob that is only in a doc or only in the script does not exist. Two schema details
   bite when hand-editing it: every workspace needs a `name` (it is required), and

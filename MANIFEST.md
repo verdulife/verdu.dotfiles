@@ -32,7 +32,8 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 
 | Repo file | Destination (Windows) |
 |---|---|
-| `windows/komorebi/komorebi.json` | `%USERPROFILE%\komorebi.json` |
+| `windows/komorebi/komorebi.home.json` | `%USERPROFILE%\komorebi.json` (two-monitor machine only) |
+| `windows/komorebi/komorebi.work.json` | `%USERPROFILE%\komorebi.json` (single-monitor machine only) |
 | `windows/komorebi/komorebi.ahk` | `%USERPROFILE%\komorebi.ahk` |
 | `windows/komorebi/komorebi-autostart.ps1` | `%USERPROFILE%\komorebi-autostart.ps1` |
 | `windows/komorebi/container-dump.ps1` | `%USERPROFILE%\komorebi-container-dump.ps1` |
@@ -52,6 +53,15 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/nushell/config.nu` | `%APPDATA%\nushell\config.nu` |
 | `windows/nushell/env.nu` | `%APPDATA%\nushell\env.nu` |
 | `windows/herdr/config.toml` | `%APPDATA%\herdr\config.toml` |
+
+> **Copy exactly one komorebi configuration.** `komorebi.home.json` on the two-monitor
+> (home) machine, `komorebi.work.json` on the single-monitor (work) machine — both to
+> `%USERPROFILE%\komorebi.json` — and **never the other one**. Tell the machines apart
+> with `komorebic state`: `serial_number_id=CZK83705DT` is the work machine, the home
+> machine maps `CNK51707R2` + `CNK6180S06`. Every key except `display_index_preferences`
+> and `monitors` is shared and must stay identical in both variants;
+> `windows/komorebi/tests/` fails when they drift. Details, including how to run it:
+> `windows/komorebi/README.md`.
 
 > `windows/nushell/setup-autoloads.nu` is NOT copied; run it once after copying,
 > from a shell where `nu`, `starship` and `zoxide` are on PATH, to regenerate
@@ -96,12 +106,15 @@ machine before.
   or `README.md` wins. The three documents the install path depends on are
   `MANIFEST.md` (where files go), `README.md` (what they do) and `AGENTS.md`.
 - `windows/komorebi/spy-dialog.ps1`, `windows/komorebi/snapshot-wm.ps1` and
-  `windows/komorebi/tests/` are **repo-only** diagnostic tools (window-class spy,
-  layout measuring, Pester tests); they are never copied. The `windows/komorebi/`
-  rows in the table above are the only komorebi files that get deployed.
-- `windows/komorebi/komorebi.json` is komorebi's **configuration** and is applied
-  by komorebi itself (`komorebi.exe --config`); `komorebi-autostart.ps1` is only the
-  logon supervisor and does not re-apply it.
+  `windows/komorebi/tests/` are **repo-only** tools (window-class spy, layout
+  measuring, Pester tests for the deployed helpers and the drift gate that keeps the
+  two komorebi variants' shared keys identical); they are never copied. The
+  `windows/komorebi/` rows in the table above are the only komorebi files that get
+  deployed.
+- `windows/komorebi/komorebi.home.json` and `windows/komorebi/komorebi.work.json` are
+  komorebi's **configuration** variants — one per machine, selected by the note under
+  the table — and are applied by komorebi itself (`komorebi.exe --config`);
+  `komorebi-autostart.ps1` is only the logon supervisor and does not re-apply them.
 - `windows/win-terminal/settings.json` is a full snapshot that carries
   per-machine dynamic profiles (WSL distro names, Visual Studio versions) and a
   machine-local `defaultProfile` GUID. On a different machine, **merge** it —

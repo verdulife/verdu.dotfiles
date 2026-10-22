@@ -28,7 +28,8 @@ verdu.dotfiles/
 │   └── nvim/             ← Neovim config (LazyVim, lazy.nvim)
 ├── windows/
 │   ├── komorebi/
-│   │   ├── komorebi.json             ← the WM config: monitors, paddings, borders, rules
+│   │   ├── komorebi.home.json        ← WM config, two-monitor machine
+│   │   ├── komorebi.work.json        ← WM config, single-monitor machine
 │   │   ├── komorebi.ahk              ← AHK v2: hotkeys, taskbar, Win key
 │   │   ├── komorebi-autostart.ps1    ← logon supervisor: start, verify, log
 │   │   ├── container-dump.ps1        ← refuses to replay a state dump komorebi must not
@@ -101,7 +102,8 @@ Implied/native details worth knowing:
 - A **dummy keystroke** (`~LWin::Send("{Blind}{vkE8}")`) stops the lone Super
   press from opening the Start menu; all `Super+letter` system shortcuts keep
   working.
-- **Dialogs float**: `ignore_rules` in `windows/komorebi/komorebi.json` lists the
+- **Dialogs float**: `ignore_rules` in `windows/komorebi/komorebi.<machine>.json`
+  (both variants) lists the
   common dialog classes (`#32770`, `TaskDialog`) and Zen's dialog shadow
   (`MozillaDialogClass` / `MozillaDropShadowWindowClass`), so Save As, open and
   copy-progress dialogs stay unmanaged above the tiles. Match by **class**, never
@@ -164,8 +166,9 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 
 - **Gaps / borders** (komorebi): `workspace_padding`, `container_padding`,
   `border_width`, `border_offset`, `border_colours` in
-  `windows/komorebi/komorebi.json` — read the border formula first. Monitors and
-  `display_index_preferences` live in the same file.
+  `windows/komorebi/komorebi.<machine>.json` (both variants) — read the border formula
+  first. Monitors and `display_index_preferences` live in the same file, and are the
+  only keys that differ between the two variants.
 - **YASB look**: pill opacity `rgba(0,0,0,0.45)` in `styles.css` (` .widget`);
   widget set/order in `config.yaml` under `bars.status-bar.widgets`.
 - **Focus follows mouse**: the `masir` daemon, started by the autostart; it only
@@ -201,7 +204,7 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
     reports the pre-existing `node`. For scripted checks use
     `nu --env-config <path>/env.nu -c 'node --version'`.
 21. **A window minimized with the native button keeps its container, and the next window opened on that workspace is squeezed**: verified on this build with the symptom live. On a workspace holding a visible Zen and a Windows Terminal minimized with the native button/taskbar, `komorebic state` keeps the minimized window as a container parked at `-31993,-32000` and Zen stays at **49%** of the work-area width while nothing else is on screen — the reported "the app opens at half, alone". Neither `komorebic retile` nor a workspace switch clears it; only restoring the minimized window does (both measured, `snapshot-wm.ps1` prints the share). This is upstream issue **#1730**, still open on `v0.1.41` and unrelated to the rules in gotcha 19 — do not try to fix it with `ignore-rule`s, the window is a real window. #1729 (`ghost_movement` default) is the same family, and no stable release fixes either yet. Workarounds: minimize with `komorebic minimize` instead of the titlebar/taskbar button — **Win+Shift+M**, already bound in `komorebi.ahk` — or clear it with a komorebi restart — which now also drops the bad dump, so the layout comes back clean. Consequence to expect: any session that ends with a minimized or natively parked window writes a dump the sanitizer refuses, so window-to-workspace placement is not restored at the next logon (the windows come back in the focused workspace). That is deliberate: a replayed dump is how the wrongly-managed containers come back.
-22. **komorebi configuration has one home, and you can test it without logging out**: `windows/komorebi/komorebi.json` is applied by komorebi itself (`--config`), and the logon script only supervises and verifies. To prove a change on the running instance, run `komorebic replace-configuration "$HOME\komorebi.json"` and compare `komorebic state` (`komorebic check` validates the file in place) — that is how the migration was validated before the autostart was touched. Two values (`resize_delta`, workspace count) are duplicated in the script as verification expectations on purpose, so keep them in sync. Write `workspace_padding`/`container_padding` **per workspace**: the global `default_*_padding` keys work, but they leave `state` padding `null` (inherited), which makes the applied config unverifiable from `komorebic state`. And note that a `komorebi.json` workspace requires a `name` — the YASB dots use fixed glyphs, so names are invisible to the bar.
+22. **komorebi configuration has one home, and you can test it without logging out**: `windows/komorebi/komorebi.home.json` and `komorebi.work.json` (one per machine — copy exactly one, see `MANIFEST.md`) are applied by komorebi itself (`--config`), and the logon script only supervises and verifies. To prove a change on the running instance, run `komorebic replace-configuration "$HOME\komorebi.json"` and compare `komorebic state` (`komorebic check` validates the file in place) — that is how the migration was validated before the autostart was touched. Two values (`resize_delta`, workspace count) are duplicated in the script as verification expectations on purpose, so keep them in sync. Write `workspace_padding`/`container_padding` **per workspace**: the global `default_*_padding` keys work, but they leave `state` padding `null` (inherited), which makes the applied config unverifiable from `komorebic state`. And note that a `komorebi.json` workspace requires a `name` — the YASB dots use fixed glyphs, so names are invisible to the bar.
 
 ## Revert
 

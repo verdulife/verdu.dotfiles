@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LGUG2Z/komorebi/v0.1.41/schema.json",
+
+  "display_index_preferences": {
+    "0": "CZK83705DT"
+  },
+
+  "monitors": [
+    {
+      "workspaces": [
+        { "name": "I",   "layout": "BSP", "workspace_padding": 4, "container_padding": 0 },
+        { "name": "II",  "layout": "BSP", "workspace_padding": 4, "container_padding": 0 },
+        { "name": "III", "layout": "BSP", "workspace_padding": 4, "container_padding": 0 },
+        { "name": "IV",  "layout": "BSP", "workspace_padding": 4, "container_padding": 0 },
+        { "name": "V",   "layout": "BSP", "workspace_padding": 4, "container_padding": 0 }
+      ]
+    }
+  ],
+
+  "resize_delta": 25,
+  "border": true,
+  "border_width": 6,
+  "border_offset": -1,
+  "border_style": "Rounded",
+  "border_colours": {
+    "single":           { "r": 64, "g": 64, "b": 64 },
+    "stack":            { "r": 64, "g": 64, "b": 64 },
+    "monocle":          { "r": 64, "g": 64, "b": 64 },
+    "floating":         { "r": 64, "g": 64, "b": 64 },
+    "unfocused":        { "r": 0,  "g": 0,  "b": 0  },
+    "unfocused_locked": { "r": 0,  "g": 0,  "b": 0  }
+  },
+
+  "mouse_follows_focus": false,
+
+  "object_name_change_applications": [
+    { "kind": "Exe",   "id": "zen.exe", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "OpusApp", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "XLMAIN",  "matching_strategy": "Equals" }
+  ],
+
+  "ignore_rules": [
+    { "kind": "Class", "id": "#32770",                          "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "TaskDialog",                      "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "MozillaDialogClass",              "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "MozillaDropShadowWindowClass",    "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "ReunionWindowingCaptionControls", "matching_strategy": "Equals" },
+    { "kind": "Class", "id": "InputNonClientPointerSource",     "matching_strategy": "Equals" }
+  ],
+
+  "manage_rules": [
+    { "kind": "Class", "id": "CorelDRAW", "matching_strategy": "StartsWith" },
+    [
+      { "kind": "Class", "id": "Window Class",    "matching_strategy": "Equals" },
+      { "kind": "Exe",   "id": "vectorcraft.exe", "matching_strategy": "Equals" }
+    ]
+  ]
+}
