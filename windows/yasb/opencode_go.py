@@ -254,6 +254,32 @@ def usage_bar(percent: int, cells: int = BAR_CELLS) -> str:
     return (BAR_FULL * filled) + (BAR_EMPTY * (cells - filled))
 
 
+# Circle progress for the full state: Material Design `circle-slice-1` ..
+# `circle-slice-8` (U+F0A9E .. U+F0AA5). Measured on the installed CaskaydiaCove
+# NFP TTF, the filled fraction inside the ring is 12.3 / 25.6 / 38.8 / 51.1 /
+# 63.9 / 75.6 / 88.0 / 100 % — exact eighths. There is no 0/8 glyph, so the
+# lowest readable step is 1/8 and everything under 12.5 % paints as slice_1.
+SLICE_FIRST = 0xF0A9E
+SLICE_LAST = 0xF0AA5
+SLICE_STEPS = 8
+
+# The glyphs are a donut: the outer ring is always complete and only the inner
+# wedge changes, so at the label's ~13 px they read as a plain ring. Rendering
+# them a couple of pixels larger is what makes the eighths visible at all.
+SLICE_FONT_PX = 15
+
+
+def slice_glyph(percent: int) -> str:
+    """Render a percent as the closest 1/8-step circle glyph (U+F0A9E..U+F0AA5).
+
+    Rounded, not ceiling: a gauge should land on the nearest eighth. The floor is
+    1/8 because there is no 0/8 glyph, so 0..6 % paints as slice_1.
+    """
+    clamped = max(0, min(100, int(percent)))
+    step = max(1, min(SLICE_STEPS, round(clamped * SLICE_STEPS / 100)))
+    return chr(SLICE_FIRST + step - 1)
+
+
 # Click cycle: the pill shows one of four states and the left click rotates it.
 # The state file lives in %TEMP% next to the cache; a missing or corrupt file
 # means STATE_FULL, the default.
@@ -310,10 +336,12 @@ def label_text(state: int, data: dict) -> str:
     and the muted icon gray, exactly like the old inline template did.
 
     Two shapes, per the request of 2026-10-07:
-        full   -> "5h ▰▱▱▱▱ 8%  W ▰▰▱▱▱ 22%  M ▰▰▰▱▱ 59%"
+        full   -> "5h <circle 1/8> 8%  W <circle 2/8> 22%  M <circle 5/8> 59%"
         single -> "5h ▰▱▱▱▱ 8% (1h 27m)"
                   "Week ▰▰▱▱▱ 22% (4d 11h)"
                   "Month ▰▰▰▱▱ 59% (6d 22h)"
+    The full state uses the eight-step circle instead of the text bar (trial of
+    2026-10-22); the single-metric states keep the bar for now.
     The full state abbreviates (W, M) to stay a dense three-metric line; the
     single-metric states have room for the words. The reset countdown only fits the
     single-metric states, and it is word-free there: the parentheses next to the percent
@@ -323,9 +351,16 @@ def label_text(state: int, data: dict) -> str:
     state rotates.
     """
     bar = lambda glyph: f'<font face="CaskaydiaCove NFP" color="#9aa3b2">{glyph}</font>'
+    # Brighter than the bar glyphs: the ring and the wedge share one colour, so the
+    # muted icon gray (#9aa3b2) makes the filled eighth vanish at this size.
+    circle = lambda glyph: (
+        f'<span style="font-size:{SLICE_FONT_PX}px">'
+        f'<font face="CaskaydiaCove NFP" color="#d7dce2">{glyph}</font></span>'
+    )
 
-    def metric(name: str, key: str, with_reset: bool = False) -> str:
-        text = f"{name} {bar(data[f'{key}_bar'])} {data[key]}%"
+    def metric(name: str, key: str, with_reset: bool = False, use_circle: bool = False) -> str:
+        glyph = circle(slice_glyph(data[key])) if use_circle else bar(data[f"{key}_bar"])
+        text = f"{name} {glyph} {data[key]}%"
         return f"{text} ({data[f'{key}_reset']})" if with_reset else text
 
     if state == STATE_ROLLING:
@@ -337,9 +372,9 @@ def label_text(state: int, data: dict) -> str:
 
     return "  ".join(
         (
-            metric("5h", "rolling"),
-            metric("W", "weekly"),
-            metric("M", "monthly"),
+            metric("5h", "rolling", use_circle=True),
+            metric("W", "weekly", use_circle=True),
+            metric("M", "monthly", use_circle=True),
         )
     )
 
