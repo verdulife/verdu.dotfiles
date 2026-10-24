@@ -26,7 +26,6 @@ import argparse
 import hashlib
 import html
 import json
-import math
 import os
 import re
 import sys
@@ -41,9 +40,10 @@ from pathlib import Path
 # (gentle-pi lib/orchestrator-presence.ts), so the two agree by construction.
 LIVE_MS = 15_000
 
-# Segments per page. Three keeps the pill near the width of the sysinfo group;
-# anything longer is reachable with a left click (see README).
-MAX_ITEMS = 3
+# Segments in the visible window. Five keeps the pill near the width of the
+# sysinfo group; a left click slides the window by one session (see README),
+# so the overflow is reachable without a jump in width.
+MAX_ITEMS = 5
 
 SEPARATOR = "&nbsp;&nbsp;"
 
@@ -458,24 +458,40 @@ def sort_key(session: Session) -> tuple[int, int, int]:
     return (STATE_RANK.get(session.state, 1), 0 if session.phase else 1, -session.heartbeat)
 
 
-def next_page(page: int, pages: int) -> int:
-    return 0 if pages <= 0 else (page + 1) % pages
+def _window_size(count: int, max_items: int) -> int:
+    """How many segments fit, never more than there are sessions."""
+    return min(max(1, max_items), count) if count > 0 else 0
 
 
-def format_label(sessions: list[Session], page: int, max_items: int) -> tuple[str, int, int]:
-    """Return (label html, clamped page, page count)."""
+def next_offset(offset: int, count: int, max_items: int) -> int:
+    """Slide the window by one session, wrapping past the last one.
+
+    Nothing slides while every session already fits, so a click on a pill that
+    shows them all leaves the window where it is.
+    """
+    if _window_size(count, max_items) >= count:
+        return 0
+    return (offset + 1) % count
+
+
+def format_label(sessions: list[Session], offset: int, max_items: int) -> tuple[str, int, int]:
+    """Return (label html, clamped window offset, session count).
+
+    The window is a slide, not a page: each offset drops the leftmost session
+    and appends the next one, wrapping around the ordered list.
+    """
     ordered = sorted(sessions, key=sort_key)
-    if not ordered:
+    count = len(ordered)
+    if not count:
         return "", 0, 0
-    max_items = max(1, max_items)
-    pages = max(1, math.ceil(len(ordered) / max_items))
-    page = page % pages
-    window = ordered[page * max_items : (page + 1) * max_items]
+    size = _window_size(count, max_items)
+    offset = 0 if size >= count else offset % count
+    window = [ordered[(offset + index) % count] for index in range(size)]
     text = SEPARATOR.join(_segment(session) for session in window)
-    hidden = len(ordered) - len(window)
+    hidden = count - size
     if hidden > 0:
         text += f" +{hidden}"
-    return text, page, pages
+    return text, offset, count
 
 
 def _segment(session: Session) -> str:
@@ -586,9 +602,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Live Pi agents for the YASB bar")
     parser.add_argument("--presence", help="presence registry directory")
     parser.add_argument("--sessions", help="Pi sessions directory")
-    parser.add_argument("--page-file", help="file that stores the current page")
-    parser.add_argument("--max", type=int, default=MAX_ITEMS, help="segments per page")
-    parser.add_argument("--next", action="store_true", help="advance the page before rendering")
+    parser.add_argument("--page-file", help="file that stores the window offset")
+    parser.add_argument("--max", type=int, default=MAX_ITEMS, help="segments per window")
+    parser.add_argument("--next", action="store_true", help="slide the window by one session before rendering")
     parser.add_argument("--popup", action="store_true", help="open the detail table")
     parser.add_argument("--now", type=int, help="current time in ms (tests)")
     args = parser.parse_args(argv)
@@ -600,15 +616,15 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         sessions = collect_sessions(presence_dir, sessions_dir, now_ms)
-        page = _read_page(page_file)
+        offset = _read_page(page_file)
         if args.next:
-            _, _, pages = format_label(sessions, page, args.max)
-            page = next_page(page, pages)
-            _write_page(page_file, page)
+            _, offset, count = format_label(sessions, offset, args.max)
+            offset = next_offset(offset, count, args.max)
+            _write_page(page_file, offset)
         if args.popup:
             show_popup(sessions, now_ms)
             return 0
-        text, _, _ = format_label(sessions, page, args.max)
+        text, _, _ = format_label(sessions, offset, args.max)
         print(json.dumps(text))
     except Exception:  # noqa: BLE001 - the bar must show the failure, not vanish
         print(json.dumps(error_payload()))

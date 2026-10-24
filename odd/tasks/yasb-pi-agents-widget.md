@@ -24,17 +24,21 @@ S3. Liveness: a session is live when `now - header.heartbeat <= 15000` ms.
 S4. Ordering: `blocked`, then the working states (`planning`, `exploring`,
     `implementing`, `checking`, `working`), then `idle`; ties by newest
     heartbeat first.
-S5. Width control: at most `MAX_ITEMS = 3` segments per page. When more sessions
-    are live, the pill appends ` +N` (N = hidden sessions) and a left click
-    cycles to the next page. Page index persists in `%TEMP%\pi-agents.page`.
+S5. Width control: at most `MAX_ITEMS = 5` segments in the visible window. When
+    more sessions are live, the pill appends ` +N` (N = hidden sessions) and a
+    left click slides the window by exactly one session: the leftmost segment
+    disappears and the next one is appended, wrapping past the last session. The
+    window offset persists in `%TEMP%\pi-agents.page`. While every session
+    already fits, a click leaves the window at offset 0.
 S6. Zero live sessions prints an empty JSON string, so `hide_empty: true` hides
     the pill and it leaves no empty surface.
 S7. Mouse wheel cannot scroll a custom widget: YASB implements `wheelEvent`
     only in komorebi/glazewm workspaces, komorebi stack, brightness, media and
     media_lite, and `CustomWidget` exposes only left/middle/right callbacks.
-    Paging in S5 is the substitute.
-S8. Left click = next page. Right click = tkinter popup listing every live
-    session with label, state, phase, child task, model and uptime.
+    The sliding window in S5 is the substitute.
+S8. Left click = slide the window by one session. Right click = tkinter popup
+    listing every live session with label, state, phase, child task, model and
+    uptime.
 S9. A script failure must be visible: on exception the pill renders
     `pi agents: error` instead of disappearing.
 S10. Reads only `%USERPROFILE%\.pi\agent\gentle-agents\presence` and
@@ -51,6 +55,7 @@ S10. Reads only `%USERPROFILE%\.pi\agent\gentle-agents\presence` and
 | T4 | `config.yaml` widget block + `styles.css` rule | S1, S6 | inline | `feat(yasb): show live Pi agents in the bar` |
 | T5 | README section + MANIFEST row | S7 | inline | `feat(yasb): show live Pi agents in the bar` |
 | T6 | Deploy to `%USERPROFILE%\.config\yasb`, restart YASB, verify live | S1-S6 | inline | `feat(yasb): show live Pi agents in the bar` |
+| T7 | Window of 5 and a slide-by-one cursor that replaces paging (supersedes the paging half of T3) | S5, S7, S8 | inline | `feat(yasb): slide the pi agents window by one session` |
 
 ## Log
 
@@ -200,3 +205,41 @@ one click on the pill brings the terminal window forward (enumerate
 left = focus, middle = page, right = detail table. The user did not ask for it
 now; the pill remains read-only with left = page, right = popup. Nothing in the
 widget changed for this line of investigation.
+
+L21 (user, 2026-10-24, verbatim):
+> ok, gracias. veo que si hay mas de 3 se paginan. amplia eso a 5
+
+L22 (user, 2026-10-24, verbatim):
+> no solo eso, si no que en lugar de cambiar de pagina, muestre el siguiente y oculte el primero (como un falso slider)
+
+L23 (decision, 2026-10-24): L22 replaces paging, it does not add a second mode.
+`format_label` now returns `(text, offset, count)` over a circular window, the
+` +N` count stays constant (it is no longer a per-page remainder), and `--next`
+advances one session with `next_offset`; the offset is a no-op while every
+session fits. Renamed `next_page(page, pages)` to `next_offset(offset, count,
+max_items)`; the `%TEMP%\pi-agents.page` file and the `--page-file` flag keep
+their names because their content is still one integer cursor, now an offset.
+
+L24 (evidence, 2026-10-24, T7): RED first — 7 failures + 2 errors against the
+paging tests; after the change `py -B -m unittest discover -s windows/yasb -p
+"test_*.py"` = 49 tests OK. Measured on the live registry with `--max 2` and a
+scratch cursor: `[p0 p1] [p1 p2] [p2 p3] [p3 p0] [p0 p1]` — the leftmost leaves
+and the next enters, wrapping. With 4 live sessions and the default window the
+pill shows all of them and `--next` leaves the cursor at 0, as designed.
+`import math` was removed: `math.ceil` was the only use and the window no longer
+computes page counts.
+
+L25 (evidence, 2026-10-24, T7 deployed): the deployed copy in
+`%USERPROFILE%\.config\yasb\pi_agents.py` was verified identical to `HEAD`
+before copying (line endings aside), then replaced with the working-tree file;
+YASB killed (PID 1412) and restarted v2.0.7 (PID 21132) with no new error lines
+in `yasb.log`. Deployed script measured with `--max 2` on a scratch cursor:
+`[p0 p1] [p1 p2] [p2 p3]` — slide by one. Live pill with the default window of 5
+and four live sessions renders all four and leaves the cursor at offset 0.
+
+L26 (delivery, 2026-10-24, T7): one work-unit commit on `main`, subject
+`feat(yasb): slide the pi agents window by one session`, carrying the widget,
+its tests, the README, the `config.yaml` comment and this document; the exact
+sha is in `git log`. The unrelated working-tree edits in
+`windows/nushell/config.nu` and `windows/powershell/user_profile.ps1` (the `gs`
+alias) belong to another task and were left out of this commit.

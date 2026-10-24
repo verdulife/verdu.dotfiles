@@ -201,36 +201,59 @@ class LabelTests(unittest.TestCase):
                           child=None, model=None, started_at=None, session_id=None)
 
     def test_two_sessions_render_name_and_small_caps_state(self):
-        text, page, pages = pa.format_label([self.session("verdu.dotfiles", "working"),
-                                             self.session("vre-mcp", "idle")], 0, 3)
+        text, offset, count = pa.format_label([self.session("verdu.dotfiles", "working"),
+                                               self.session("vre-mcp", "idle")], 0, 3)
         self.assertEqual(
             text,
             'verdu.dotfiles <span style="font-size:9px; letter-spacing:1px"><font color="#8fb3d9">WORKING</font></span>'
             '&nbsp;&nbsp;'
             'vre-mcp <span style="font-size:9px; letter-spacing:1px"><font color="#7f8c8d">IDLE</font></span>',
         )
-        self.assertEqual((page, pages), (0, 1))
+        self.assertEqual((offset, count), (0, 2))
         self.assertNotIn("|", text)
         self.assertNotIn("(", text)
 
+    def test_default_window_holds_five_sessions(self):
+        sessions = [self.session(f"p{i}", "idle") for i in range(6)]
+        text, _, count = pa.format_label(sessions, 0, pa.MAX_ITEMS)
+        self.assertEqual(count, 6)
+        self.assertEqual(text.count("&nbsp;&nbsp;"), 4)  # five segments, four gaps
+        self.assertTrue(text.endswith(" +1"), text)
+
     def test_overflow_shows_the_hidden_count(self):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
-        text, page, pages = pa.format_label(sessions, 0, 3)
+        text, offset, count = pa.format_label(sessions, 0, 3)
         self.assertTrue(text.endswith(" +2"), text)
-        self.assertEqual((page, pages), (0, 2))
+        self.assertEqual((offset, count), (0, 5))
 
-    def test_second_page_shows_the_rest(self):
+    def test_sliding_window_hides_the_first_and_shows_the_next(self):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
-        text, page, pages = pa.format_label(sessions, 1, 3)
-        self.assertTrue(text.startswith("p3 <span"), text)
-        self.assertTrue(text.endswith(" +3"), text)
-        self.assertEqual((page, pages), (1, 2))
+        text, offset, count = pa.format_label(sessions, 1, 3)
+        self.assertTrue(text.startswith("p1 <span"), text)
+        self.assertNotIn("p0 <span", text)
+        self.assertIn("p3 <span", text)
+        self.assertTrue(text.endswith(" +2"), text)
+        self.assertEqual((offset, count), (1, 5))
 
-    def test_out_of_range_page_wraps(self):
+    def test_window_wraps_past_the_last_session(self):
         sessions = [self.session(f"p{i}", "idle") for i in range(5)]
-        text, page, _ = pa.format_label(sessions, 7, 3)
-        self.assertEqual(page, 1)
-        self.assertTrue(text.startswith("p3 <span"), text)
+        text, offset, _ = pa.format_label(sessions, 4, 3)
+        self.assertTrue(text.startswith("p4 <span"), text)
+        self.assertIn("p0 <span", text)
+        self.assertEqual(offset, 4)
+
+    def test_out_of_range_offset_wraps(self):
+        sessions = [self.session(f"p{i}", "idle") for i in range(5)]
+        text, offset, _ = pa.format_label(sessions, 7, 3)
+        self.assertEqual(offset, 2)
+        self.assertTrue(text.startswith("p2 <span"), text)
+
+    def test_offset_is_ignored_when_every_session_fits(self):
+        sessions = [self.session(f"p{i}", "idle") for i in range(3)]
+        text, offset, count = pa.format_label(sessions, 2, 5)
+        self.assertEqual((offset, count), (0, 3))
+        self.assertTrue(text.startswith("p0 <span"), text)
+        self.assertNotIn("+", text)
 
     def test_no_sessions_render_nothing(self):
         self.assertEqual(pa.format_label([], 0, 3), ("", 0, 0))
@@ -250,10 +273,15 @@ class LabelTests(unittest.TestCase):
         ordered = sorted(sessions, key=pa.sort_key)
         self.assertEqual([s.label for s in ordered], ["plan", "plain"])
 
-    def test_next_page_cycles(self):
-        self.assertEqual(pa.next_page(0, 3), 1)
-        self.assertEqual(pa.next_page(2, 3), 0)
-        self.assertEqual(pa.next_page(0, 0), 0)
+    def test_next_offset_slides_by_one_and_wraps(self):
+        self.assertEqual(pa.next_offset(0, 5, 3), 1)
+        self.assertEqual(pa.next_offset(3, 5, 3), 4)
+        self.assertEqual(pa.next_offset(4, 5, 3), 0)
+        self.assertEqual(pa.next_offset(7, 5, 3), 3)
+        self.assertEqual(pa.next_offset(0, 0, 3), 0)
+
+    def test_next_offset_is_zero_when_every_session_fits(self):
+        self.assertEqual(pa.next_offset(2, 3, 5), 0)
 
 
 class PresenceCollectionTests(unittest.TestCase):
@@ -352,7 +380,7 @@ class CliTests(unittest.TestCase):
             sessions = root / "sessions"
             presence.mkdir()
             sessions.mkdir()
-            for i in range(5):
+            for i in range(7):
                 h = header(f"p{i}", NOW_MS - 100, session_hash=f"h{i}")
                 base = f"{h['sessionHash']}.{h['incarnation']}"
                 (presence / f"{base}.header.json").write_text(json.dumps(h), encoding="utf-8")

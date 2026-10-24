@@ -328,9 +328,10 @@ widgets:
   # No mouse wheel: a custom widget cannot receive wheel events. YASB
   # implements wheelEvent only in komorebi/glazewm workspaces, komorebi stack,
   # brightness, media and media_lite, and CustomWidget dispatches just left /
-  # middle / right. So the overflow is paged: the pill shows at most three
-  # segments plus " +N", and a left click advances to the next page (the cursor
-  # lives in %TEMP%\pi-agents.page).
+  # middle / right. So the overflow is a sliding window: the pill shows at most
+  # five segments plus " +N", and a left click hides the first one while
+  # appending the next (it wraps, so clicking loops through every session; the
+  # position lives in %TEMP%\pi-agents.page).
   #
   # label is "{data}" and NOT "{data[text]}": YASB formats the template before it
   # checks hide_empty, and a failed format leaves the literal template painted.

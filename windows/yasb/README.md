@@ -28,7 +28,7 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
-| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click pages the overflow, right click opens the detail table |
+| `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click slides the overflow by one session, right click opens the detail table |
 
 ## System info icons (CPU / RAM / GPU)
 
@@ -208,14 +208,17 @@ States, first match wins:
 Order: `blocked` first, then the working states (phase before plain `working`),
 then `idle`; ties by newest heartbeat.
 
-### No horizontal scroll — paging instead
+### No horizontal scroll — a sliding window instead
 
 A custom widget **cannot** receive mouse-wheel events: YASB implements
 `wheelEvent` only in `komorebi/workspaces`, `komorebi/stack`, `glazewm/workspaces`,
 `brightness`, `media` and `media_lite`, and `CustomWidget` dispatches only
-left/middle/right. So the width is bounded by paging: at most **three** segments,
-then ` +N` for the hidden ones. **Left click** advances to the next page (cursor in
-`%TEMP%\pi-agents.page`); **right click** opens a table with every live session
+left/middle/right. So the width is bounded by a window of at most **five**
+segments, then ` +N` for the hidden ones. **Left click** slides that window by one
+session — the leftmost segment disappears and the next one is appended — and it
+wraps around the ordered list, so clicking is a loop over every live session; the
+position lives in `%TEMP%\pi-agents.page`. While every session already fits, the
+click changes nothing. **Right click** opens a table with every live session
 (project, state, phase, child task, model, session id, uptime).
 
 With no live session the script prints an empty JSON string, and `hide_empty: true`
