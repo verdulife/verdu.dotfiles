@@ -26,6 +26,15 @@ Set-Alias grep findstr
 Set-Alias tig 'C:\Program Files\Git\usr\bin\tig.exe'
 Set-Alias less 'C:\Program Files\Git\usr\bin\less.exe'
 
+# Gentle Shell: the standalone launcher installed with `npm i -g gentle-pi`
+# (Path A). It runs Pi with `--link`, so the agent home stays `~/.pi/agent` and
+# sign-ins, models, chats and packages are shared with plain `pi` rather than
+# duplicated. Guarded because the bin lives in the fnm `default` alias: if that
+# alias ever points at another Node version, the profile must still load.
+if (Get-Command gentle-shell -ErrorAction SilentlyContinue) {
+  Set-Alias gs gentle-shell
+}
+
 if ($Host.Name -eq 'ConsoleHost' -and -not [Console]::IsOutputRedirected) {
   $ascii = @'
     _/\/\__/\/\____/\/\/\____/\/\__/\/\________/\/\__/\/\__/\/\_

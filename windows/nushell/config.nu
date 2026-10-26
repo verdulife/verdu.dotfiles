@@ -32,3 +32,14 @@ $env.config.color_config.hints = "#444444"
 # Ctrl+R opens the history menu, Tab opens the completion menu. Nothing under
 # `vendor/autoload` rewrites those keys or the external completer — atuin and
 # carapace are deliberately not integrated (see `setup-autoloads.nu`).
+
+# ---------------------------------------------------------------------------
+# gs — Gentle Shell launcher
+# ---------------------------------------------------------------------------
+# `gentle-shell` comes from `npm i -g gentle-pi` (Path A, standalone) and is
+# configured with `gentle-shell home link`, so it shares ~/.pi/agent with plain
+# `pi`. Nushell aliases are expanded at parse time and resolve the external
+# command at run time, so a missing bin only fails the `gs` call, never startup.
+
+# gs — Gentle Shell launcher (standalone `gentle-pi`, home linked to ~/.pi/agent).
+alias gs = gentle-shell
