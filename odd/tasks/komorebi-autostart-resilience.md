@@ -1,8 +1,9 @@
 # Keep the session usable when komorebi fails to start at logon
 
-Status: REOPENED 2026-10-06 - Round 1 (failure handling) is done and verified; Round 2
-fixes the residual failure: the retry window was so short it stayed inside the
-~200 s foreground-lock blind window, so the 2026-10-06 logon got no WM at all.
+Status: REOPENED 2026-10-27 - Rounds 1 and 2 are done and verified. Round 3 fixes the
+real residual failure: the blind window is NOT bounded by ForegroundLockTimeout, so
+the launcher now retries in two phases up to a 45 min horizon instead of giving up
+after ~4 min, and records the Win32 gate state on every failed attempt.
 Repo: `C:\Users\verdu\verdu.dotfiles`, branch `chore/apply-dotfiles-port`
 Date: 2026-10-05
 Related: `odd/tasks/apply-dotfiles.md` (the port that introduced this autostart)
@@ -170,3 +171,66 @@ yasb.log: connected to named pipe at the moment komorebi answered (no YASB resta
 Note for whoever hits the failure path next: the `[warn] … attempt n/9` lines now
 span up to ~240 s of logon, and AHK/YASB are already up by then (they start before
 the loop). The reboot is the only real proof of the failure path.
+
+## Round 3: the blind window is not bounded (2026-10-27)
+
+Round 2 assumed the gate opens ~200 s after logon (the `ForegroundLockTimeout`
+default) and sized the horizon at ~240 s. The 2026-10-27 logon disproved that.
+
+### Symptom (2026-10-27, reported by the user)
+
+- Boot 09:34:56; AHK + YASB started 09:38:32 (they are not gated on the WM, by
+  design). komorebi attempts 09:38:36 -> 09:41:52 (9 attempts, 196 s), all
+  `process exited` with `failed call to AllowSetForegroundWindow after 5 retries`;
+  script logged `[FAIL] … config NOT applied` and exited.
+- The same script, run by hand at 09:53:16, succeeded on its **first** attempt:
+  `[ok] komorebi ready` + `[ok] config applied` + `[ok] yasb subscription repaired`.
+  So the session went ~15 min without a window manager, and YASB's workspaces
+  widget was hidden the whole time (`hide_if_offline: true`).
+- 2026-10-23 shows the same shape and rules out "just widen it a bit": the same 9
+  attempts spanned 09:39:35 -> 09:44:44 (309 s) and every one failed.
+
+### What was measured (and what it rules out)
+
+| Measurement | Result |
+|---|---|
+| `%TEMP%\komorebi.err` after the logon | `failed call to AllowSetForegroundWindow after 5 retries` / `main.rs:219:13` |
+| `%TEMP%\komorebi.log.2026-10-27` for the failure window | no entries before 09:53:15 — the bail happens before `setup(opts.log_level)` |
+| Session `SPI_GETFOREGROUNDLOCKTIMEOUT` while komorebi runs | `0`; the registry (`HKCU\Control Panel\Desktop\ForegroundLockTimeout`) keeps `200000` (komorebi writes the session value with `SPIF_SENDCHANGE` only) |
+| Fresh child process probing `AllowSetForegroundWindow(own pid)` with the session lock forced to `200000` | failed (`False`), twice, while a sibling with the lock at `0` succeeded |
+| Real `komorebi.exe --config` start with the session lock forced to `200000` | **succeeded** and logged `current value of ForegroundLockTimeout is 0` — so the lock value alone does not decide the outcome |
+| `GetLastInputInfo` in this session | `idle=0s` continuously — input is being generated all the time, so a lock timer would never expire here |
+
+Conclusion: the gate depends on which window owns the foreground at logon, which a
+startup-folder launcher cannot control, and this machine can keep it closed for
+well over 300 s. Any fixed horizon is therefore a coin flip; the defect is the
+give-up, not the number.
+
+### Tasks (Round 3)
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Reproduce the gate and measure what it depends on | done — probes above; the armed-lock reproduction works from a fresh child, but not as a predictor for the real binary |
+| 2 | Replace the fixed 9-attempt horizon with two phases (dense burst, then one attempt per minute) up to a 45 min horizon | done |
+| 3 | Log the gate triple `[lock=… idle=…s asfw=…]` on every failed attempt, guarded so diagnostics can never break the start path | done — `KomorebiGate` Add-Type + `Get-GateDiagnostics`, both wrapped |
+| 4 | Behavioural dry run of the new loop against a forced failure | done — isolated copy with a nonexistent binary, burst `@(1,1,1)`, steady 3 s, 12 s horizon: 5 attempts logged with the gate triple, `[FAIL]` with the gate line, exit 1, no real process touched |
+| 5 | Deploy to `%USERPROFILE%` (MANIFEST destination), AST-check both copies, live run | done — byte-identical, `AST OK` both, live start at 10:23:11 on the first attempt, config applied, YASB subscription repaired |
+| 6 | Update README gotchas 8 and 17 with the corrected mechanism | done |
+| 7 | Commit the work unit | done — see the work-unit commit |
+| 8 | Close: the logon path is proven only by the next reboot (user action) | pending — reboot is the user's call; expect `[ok] komorebi ready` or `[warn] … attempt n failed … [lock=… idle=…s asfw=…]` followed by success, never a session without a WM |
+
+### Live run (2026-10-27 10:23, new script)
+
+```
+komorebi-autostart.ps1 -> exit code 0
+  10:23:10 [ok] state dump clean: …\komorebi.state.json
+  10:23:11 [ok] komorebi ready                                   (first attempt of phase 1)
+  10:23:11 [ok] config applied: resize_delta=25 mouse_follows_focus=False masir=True workspaces=5 monitors=1
+  10:23:14 [ok] yasb subscription repaired after 1 attempt(s)
+komorebic state: 5 workspaces, resize_delta=25, mouse_follows_focus=False
+```
+
+Note for the next incident: with the new loop the failure path is no longer "gives
+up after ~4 min". A `[FAIL]` now means 45 min of attempts, and the `[lock=… idle=…s
+asfw=…]` triple in every `[warn]` line is the evidence to compare against the values
+in the table above.
