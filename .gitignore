@@ -21,3 +21,7 @@ shared/nvim/spell/*.txt
 # Tool-generated stray: opencode-pi resolves its cache path to the literal
 # "undefined" when it runs from this directory. Harmless, never commit it.
 undefined/
+
+# Python bytecode (the yasb widget scripts are tested with python directly)
+__pycache__/
+*.pyc
