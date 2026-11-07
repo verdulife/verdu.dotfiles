@@ -3,11 +3,11 @@
 
 The bar label is one JSON string built from three local sources only:
 
-  %USERPROFILE%\\.pi\\agent\\gentle-agents\\presence\\<hash>.<incarnation>.header.json
+  %USERPROFILE%\\.gentle-shell\\agent\\gentle-agents\\presence\\<hash>.<incarnation>.header.json
       one record per running Pi session: label, heartbeat, child-task counters
   ...\\<hash>.<incarnation>.activity.json
       the child tasks of that session (agent, label, status)
-  %USERPROFILE%\\.pi\\agent\\sessions\\<project>\\<iso>_<sessionId>.jsonl
+  %USERPROFILE%\\.gentle-shell\\agent\\sessions\\<project>\\<iso>_<sessionId>.jsonl
       the session transcript; its tail says whether the turn is open and which
       tool ran last, which is what the ODD phase is inferred from
 
@@ -61,11 +61,14 @@ TAIL_BYTES = 128 * 1024
 
 STATE_COLORS = {
     "working": "#8fb3d9",
+    "authorizing": "#e8a8d9",
     "planning": "#c9a8e8",
     "exploring": "#8fc7d9",
+    "researching": "#a8c0e8",
     "implementing": "#8fd99f",
     "checking": "#e8d18f",
     "deciding": "#e8b48f",
+    "closing": "#b8d9a8",
     "blocked": "#e88f8f",
     "idle": "#7f8c8d",
     "offline": "#6b6b6b",
@@ -74,11 +77,14 @@ STATE_COLORS = {
 # Sort rank, then "has a specific phase" (0 before 1), then newest heartbeat.
 STATE_RANK = {
     "blocked": 0,
+    "authorizing": 1,
     "deciding": 1,
     "planning": 1,
     "exploring": 1,
+    "researching": 1,
     "implementing": 1,
     "checking": 1,
+    "closing": 1,
     "working": 1,
     "idle": 2,
     "offline": 3,
@@ -92,6 +98,10 @@ TOOL_PHASES = {
     "find": "exploring",
     "ls": "exploring",
     "codegraph": "exploring",
+    "web_search": "researching",
+    "source_check": "researching",
+    "fetch_content": "researching",
+    "get_search_content": "researching",
     "ask_user_choice": "deciding",
     "ask_user_question": "deciding",
     "todo": "planning",
@@ -174,12 +184,33 @@ class Session:
 # --------------------------------------------------------------------------- #
 
 
+# Phases the runtime can report explicitly through its `gentle_odd_phase` tool.
+# `clear` is intentionally absent: it means "no phase", so the inferred phase
+# must win rather than pinning a stale label on the bar.
+EXPLICIT_PHASES = frozenset({
+    "authorizing",
+    "exploring",
+    "researching",
+    "deciding",
+    "planning",
+    "implementing",
+    "checking",
+    "closing",
+})
+
+
 def infer_phase(tool_name: str | None, args: dict | None) -> str | None:
     """Return the ODD phase implied by a tool call, or None when it carries none."""
     if not tool_name:
         return None
     name = re.sub(r"^mcp__.+?__", "", tool_name)
     args = args if isinstance(args, dict) else {}
+    # The runtime reports phases that no tool name can imply (authorizing,
+    # researching, closing) by calling `gentle_odd_phase` with the phase as an
+    # argument. Honor it when it is the most recent call of the turn.
+    if name == "gentle_odd_phase":
+        phase = args.get("phase")
+        return phase if isinstance(phase, str) and phase in EXPLICIT_PHASES else None
     if name == "subagent_run":
         agent = args.get("agent")
         return DELEGATED_PHASES.get(agent) if isinstance(agent, str) else None
@@ -284,6 +315,42 @@ def summarize_tail(records: list[dict]) -> dict:
     return empty
 
 
+def explicit_phase(records: list[dict]) -> str | None:
+    """The phase the model reported through `gentle_odd_phase` in the current turn.
+
+    Scans every record of the turn instead of only its last one, so an explicit
+    phase survives the reads and shell calls that follow it: those tools only
+    imply a phase, while the marker states it. A `user` message or a closed turn
+    starts a fresh window, so a marker never leaks into the next turn.
+
+    Returns None when the turn carries no marker, or when its last marker was
+    `clear`, which means "no phase" and hands control back to inference.
+    """
+    marker: str | None = None
+    for record in records:
+        message = record.get("message")
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        if role == "user" or (role == "assistant" and message.get("stopReason") == "stop"):
+            marker = None
+            continue
+        if role != "assistant":
+            continue
+        for part in message.get("content") or []:
+            if not isinstance(part, dict) or part.get("type") != "toolCall":
+                continue
+            if part.get("name") != "gentle_odd_phase":
+                continue
+            args = part.get("arguments")
+            phase = args.get("phase") if isinstance(args, dict) else None
+            if phase == "clear":
+                marker = None
+            elif isinstance(phase, str) and phase in EXPLICIT_PHASES:
+                marker = phase
+    return marker
+
+
 # --------------------------------------------------------------------------- #
 # State
 # --------------------------------------------------------------------------- #
@@ -302,7 +369,9 @@ def derive_state(header: dict, activity: dict, tail: list[dict]) -> tuple[str, s
         return "blocked", None, _child_text(waiting[0] if waiting else None, "waiting")
 
     summary = summarize_tail(tail)
-    phase = _phase_from_summary(summary)
+    # Precedence: what the model declared, then the most recent call of the turn
+    # that actually implies a phase, then the reduced summary as a last resort.
+    phase = explicit_phase(tail) or inferred_phase(tail) or _phase_from_summary(summary)
     running = [t for t in tasks if t.get("status") == "running"]
     active = (
         summary["kind"] in {"tool_use", "tool_result", "turn_open"}
@@ -313,6 +382,41 @@ def derive_state(header: dict, activity: dict, tail: list[dict]) -> tuple[str, s
     if not active:
         return "idle", None, None
     return phase or "working", phase, _child_text(running[0], "running") if running else None
+
+
+def inferred_phase(records: list[dict]) -> str | None:
+    """The phase of the most recent tool call of the turn that implies one.
+
+    Walking back instead of reading only the last call keeps the label stable
+    when that call is ambiguous (a mixed shell command) or carries no phase at
+    all (memory, web and subagent bookkeeping). The shell's own prompt label
+    behaves the same way, so both stay in step.
+
+    `gentle_odd_phase` is skipped on purpose: it is a declaration, handled by
+    `explicit_phase`, and must not be read as an inference.
+    """
+    for record in reversed(records):
+        message = record.get("message")
+        if not isinstance(message, dict):
+            continue
+        role = message.get("role")
+        if role == "user" or (role == "assistant" and message.get("stopReason") == "stop"):
+            return None
+        if role != "assistant":
+            continue
+        calls = [
+            part
+            for part in message.get("content") or []
+            if isinstance(part, dict) and part.get("type") == "toolCall"
+        ]
+        for call in reversed(calls):
+            if call.get("name") == "gentle_odd_phase":
+                continue
+            args = call.get("arguments")
+            phase = infer_phase(call.get("name"), args if isinstance(args, dict) else {})
+            if phase:
+                return phase
+    return None
 
 
 def _phase_from_summary(summary: dict) -> str | None:
@@ -573,11 +677,14 @@ def _uptime(session: Session, now_ms: int) -> str:
 
 
 def default_presence_dir() -> Path:
-    return Path.home() / ".pi" / "agent" / "gentle-agents" / "presence"
+    # Gentle Shell's managed home. Switched from `.pi/agent` on 2026-11-07, when
+    # the standalone Pi install was removed and gentle-shell became the only
+    # Pi runtime on this machine; it writes the same presence records.
+    return Path.home() / ".gentle-shell" / "agent" / "gentle-agents" / "presence"
 
 
 def default_sessions_dir() -> Path:
-    return Path.home() / ".pi" / "agent" / "sessions"
+    return Path.home() / ".gentle-shell" / "agent" / "sessions"
 
 
 def default_page_file() -> Path:

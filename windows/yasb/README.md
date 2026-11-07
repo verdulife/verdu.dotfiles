@@ -65,13 +65,21 @@ Verified against the v2.0.7 sources.
 
 ## OpenCode Go widget (`opencode_go`)
 
-`opencode_go.py` tries the `opencode-go` key of two stores, in this order:
+`opencode_go.py` tries the `opencode-go` key of three stores, in this order:
 
-1. `%USERPROFILE%\.pi\agent\auth.json` — Pi's managed store (`type: api_key`),
-   the one that carries the Go entitlement on this machine.
-2. `%USERPROFILE%\.local\share\opencode\auth.json` — the opencode CLI store
-   (`type: api`); its key answers `403 EntitlementError: OpenCode Go
-   subscription required` for this endpoint (measured 2026-10-06).
+1. `%USERPROFILE%\.gentle-shell\agent\auth.json` — Gentle Shell's managed store
+   (`type: api_key`), the one that carries the Go entitlement on this machine.
+2. `%USERPROFILE%\.pi\agent\auth.json` — Pi's managed store, kept as a fallback
+   for machines that still run a standalone Pi home.
+3. `%USERPROFILE%\.local\share\opencode\auth.json` — the opencode CLI store
+   (`type: api`); its key answers `401 Unauthorized` for this endpoint
+   (measured 2026-11-07; it answered `403 EntitlementError` on 2026-10-06).
+
+The gentle-shell store became the first candidate on 2026-11-07, when the
+standalone Pi home was removed from this machine. Only a `type: api_key` entry
+carries the entitlement, and the key lives under the JSON field `key`, not
+`api_key` — writing the wrong field produces an entry with no key that fails
+silently.
 
 A key the endpoint rejects falls through to the next candidate, so an entitled
 key in either store is enough. It queries every 5 minutes and returns one JSON
@@ -186,9 +194,9 @@ Sources (local files only, no network):
 
 | Source | What it gives |
 |---|---|
-| `%USERPROFILE%\.pi\agent\gentle-agents\presence\*.header.json` | one record per running Pi session: `label`, `heartbeat`, `counts{running,queued,waiting}` |
+| `%USERPROFILE%\.gentle-shell\agent\gentle-agents\presence\*.header.json` | one record per running Pi session: `label`, `heartbeat`, `counts{running,queued,waiting}` |
 | `...\<hash>.<incarnation>.activity.json` | that session's child tasks (`agent`, `label`, `status`) |
-| `%USERPROFILE%\.pi\agent\sessions\<project>\<iso>_<sessionId>.jsonl` | the transcript tail: last tool call and whether the turn is still open |
+| `%USERPROFILE%\.gentle-shell\agent\sessions\<project>\<iso>_<sessionId>.jsonl` | the transcript tail: last tool call and whether the turn is still open |
 
 A session is **live** while `now - heartbeat <= 15 s` (the window Pi's own presence
 publisher uses). Records are grouped by `sessionHash` (`sha256(sessionId)`) and the
@@ -201,9 +209,15 @@ States, first match wins:
 |---|---|
 | `offline` | the presence record reports `unavailable` |
 | `blocked` | `counts.waiting > 0` or a child task is `waiting` |
-| `planning` / `exploring` / `implementing` / `checking` / `deciding` | phase inferred from the last tool call, mirroring `gentle-pi`'s `odd-phase-inference.ts` (`todo` → planning, `read`/`grep` → exploring, `edit`/`write` → implementing, `bash` running a checker → checking, `ask_user_*` → deciding) |
-| `working` | the turn is open but no tool implies a phase |
+| `authorizing` / `planning` / `exploring` / `researching` / `implementing` / `checking` / `deciding` / `closing` | phase declared by `gentle_odd_phase` for the turn, else inferred from the most recent tool call of the turn that implies one, mirroring `gentle-pi`'s `odd-phase-inference.ts` (`todo` → planning, `read`/`grep`/`find`/`ls` → exploring, `web_search`/`fetch_content`/`source_check` → researching, `edit`/`write` → implementing, `bash` running a checker → checking, `ask_user_*` → deciding) |
+| `working` | the turn is open but no tool in it implies a phase |
 | `idle` | the last record is an assistant message with `stopReason: stop` |
+
+Precedence inside a turn: an explicit `gentle_odd_phase` marker wins for the whole
+ turn, and `clear` hands control back to inference. Inference itself walks back to
+the most recent call that implies a phase, so an ambiguous shell command, a memory
+call or a web fetch never collapses the label to `working` mid-turn. A `toolResult`
+record carries only the tool name, which is why the call — not the result — is read.
 
 Order: `blocked` first, then the working states (phase before plain `working`),
 then `idle`; ties by newest heartbeat.

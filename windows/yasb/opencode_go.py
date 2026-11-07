@@ -4,11 +4,13 @@
 OpenCode Go usage helper for YASB CustomWidget.
 
 Reads the OpenCode Go API key from the first store that has one and is accepted:
-%USERPROFILE%\\.pi\\agent\\auth.json            (Pi's managed store: `type: api_key`)
-%USERPROFILE%\\.local\\share\\opencode\\auth.json  (opencode CLI store: `type: api`)
-The Pi store is tried first: on this machine only its key holds the Go entitlement,
-the opencode one answers 403 EntitlementError even though its entry is also called
-`opencode-go` (verified 2026-10-06).
+%USERPROFILE%\\.gentle-shell\\agent\\auth.json   (Gentle Shell store: `type: api_key`)
+%USERPROFILE%\\.pi\\agent\\auth.json             (Pi's managed store: `type: api_key`)
+%USERPROFILE%\\.local\\share\\opencode\\auth.json (opencode CLI store: `type: api`)
+The gentle-shell store is tried first since 2026-11-07, when the Pi home was
+removed from this machine: only a `type: api_key` entry carries the Go
+entitlement, while the opencode one answers 401 Unauthorized even though its
+entry is also called `opencode-go` (verified 2026-11-07).
 
 Output modes:
     (default) -> one compact JSON line for YASB
@@ -39,6 +41,12 @@ HOME = Path(os.environ.get("USERPROFILE", str(Path.home())))
 # key that the endpoint rejects falls through to the next candidate instead of leaving
 # the widget at 0%.
 AUTH_PATHS = (
+    # Gentle Shell's managed store. Added 2026-11-07 after the Pi home was
+    # removed: this is the same `type: api_key` entry that used to live in
+    # `~/.pi/agent/auth.json`, now maintained by gentle-shell, which keeps
+    # working after `pi` is gone. The opencode CLI store's `type: api` entry is
+    # rejected by this endpoint (401), so it stays as a last resort only.
+    HOME / ".gentle-shell" / "agent" / "auth.json",
     HOME / ".pi" / "agent" / "auth.json",
     HOME / ".local" / "share" / "opencode" / "auth.json",
 )
