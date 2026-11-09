@@ -158,6 +158,7 @@ ResizeDirectional(axis, arrow) {
 ; Super+F -> Ferdium
 ; Super+B -> default browser (fallback order: Zen, Brave)
 ; Super+M -> default email client (fallback: Mailspring)
+; Super+O -> Obsidian (per-user install, then machine-wide fallbacks)
 LaunchFirst(paths*) {
     for p in paths
         if (FileExist(p))
@@ -208,6 +209,14 @@ LaunchDefaultApp(protocol, candidates*) {
         EnvGet("LocalAppData") . "\Programs\mailspring\Mailspring.exe",
         EnvGet("ProgramFiles") . "\Mailspring\Mailspring.exe",
         "mailspring.exe")
+}
+
+; Obsidian installs per user by default; the Program Files paths cover an
+; all-users install and the bare name covers a PATH entry.
+#o::{
+    LaunchFirst(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
+                EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe",
+                "obsidian.exe")
 }
 
 ; ---- Suppress the Start menu on a lone Win press -------------------------
