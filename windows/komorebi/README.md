@@ -276,9 +276,14 @@ It is a HM-style Toggle: `Super` = the Windows key.
   retry/queue for a dropped `AddSubscriberPipe` (`komorebic --help` has only
   `subscribe-pipe`, `subscribe-socket`, `unsubscribe-*`) and the YASB widget schema has no
   retry or timeout key.
-- **AutoHotkey v2 reserves `log`.** `log := ...` fails to load with
-  `This Func cannot be used as an output variable` because `Log()` is a built-in math
-  function, so helper scripts must use another name (`logFile`). Along the same lines, a
+- **AutoHotkey v2 reserves `log` and has no `A_UserProfile`.** `log := ...` fails to load
+  with `This Func cannot be used as an output variable` because `Log()` is a built-in math
+  function, so helper scripts must use another name (`logFile`). Likewise
+  `A_UserProfile`/`A_LocalAppData` are **not** v2 built-ins: referring to one compiles fine
+  and then fails at runtime with `This local variable has not been assigned a value`, which
+  surfaces as a modal dialog every time the hotkey fires (seen with `#o` on 2026-11-09).
+  Every path in this script therefore comes from `EnvGet("UserProfile")`,
+  `EnvGet("LocalAppData")`, etc. — never from an `A_`-prefixed guess. Along the same lines, a
   restarted script was once seen leaving the replaced process alive
   (`Get-Process AutoHotkey64` showed two, both on `komorebi.ahk`); two live instances
   double-fire every `Run` hotkey, so after any manual reload check that exactly one

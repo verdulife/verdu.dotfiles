@@ -214,16 +214,17 @@ LaunchDefaultApp(protocol, candidates*) {
 ; Obsidian: open the Verdu vault directly. The per-user `obsidian://` handler is
 ; registered at install, so no exe path is needed here. If the vault folder is
 ; gone (renamed/moved) or the handler is not registered, fall back to a plain
-; launch, which is what restores the last vault used.
+; launch, which is what restores the last vault used. Paths come from EnvGet
+; because AutoHotkey v2 has no A_UserProfile/A_LocalAppData built-ins.
 #o::{
-    if (DirExist(A_UserProfile . "\Obsidian\Verdu")) {
+    if (DirExist(EnvGet("UserProfile") . "\Obsidian\Verdu")) {
         try {
             Run("obsidian://open?vault=Verdu")
             return
         }
     }
-    LaunchFirst(A_LocalAppData . "\Programs\Obsidian\Obsidian.exe",
-                A_ProgramFiles . "\Obsidian\Obsidian.exe",
+    LaunchFirst(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
+                EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe",
                 "obsidian.exe")
 }
 
