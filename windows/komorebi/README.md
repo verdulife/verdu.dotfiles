@@ -155,7 +155,7 @@ in `komorebi.json`.
 | Workspaces 1–5 | `Super+1..5` · move `Super+Shift+1..5` |
 | Close | `Super+W` |
 | Float | `Super+Shift+V` |
-| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian |
+| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian (vault `Verdu`) |
 | Minimize | `Super+Shift+M` |
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
 | Terminal | `Super+Enter` |
@@ -163,8 +163,10 @@ in `komorebi.json`.
 
 Launchers resolve: the registered OS default for the URL scheme first (`http` /
 `mailto` via UserChoice ProgId), with fallbacks Ferdium→(known paths, then
-plain name), browser→Zen then Brave, email→Mailspring, Obsidian→(per-user
-`Programs` path, then `Program Files`, then plain name). The Squirrel
+plain name), browser→Zen then Brave, email→Mailspring. `Super+O` uses the
+`obsidian://` handler to open the `Verdu` vault directly; when that vault folder
+is missing it falls back to a plain launch (per-user path, `Program Files`, then
+plain name), which restores the last vault used. The Squirrel
 `Update.exe` stub is skipped so Mailspring launches the real app. Monocle
 (fullscreen) and native maximize are intentionally unbound since `Super+F`/
 `Super+M` became launchers.
@@ -274,3 +276,10 @@ It is a HM-style Toggle: `Super` = the Windows key.
   retry/queue for a dropped `AddSubscriberPipe` (`komorebic --help` has only
   `subscribe-pipe`, `subscribe-socket`, `unsubscribe-*`) and the YASB widget schema has no
   retry or timeout key.
+- **AutoHotkey v2 reserves `log`.** `log := ...` fails to load with
+  `This Func cannot be used as an output variable` because `Log()` is a built-in math
+  function, so helper scripts must use another name (`logFile`). Along the same lines, a
+  restarted script was once seen leaving the replaced process alive
+  (`Get-Process AutoHotkey64` showed two, both on `komorebi.ahk`); two live instances
+  double-fire every `Run` hotkey, so after any manual reload check that exactly one
+  process holds the script.

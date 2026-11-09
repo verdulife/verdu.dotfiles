@@ -158,7 +158,7 @@ ResizeDirectional(axis, arrow) {
 ; Super+F -> Ferdium
 ; Super+B -> default browser (fallback order: Zen, Brave)
 ; Super+M -> default email client (fallback: Mailspring)
-; Super+O -> Obsidian (per-user install, then machine-wide fallbacks)
+; Super+O -> Obsidian, opening the Verdu vault (fallback: last vault used)
 LaunchFirst(paths*) {
     for p in paths
         if (FileExist(p))
@@ -211,11 +211,19 @@ LaunchDefaultApp(protocol, candidates*) {
         "mailspring.exe")
 }
 
-; Obsidian installs per user by default; the Program Files paths cover an
-; all-users install and the bare name covers a PATH entry.
+; Obsidian: open the Verdu vault directly. The per-user `obsidian://` handler is
+; registered at install, so no exe path is needed here. If the vault folder is
+; gone (renamed/moved) or the handler is not registered, fall back to a plain
+; launch, which is what restores the last vault used.
 #o::{
-    LaunchFirst(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
-                EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe",
+    if (DirExist(A_UserProfile . "\Obsidian\Verdu")) {
+        try {
+            Run("obsidian://open?vault=Verdu")
+            return
+        }
+    }
+    LaunchFirst(A_LocalAppData . "\Programs\Obsidian\Obsidian.exe",
+                A_ProgramFiles . "\Obsidian\Obsidian.exe",
                 "obsidian.exe")
 }
 

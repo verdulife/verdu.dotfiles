@@ -82,7 +82,7 @@ keyboard-driven; the native taskbar is hidden and the YASB bar replaces it.
 | Resize (direction-aware) | `Super+Ctrl+arrows` (grows toward the pointed neighbor) |
 | Workspaces | `Super+1..5` · move: `Super+Shift+1..5` |
 | Close / float | `Super+W` / `Super+Shift+V` |
-| App launchers | `Super+F` Ferdium · `Super+B` default browser (Zen→Brave) · `Super+M` default email (Mailspring) · `Super+O` Obsidian |
+| App launchers | `Super+F` Ferdium · `Super+B` default browser (Zen→Brave) · `Super+M` default email (Mailspring) · `Super+O` Obsidian (vault `Verdu`) |
 | Minimize | `Super+Shift+M` |
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
 | Terminal | `Super+Enter` |
