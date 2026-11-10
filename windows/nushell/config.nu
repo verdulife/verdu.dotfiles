@@ -18,6 +18,15 @@
 #     config nu --doc | nu-highlight | less -R
 
 # ---------------------------------------------------------------------------
+# Startup banner
+# ---------------------------------------------------------------------------
+# Nushell prints a welcome banner (version, "type help for commands", tips)
+# before the first prompt of every terminal it starts. It is noise in a layout
+# where a terminal is one keystroke away: turn it off and the prompt is the
+# first thing you see.
+$env.config.show_banner = false
+
+# ---------------------------------------------------------------------------
 # Line editor — the PSReadLine-like flow
 # ---------------------------------------------------------------------------
 # Inline hints are Nushell's own autosuggestion: as you type, the most recent
