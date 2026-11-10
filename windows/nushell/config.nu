@@ -32,3 +32,11 @@ $env.config.color_config.hints = "#444444"
 # Ctrl+R opens the history menu, Tab opens the completion menu. Nothing under
 # `vendor/autoload` rewrites those keys or the external completer — atuin and
 # carapace are deliberately not integrated (see `setup-autoloads.nu`).
+
+# ---------------------------------------------------------------------------
+# Aliases — names this shell shares with the PowerShell profile
+# ---------------------------------------------------------------------------
+# `gs` opens Gentle Shell: the npm `gentle-pi` package, installed globally with
+# `npm i -g --prefix "$env:APPDATA\npm" gentle-pi` on Windows. The PowerShell
+# profile defines the same alias, so both shells answer to `gs`.
+alias gs = gentle-shell
