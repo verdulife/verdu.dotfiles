@@ -151,8 +151,44 @@ ResizeDirectional(axis, arrow) {
 #HotIf
 
 ; ---- Global bindings ----
-; Launch Windows Terminal
-#Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
+; Win+Enter -> Herdr desktop app (focus the running instance, else launch it).
+;
+; Herdr is single-instance: launching herdr-app.exe while it is already running
+; creates no second window and does not focus the existing one. And AHK cannot
+; see a window that komorebi parked on another workspace (the shell cloaks it),
+; so WinExist() without DetectHiddenWindows misses it and the guard falls through.
+; Resolution: when it runs, ask komorebi to eager-focus it - that uncloaks it,
+; switches to the owning workspace and focuses it (the exe name is positional
+; and case-sensitive). WinActivate alone fails silently on a cloaked window.
+#Enter::{
+    if (!HerdrRunning()) {
+        LaunchFirst(HerdrExe(), "herdr-app.exe")
+        return
+    }
+    Komorebic("eager-focus herdr-app.exe")
+    if (!WinActive("ahk_exe herdr-app.exe"))
+        HerdrActivate()            ; fallback if eager-focus could not reach it
+}
+
+HerdrExe() {
+    return EnvGet("LocalAppData") . "\Programs\herdr-app\herdr-app.exe"
+}
+
+HerdrRunning() {
+    DetectHiddenWindows(true)      ; the instance may be cloaked on another workspace
+    try found := WinExist("ahk_exe herdr-app.exe")
+    finally DetectHiddenWindows(false)
+    return found
+}
+
+HerdrActivate() {
+    DetectHiddenWindows(true)
+    try {
+        hwnd := WinExist("ahk_exe herdr-app.exe")
+        if (hwnd)
+            WinActivate("ahk_id " hwnd)
+    } finally DetectHiddenWindows(false)
+}
 
 ; ---- App launchers -----------------------------------------------------------
 ; Super+F -> Ferdium

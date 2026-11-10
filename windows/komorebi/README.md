@@ -158,7 +158,7 @@ in `komorebi.json`.
 | App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian (vault `Verdu`) |
 | Minimize | `Super+Shift+M` |
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
-| Terminal | `Super+Enter` |
+| Terminal (Herdr) | `Super+Enter` |
 | Pause tiling | `Super+Shift+P` |
 
 Launchers resolve: the registered OS default for the URL scheme first (`http` /
@@ -170,6 +170,14 @@ plain name), which restores the last vault used. The Squirrel
 `Update.exe` stub is skipped so Mailspring launches the real app. Monocle
 (fullscreen) and native maximize are intentionally unbound since `Super+F`/
 `Super+M` became launchers.
+
+`Super+Enter` opens the Herdr desktop app (`%LOCALAPPDATA%\Programs\herdr-app\
+herdr-app.exe`) and, when it is already running, brings it to the front instead
+of launching a second copy: Herdr is single-instance, and a window komorebi
+parked on another workspace is cloaked, so `WinExist` only finds it inside
+`DetectHiddenWindows` and `WinActivate` fails silently on it. The hotkey asks
+komorebi to `eager-focus herdr-app.exe`, which uncloaks it, switches to the
+owning workspace and focuses it; `WinActivate` stays only as a fallback.
 
 It is a HM-style Toggle: `Super` = the Windows key.
 
