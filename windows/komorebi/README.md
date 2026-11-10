@@ -155,15 +155,18 @@ in `komorebi.json`.
 | Workspaces 1–5 | `Super+1..5` · move `Super+Shift+1..5` |
 | Close | `Super+W` |
 | Float | `Super+Shift+V` |
-| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email |
+| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian |
 | Minimize | `Super+Shift+M` |
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
-| Terminal | `Super+Enter` |
+| Terminal | `Super+Enter` Herdr · `Super+Shift+Enter` Windows Terminal |
 | Pause tiling | `Super+Shift+P` |
 
 Launchers resolve: the registered OS default for the URL scheme first (`http` /
 `mailto` via UserChoice ProgId), with fallbacks Ferdium→(known paths, then
-plain name), browser→Zen then Brave, email→Mailspring. The Squirrel
+plain name), browser→Zen then Brave, email→Mailspring. Obsidian opens with
+no vault argument, which reopens the vault marked open in
+`%APPDATA%\obsidian\obsidian.json` (no vault picker); the `obsidian://`
+handler is the fallback if the exe moves. The Squirrel
 `Update.exe` stub is skipped so Mailspring launches the real app. Monocle
 (fullscreen) and native maximize are intentionally unbound since `Super+F`/
 `Super+M` became launchers.

@@ -151,17 +151,33 @@ ResizeDirectional(axis, arrow) {
 #HotIf
 
 ; ---- Global bindings ----
-; Launch Windows Terminal
-#Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
+; Launch Herdr app (the desktop app, not the terminal CLI in Herdr\bin);
+; Windows Terminal keeps Super+Shift+Enter
+#Enter::{
+    exe := FirstExisting(EnvGet("LocalAppData") . "\Programs\herdr-app\herdr-app.exe",
+                         EnvGet("ProgramFiles") . "\herdr-app\herdr-app.exe")
+    if (exe)
+        Run(exe)
+    else
+        Run("herdr-app.exe")    ; first on PATH
+}
+#+Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
 
 ; ---- App launchers -----------------------------------------------------------
 ; Super+F -> Ferdium
 ; Super+B -> default browser (fallback order: Zen, Brave)
 ; Super+M -> default email client (fallback: Mailspring)
+; Super+O -> Obsidian, reopening its default vault (no vault picker)
 LaunchFirst(paths*) {
     for p in paths
         if (FileExist(p))
             return Run(p)
+}
+FirstExisting(paths*) {        ; Run()'s PID is not a reliable success test
+    for p in paths
+        if (FileExist(p))
+            return p
+    return ""
 }
 UrlAppExe(protocol) {          ; registered default app executable for http/mailto
     try {
@@ -208,6 +224,18 @@ LaunchDefaultApp(protocol, candidates*) {
         EnvGet("LocalAppData") . "\Programs\mailspring\Mailspring.exe",
         EnvGet("ProgramFiles") . "\Mailspring\Mailspring.exe",
         "mailspring.exe")
+}
+; Obsidian launched without arguments reopens the vault marked open in
+; %APPDATA%\obsidian\obsidian.json (the only registered one), so no vault name
+; is hardcoded here. The URI handler is the fallback if the exe moves.
+#o::{
+    exe := FirstExisting(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
+                         EnvGet("LocalAppData") . "\Obsidian\Obsidian.exe",
+                         EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe")
+    if (exe)
+        Run(exe)
+    else
+        try Run("obsidian://open")
 }
 
 ; ---- Suppress the Start menu on a lone Win press -------------------------
