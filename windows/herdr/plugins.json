@@ -2,11 +2,11 @@
   {
     "plugin_id": "herdr-file-viewer",
     "name": "herdr-file-viewer",
-    "version": "1.14.0",
-    "min_herdr_version": "0.7.0",
+    "version": "1.18.0",
+    "min_herdr_version": "0.7.5",
     "description": "A git-aware, read-only file viewer: a keyboard-driven TUI in a herdr split pane.",
     "manifest_path": "\\\\?\\C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614\\herdr-plugin.toml",
-    "plugin_root": "\\\\?\\C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614",
+    "plugin_root": "C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614",
     "enabled": true,
     "platforms": [
       "linux",
@@ -50,6 +50,34 @@
         "command": [
           "bash",
           "scripts/open-file-viewer.sh"
+        ]
+      },
+      {
+        "id": "open-file-viewer-at",
+        "title": "Open file viewer at…",
+        "description": "Ask for a directory in a popup, then open the file viewer there in a split pane.",
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "command": [
+          "bash",
+          "scripts/open-file-viewer-at.sh",
+          "split"
+        ]
+      },
+      {
+        "id": "open-file-viewer-at-tab",
+        "title": "Open file viewer at… (tab)",
+        "description": "Ask for a directory in a popup, then open the file viewer there in a new tab.",
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "command": [
+          "bash",
+          "scripts/open-file-viewer-at.sh",
+          "tab"
         ]
       },
       {
@@ -106,15 +134,30 @@
         "command": [
           "./target/release/herdr-file-viewer"
         ]
+      },
+      {
+        "id": "root-picker",
+        "title": "Open file viewer at",
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "placement": "popup",
+        "width": "60%",
+        "height": 16,
+        "command": [
+          "./target/release/herdr-file-viewer",
+          "--pick-root"
+        ]
       }
     ],
     "source": {
       "kind": "github",
       "owner": "smarzban",
       "repo": "herdr-file-viewer",
-      "resolved_commit": "955c8cee9883f5e7ad78370dc7c83491c21044b5",
+      "resolved_commit": "d17a068ee753daf5ba205bafd59c130b81b8c6c0",
       "managed_path": "C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614",
-      "installed_unix_ms": 1785433112862
+      "installed_unix_ms": 1794431656735
     }
   }
 ]
