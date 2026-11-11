@@ -1,0 +1,120 @@
+[
+  {
+    "plugin_id": "herdr-file-viewer",
+    "name": "herdr-file-viewer",
+    "version": "1.14.0",
+    "min_herdr_version": "0.7.0",
+    "description": "A git-aware, read-only file viewer: a keyboard-driven TUI in a herdr split pane.",
+    "manifest_path": "\\\\?\\C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614\\herdr-plugin.toml",
+    "plugin_root": "\\\\?\\C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614",
+    "enabled": true,
+    "platforms": [
+      "linux",
+      "macos",
+      "windows"
+    ],
+    "build": [
+      {
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "command": [
+          "/bin/sh",
+          "scripts/fetch-or-build.sh"
+        ]
+      },
+      {
+        "platforms": [
+          "windows"
+        ],
+        "command": [
+          "powershell",
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "scripts/fetch-or-build.ps1"
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "open-file-viewer",
+        "title": "Open file viewer",
+        "description": "Open the git-aware file viewer in a split pane beside the current work.",
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "command": [
+          "bash",
+          "scripts/open-file-viewer.sh"
+        ]
+      },
+      {
+        "id": "open-file-viewer-tab",
+        "title": "Open file viewer (tab)",
+        "description": "Open the git-aware file viewer in its own tab (switch to it if already open).",
+        "platforms": [
+          "linux",
+          "macos"
+        ],
+        "command": [
+          "bash",
+          "scripts/open-file-viewer-tab.sh"
+        ]
+      },
+      {
+        "id": "open-file-viewer-tab-windows",
+        "title": "Open file viewer (tab)",
+        "description": "Open the git-aware file viewer in its own tab (switch to it if already open).",
+        "platforms": [
+          "windows"
+        ],
+        "command": [
+          "powershell",
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          "$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\\\?\\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer-tab.ps1')"
+        ]
+      },
+      {
+        "id": "open-file-viewer-windows",
+        "title": "Open file viewer",
+        "description": "Open the git-aware file viewer in a split pane beside the current work.",
+        "platforms": [
+          "windows"
+        ],
+        "command": [
+          "powershell",
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-Command",
+          "$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\\\?\\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer.ps1')"
+        ]
+      }
+    ],
+    "panes": [
+      {
+        "id": "file-viewer",
+        "title": "Files",
+        "placement": "split",
+        "command": [
+          "./target/release/herdr-file-viewer"
+        ]
+      }
+    ],
+    "source": {
+      "kind": "github",
+      "owner": "smarzban",
+      "repo": "herdr-file-viewer",
+      "resolved_commit": "955c8cee9883f5e7ad78370dc7c83491c21044b5",
+      "managed_path": "C:\\Users\\verdu\\AppData\\Roaming\\herdr\\plugins\\github\\herdr-file-viewer-c993314e2614",
+      "installed_unix_ms": 1785433112862
+    }
+  }
+]

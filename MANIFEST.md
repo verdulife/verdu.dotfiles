@@ -56,6 +56,8 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/nushell/config.nu` | `%APPDATA%\nushell\config.nu` |
 | `windows/nushell/env.nu` | `%APPDATA%\nushell\env.nu` |
 | `windows/herdr/config.toml` | `%APPDATA%\herdr\config.toml` |
+| `windows/herdr/plugins.json` | `%APPDATA%\herdr\plugins.json` |
+| `windows/wallpapers/beach-house-in-japan.1920x1080.mp4` | `%USERPROFILE%\Pictures\Wallpapers\beach-house-in-japan.1920x1080.mp4` |
 
 > **Copy exactly one komorebi configuration.** `komorebi.home.json` on the two-monitor
 > (home) machine, `komorebi.work.json` on the single-monitor (work) machine — both to
@@ -65,6 +67,15 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 > and `monitors` is shared and must stay identical in both variants;
 > `windows/komorebi/tests/` fails when they drift. Details, including how to run it:
 > `windows/komorebi/README.md`.
+
+> `windows/herdr/plugins.json` is Herdr's plugin registry (installed plugins and
+> their `enabled` flag). It stores **absolute** `manifest_path` / `plugin_root`
+> paths, so on another machine copy it and then reinstall the plugins there
+> rather than expecting the recorded paths to resolve.
+
+> `windows/wallpapers/` ships **assets, not a live configuration**: Lively keeps
+> its own virtualized copy of the active wallpaper (MSIX redirect — see
+> `windows/wallpapers/README.md`), so copy the media file and add it in the app.
 
 > `windows/nushell/setup-autoloads.nu` is NOT copied; run it once after copying,
 > from a shell where `nu`, `starship` and `zoxide` are on PATH, to regenerate

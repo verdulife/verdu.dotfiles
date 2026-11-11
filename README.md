@@ -44,7 +44,8 @@ verdu.dotfiles/
 │   ├── win-terminal/settings.json    ← Windows Terminal
 │   ├── powershell/                   ← PS7 profile + user_profile.ps1
 │   ├── nushell/                      ← Nushell config (+ setup-autoloads.nu: run, not copied)
-│   ├── herdr/config.toml             ← Herdr (agent multiplexer)
+│   ├── herdr/                        ← Herdr (agent multiplexer): config.toml + plugins.json
+│   ├── wallpapers/                   ← wallpaper assets (video/image) + how to load them
 │   └── autostart/komorebi-autostart.vbs  ← windowless logon launcher
 └── linux/
     ├── hyprland/        ← placeholder (Arch machine config goes here)
@@ -145,8 +146,14 @@ See `windows/yasb/README.md` for the widget map and styling notes.
   hand: fnm has no nushell target and `fnm env --json` reports no `PATH`, so the
   file loads the JSON and prepends `FNM_MULTISHELL_PATH` itself. fnm is therefore a
   prerequisite (see `MANIFEST.md`).
-- `windows/herdr/config.toml` — Herdr (agent multiplexer): Gentle theme, prefix
-  `ctrl+a`, arrow-key pane navigation, alt+arrow resize, default shell Nushell.
+- `windows/herdr/` — the Herdr app configuration: `config.toml` (Gentle theme,
+  prefix `ctrl+a`, arrow-key pane navigation, alt+arrow resize, default shell
+  Nushell) and `plugins.json`, the plugin registry the app writes when you install
+  a plugin. The registry records absolute plugin paths, so it documents the set
+  and the `enabled` flags, not a portable install.
+- `windows/wallpapers/` — the media files the desktop actually uses, plus a README
+  on where Lively keeps its virtualized copy and how to load one back. The video
+  is the wallpaper currently running on this machine.
 - `gs` — short alias for **`gentle-shell`**, the standalone Gentle Shell launcher
   (the upstream "Path A"), defined in both `windows/powershell/user_profile.ps1`
   and `windows/nushell/config.nu`. It is not part of the copy: install it once with
