@@ -155,21 +155,29 @@ in `komorebi.json`.
 | Workspaces 1–5 | `Super+1..5` · move `Super+Shift+1..5` |
 | Close | `Super+W` |
 | Float | `Super+Shift+V` |
-| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian |
+| App launchers | `Super+F` Ferdium · `Super+B` default browser · `Super+M` default email · `Super+O` Obsidian (vault `Verdu`) |
 | Minimize | `Super+Shift+M` |
 | Stack / unstack | `Super+Ctrl+Shift+arrows` / `Super+Ctrl+Shift+Space` |
-| Terminal | `Super+Enter` Herdr · `Super+Shift+Enter` Windows Terminal |
+| Terminal (Herdr) | `Super+Enter` |
 | Pause tiling | `Super+Shift+P` |
 
 Launchers resolve: the registered OS default for the URL scheme first (`http` /
 `mailto` via UserChoice ProgId), with fallbacks Ferdium→(known paths, then
-plain name), browser→Zen then Brave, email→Mailspring. Obsidian opens with
-no vault argument, which reopens the vault marked open in
-`%APPDATA%\obsidian\obsidian.json` (no vault picker); the `obsidian://`
-handler is the fallback if the exe moves. The Squirrel
+plain name), browser→Zen then Brave, email→Mailspring. `Super+O` uses the
+`obsidian://` handler to open the `Verdu` vault directly; when that vault folder
+is missing it falls back to a plain launch (per-user path, `Program Files`, then
+plain name), which restores the last vault used. The Squirrel
 `Update.exe` stub is skipped so Mailspring launches the real app. Monocle
 (fullscreen) and native maximize are intentionally unbound since `Super+F`/
 `Super+M` became launchers.
+
+`Super+Enter` opens the Herdr desktop app (`%LOCALAPPDATA%\Programs\herdr-app\
+herdr-app.exe`) and, when it is already running, brings it to the front instead
+of launching a second copy: Herdr is single-instance, and a window komorebi
+parked on another workspace is cloaked, so `WinExist` only finds it inside
+`DetectHiddenWindows` and `WinActivate` fails silently on it. The hotkey asks
+komorebi to `eager-focus herdr-app.exe`, which uncloaks it, switches to the
+owning workspace and focuses it; `WinActivate` stays only as a fallback.
 
 It is a HM-style Toggle: `Super` = the Windows key.
 
@@ -276,3 +284,15 @@ It is a HM-style Toggle: `Super` = the Windows key.
   retry/queue for a dropped `AddSubscriberPipe` (`komorebic --help` has only
   `subscribe-pipe`, `subscribe-socket`, `unsubscribe-*`) and the YASB widget schema has no
   retry or timeout key.
+- **AutoHotkey v2 reserves `log` and has no `A_UserProfile`.** `log := ...` fails to load
+  with `This Func cannot be used as an output variable` because `Log()` is a built-in math
+  function, so helper scripts must use another name (`logFile`). Likewise
+  `A_UserProfile`/`A_LocalAppData` are **not** v2 built-ins: referring to one compiles fine
+  and then fails at runtime with `This local variable has not been assigned a value`, which
+  surfaces as a modal dialog every time the hotkey fires (seen with `#o` on 2026-11-09).
+  Every path in this script therefore comes from `EnvGet("UserProfile")`,
+  `EnvGet("LocalAppData")`, etc. — never from an `A_`-prefixed guess. Along the same lines, a
+  restarted script was once seen leaving the replaced process alive
+  (`Get-Process AutoHotkey64` showed two, both on `komorebi.ahk`); two live instances
+  double-fire every `Run` hotkey, so after any manual reload check that exactly one
+  process holds the script.

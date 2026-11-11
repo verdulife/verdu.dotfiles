@@ -18,6 +18,15 @@
 #     config nu --doc | nu-highlight | less -R
 
 # ---------------------------------------------------------------------------
+# Startup banner
+# ---------------------------------------------------------------------------
+# Nushell prints a welcome banner (version, "type help for commands", tips)
+# before the first prompt of every terminal it starts. It is noise in a layout
+# where a terminal is one keystroke away: turn it off and the prompt is the
+# first thing you see.
+$env.config.show_banner = false
+
+# ---------------------------------------------------------------------------
 # Line editor — the PSReadLine-like flow
 # ---------------------------------------------------------------------------
 # Inline hints are Nushell's own autosuggestion: as you type, the most recent
@@ -34,12 +43,9 @@ $env.config.color_config.hints = "#444444"
 # carapace are deliberately not integrated (see `setup-autoloads.nu`).
 
 # ---------------------------------------------------------------------------
-# gs — Gentle Shell launcher
+# Aliases — names this shell shares with the PowerShell profile
 # ---------------------------------------------------------------------------
-# `gentle-shell` comes from `npm i -g gentle-pi` (Path A, standalone) and is
-# configured with `gentle-shell home link`, so it shares ~/.pi/agent with plain
-# `pi`. Nushell aliases are expanded at parse time and resolve the external
-# command at run time, so a missing bin only fails the `gs` call, never startup.
-
-# gs — Gentle Shell launcher (standalone `gentle-pi`, home linked to ~/.pi/agent).
+# `gs` opens Gentle Shell: the npm `gentle-pi` package, installed globally with
+# `npm i -g --prefix "$env:APPDATA\npm" gentle-pi` on Windows. The PowerShell
+# profile defines the same alias, so both shells answer to `gs`.
 alias gs = gentle-shell

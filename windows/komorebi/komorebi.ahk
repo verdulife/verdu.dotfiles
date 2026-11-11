@@ -151,33 +151,54 @@ ResizeDirectional(axis, arrow) {
 #HotIf
 
 ; ---- Global bindings ----
-; Launch Herdr app (the desktop app, not the terminal CLI in Herdr\bin);
-; Windows Terminal keeps Super+Shift+Enter
+; Win+Enter -> Herdr desktop app (focus the running instance, else launch it).
+;
+; Herdr is single-instance: launching herdr-app.exe while it is already running
+; creates no second window and does not focus the existing one. And AHK cannot
+; see a window that komorebi parked on another workspace (the shell cloaks it),
+; so WinExist() without DetectHiddenWindows misses it and the guard falls through.
+; Resolution: when it runs, ask komorebi to eager-focus it - that uncloaks it,
+; switches to the owning workspace and focuses it (the exe name is positional
+; and case-sensitive). WinActivate alone fails silently on a cloaked window.
 #Enter::{
-    exe := FirstExisting(EnvGet("LocalAppData") . "\Programs\herdr-app\herdr-app.exe",
-                         EnvGet("ProgramFiles") . "\herdr-app\herdr-app.exe")
-    if (exe)
-        Run(exe)
-    else
-        Run("herdr-app.exe")    ; first on PATH
+    if (!HerdrRunning()) {
+        LaunchFirst(HerdrExe(), "herdr-app.exe")
+        return
+    }
+    Komorebic("eager-focus herdr-app.exe")
+    if (!WinActive("ahk_exe herdr-app.exe"))
+        HerdrActivate()            ; fallback if eager-focus could not reach it
 }
-#+Enter::Run("C:\Users\verdu\AppData\Local\Microsoft\WindowsApps\wt.exe")
+
+HerdrExe() {
+    return EnvGet("LocalAppData") . "\Programs\herdr-app\herdr-app.exe"
+}
+
+HerdrRunning() {
+    DetectHiddenWindows(true)      ; the instance may be cloaked on another workspace
+    try found := WinExist("ahk_exe herdr-app.exe")
+    finally DetectHiddenWindows(false)
+    return found
+}
+
+HerdrActivate() {
+    DetectHiddenWindows(true)
+    try {
+        hwnd := WinExist("ahk_exe herdr-app.exe")
+        if (hwnd)
+            WinActivate("ahk_id " hwnd)
+    } finally DetectHiddenWindows(false)
+}
 
 ; ---- App launchers -----------------------------------------------------------
 ; Super+F -> Ferdium
 ; Super+B -> default browser (fallback order: Zen, Brave)
 ; Super+M -> default email client (fallback: Mailspring)
-; Super+O -> Obsidian, reopening its default vault (no vault picker)
+; Super+O -> Obsidian, opening the Verdu vault (fallback: last vault used)
 LaunchFirst(paths*) {
     for p in paths
         if (FileExist(p))
             return Run(p)
-}
-FirstExisting(paths*) {        ; Run()'s PID is not a reliable success test
-    for p in paths
-        if (FileExist(p))
-            return p
-    return ""
 }
 UrlAppExe(protocol) {          ; registered default app executable for http/mailto
     try {
@@ -225,17 +246,22 @@ LaunchDefaultApp(protocol, candidates*) {
         EnvGet("ProgramFiles") . "\Mailspring\Mailspring.exe",
         "mailspring.exe")
 }
-; Obsidian launched without arguments reopens the vault marked open in
-; %APPDATA%\obsidian\obsidian.json (the only registered one), so no vault name
-; is hardcoded here. The URI handler is the fallback if the exe moves.
+
+; Obsidian: open the Verdu vault directly. The per-user `obsidian://` handler is
+; registered at install, so no exe path is needed here. If the vault folder is
+; gone (renamed/moved) or the handler is not registered, fall back to a plain
+; launch, which is what restores the last vault used. Paths come from EnvGet
+; because AutoHotkey v2 has no A_UserProfile/A_LocalAppData built-ins.
 #o::{
-    exe := FirstExisting(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
-                         EnvGet("LocalAppData") . "\Obsidian\Obsidian.exe",
-                         EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe")
-    if (exe)
-        Run(exe)
-    else
-        try Run("obsidian://open")
+    if (DirExist(EnvGet("UserProfile") . "\Obsidian\Verdu")) {
+        try {
+            Run("obsidian://open?vault=Verdu")
+            return
+        }
+    }
+    LaunchFirst(EnvGet("LocalAppData") . "\Programs\Obsidian\Obsidian.exe",
+                EnvGet("ProgramFiles") . "\Obsidian\Obsidian.exe",
+                "obsidian.exe")
 }
 
 ; ---- Suppress the Start menu on a lone Win press -------------------------
