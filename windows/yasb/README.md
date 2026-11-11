@@ -11,7 +11,7 @@ left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
        pi_agents                  (live Pi sessions: Project STATE ...)
 center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
-        grouper_sysinfo           (cpu % · memory · gpu · disk %)
+        grouper_sysinfo           (cpu % · memory · gpu · ssd %)
         grouper_actions           (systray collapsed ▾ | clock 00:00 | power)
 ```
 
@@ -21,36 +21,34 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 |---|---|---|
 | `komorebi_workspaces` | `komorebi.workspaces.WorkspaceWidget` | dots via label glyphs `•`/`●`, `hide_empty_workspaces: false` (5 always) |
 | `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono; collapses to 0 px when quiet, so the center is empty without audio |
-| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu/disk |
+| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu/ssd |
 | `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
 | `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | small-caps label + percentage (`{info[percent][total]}%`, no MHz). GPU shows utilization only; the temperature and the memory detail live in `label_alt`, one left click away (`GpuWidget` defaults `on_left` to `toggle_label`) |
-| `disk` | `yasb.disk.DiskWidget` | used percentage of `volume_label` (`C`); left click toggles to `label_alt` (used/total GB). Two v2.0.8 quirks the validator enforces: `update_interval` is in **seconds** here (not ms like the other sysinfo widgets) and caps at 3600, and it rejects a `menu` block |
+| `disk` | `yasb.disk.DiskWidget` | *retired*: replaced by `ssd`, which reports saturation instead of free space |
+| `ssd` | `yasb.custom.CustomWidget` | SSD **saturation** (busy time), not free space: `ssd_busy.py` samples `\PhysicalDisk(_Total)\% Disk Time` through `pdh.dll` — the counter behind Task Manager's Disk column — and prints the finished small-caps label. `run_interval: 3000` because the script spends ~500 ms of it sampling |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 | `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click slides the overflow by one session, right click opens the detail table |
 
-## System info labels: faux small caps (CPU / RAM / GPU / DISK)
+## System info labels: faux small caps (CPU / RAM / GPU / SSD)
 
-Each sysinfo widget opens with its name set in faux small caps, not an icon:
+Each sysinfo widget opens with its name in the same faux small caps `pi_agents.py`
+uses for a session state — 9px, `letter-spacing: 1px`, upper case:
 
 ```yaml
-label: "<span style=\"font-size:10px; letter-spacing:1px\"><font color=\"#9aa3b2\">CPU</font></span> {info[percent][total]}%"
+label: "<span style=\"font-size:9px; letter-spacing:1px\"><font color=\"#9aa3b2\">CPU</font></span> {info[percent][total]}%"
 ```
 
 **Why faux:** Qt rich text ignores `font-variant: small-caps`, and no Nerd Font on
 this machine carries the Unicode small-caps block (CaskaydiaCove NF/NFP/NFM and
 JetBrainsMono NF* lack the glyphs for `b c d e f k m n o p r t w`), so a word cannot
-be spelled in real small caps. The label is therefore upper case at ~70% of the pill
-text size with `letter-spacing: 1px` — the same trick `pi_agents.py` uses for a
-session state. Keep the two consistent: if the pill font size changes, the `10px`
-here moves with it.
+be spelled in real small caps. Two places own the span: `config.yaml` for the three
+built-in widgets, `ssd_busy.py` for SSD (`LABEL_FONT_SIZE`). Change one, change both.
 
-The colour `#9aa3b2` is the muted label tone the icons used, so the wordmark reads as
-a label and the number stays the bright part of the pill. `styles.css` only pins the
-font family for these four widgets; size, tracking and colour live inline in
-`config.yaml` because rich-text spans take inline styles, not QSS classes.
+The `#9aa3b2` tone is the muted label colour the icons used, so the word reads as a
+label and the number stays the bright part of the pill.
 
 **Retired:** `cpu-icon.png`, `ram-icon.png` and `gpu-icon.png` (28x8 wordmark PNGs
 rendered by `make_sysinfo_icons.py` from the FigCraft exports) are no longer
@@ -58,6 +56,25 @@ referenced by the stylesheet. The files and their `MANIFEST.md` rows stay for no
 reverting is a config edit: restore the `<span class="icon"></span>` spans and the
 `qproperty-pixmap` rules (git history has them) and the bar looks exactly as before.
 Delete the three PNGs and their manifest rows once the labels are settled.
+
+## SSD saturation (`ssd_busy.py`)
+
+Task Manager's Disk column is **busy time**, not free space, and Windows exposes it
+as a performance counter. `py` (the interpreter the bar shells out to) has no
+`psutil`, so the helper reads `\PhysicalDisk(_Total)\% Disk Time` through `pdh.dll`
+with `ctypes` — `PdhAddEnglishCounterW`, which is also why the English name works on
+this Spanish-locale Windows where `typeperf`/`Get-Counter` reject it.
+
+The counter accumulates per-request service time, so overlapping I/O pushes it past
+the wall clock: `clamp_percent` keeps the pill inside 0-100 and `PDH_FMT_NOCAP100` is
+never requested. Percentage counters need a baseline, so a run costs one sampling
+window (`--window`, default 500 ms) plus interpreter start; `run_interval` is 3000
+for that reason.
+
+Verified against the counter it complements: during a sustained 1.2 GB copy,
+`% Disk Time` reads 100.0% while `% Idle Time` reads 0.0%. Idle machines read 0.0-2%.
+
+Tests: `py -B -m unittest discover -s windows/yasb -p "test_*.py"` from the repo root.
 
 ## Center: the audio visualizer alone
 

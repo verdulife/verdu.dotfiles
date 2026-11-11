@@ -110,17 +110,16 @@
   margin-right: 4px;
 }
 
-/* ---- System info labels: faux small caps (CPU / RAM / GPU / DISK) ----
+/* ---- System info labels: faux small caps (CPU / RAM / GPU / SSD) ----
    The wordmark PNGs are retired. Qt rich text ignores `font-variant: small-caps`
    and no Nerd Font here carries the Unicode small-caps block, so each label is
-   upper case at ~70% of the pill text size with wider tracking — the same faux
-   small caps pi_agents.py uses for a session state. The size/colour/tracking live
-   inline in config.yaml (one span per label), so this block only pins the family
-   the label inherits and the gap before the number. */
+   upper case at 9px with wider tracking — byte for byte what pi_agents.py does for
+   a session state. Size/colour/tracking live inline (config.yaml for the built-in
+   widgets, ssd_busy.py for SSD), so this block only pins the family. */
 .cpu-widget .label,
 .memory-widget .label,
 .gpu-widget .label,
-.disk-widget .label {
+.ssd-widget .label {
   font-family: "JetBrainsMono NF", "JetBrainsMono NFP", sans-serif;
 }
 

@@ -43,6 +43,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/yasb/styles.css` | `%USERPROFILE%\.config\yasb\styles.css` |
 | `windows/yasb/opencode_go.py` | `%USERPROFILE%\.config\yasb\opencode_go.py` |
 | `windows/yasb/pi_agents.py` | `%USERPROFILE%\.config\yasb\pi_agents.py` |
+| `windows/yasb/ssd_busy.py` | `%USERPROFILE%\.config\yasb\ssd_busy.py` |
 | `windows/yasb/pi-logo.png` | `%USERPROFILE%\.config\yasb\pi-logo.png` |
 | `windows/yasb/opencode-logo.png` | `%USERPROFILE%\.config\yasb\opencode-logo.png` |
 | `windows/yasb/cpu-icon.png` | `%USERPROFILE%\.config\yasb\cpu-icon.png` |
