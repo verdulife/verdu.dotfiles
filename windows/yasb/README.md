@@ -78,11 +78,15 @@ words look identical. Restoring tracking would need a real rich-text label on ev
 widget, not a stylesheet edit.
 
 **Retired:** `cpu-icon.png`, `ram-icon.png` and `gpu-icon.png` (28x8 wordmark PNGs
-rendered by `make_sysinfo_icons.py` from the FigCraft exports) are no longer
-referenced by the stylesheet. The files and their `MANIFEST.md` rows stay for now so
-reverting is a config edit: restore the `<span class="icon"></span>` spans and the
-`qproperty-pixmap` rules (git history has them) and the bar looks exactly as before.
-Delete the three PNGs and their manifest rows once the labels are settled.
+rendered by `make_sysinfo_icons.py` from the FigCraft exports) are gone. The
+stylesheet stopped referencing them when the labels became text, and on 2026-11-11
+the files and their `MANIFEST.md` rows were deleted, along with the deployed copies.
+Reverting is still a config edit, not a redesign: restore the
+`<span class="icon"></span>` spans and the `qproperty-pixmap` rules from git
+history, plus the three PNGs (`git show <old-commit>:windows/yasb/cpu-icon.png`) and
+their rows, and the bar looks exactly as before. One caveat if you expect the
+generator to do it: its inputs are the FigCraft exports, which are **not** tracked
+here, so `make_sysinfo_icons.py` cannot rebuild them from this repo alone.
 
 ## SSD saturation (`ssd_busy.py`)
 
