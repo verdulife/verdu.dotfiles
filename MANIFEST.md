@@ -57,6 +57,19 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/herdr/plugins.json` | `%APPDATA%\herdr\plugins.json` |
 | `windows/herdr-app/mods/files/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\files\` |
 | `windows/herdr-app/mods/changes/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\changes\` |
+| `windows/herdr-app/layouts/pixel.json` | `%USERPROFILE%\.config\herdr-app\layouts\pixel.json` |
+| `windows/herdr-app/mods/pixel-spaces/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-spaces\` |
+| `windows/herdr-app/mods/pixel-agents/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-agents\` |
+| `windows/herdr-app/mods/pixel-tabs/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-tabs\` |
+| `windows/herdr-app/mods/pixel-pane/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-pane\` |
+| `windows/herdr-app/mods/pixel-status/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-status\` |
+| `windows/herdr-app/mods/pixel-chrome/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-chrome\` |
+| `windows/herdr-app/layouts/main-pixel.json` | `%USERPROFILE%\.config\herdr-app\layouts\main-pixel.json` |
+| `windows/herdr-app/mods/main-pixel-spaces/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\main-pixel-spaces\` |
+| `windows/herdr-app/mods/main-pixel-chrome/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\main-pixel-chrome\` |
+| `windows/herdr-app/mods/pixel-picker/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-picker\` |
+| `windows/herdr-app/programs.json` | `%USERPROFILE%\.config\herdr-app\programs.json` |
+| `windows/herdr-app/pixel-icons/` (recursive) | `%USERPROFILE%\.config\herdr-app\pixel-icons\` |
 | `windows/wallpapers/beach-house-in-japan.1920x1080.mp4` | `%USERPROFILE%\Pictures\Wallpapers\beach-house-in-japan.1920x1080.mp4` |
 
 > **Copy exactly one komorebi configuration.** `komorebi.home.json` on the two-monitor
@@ -67,6 +80,11 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 > and `monitors` is shared and must stay identical in both variants;
 > `windows/komorebi/tests/` fails when they drift. Details, including how to run it:
 > `windows/komorebi/README.md`.
+
+> The two Herdr app layout bundles (`pixel`, `main-pixel`) are third-party code,
+> pinned by commit in `windows/herdr-app/README.md`. `windows/herdr-app/licenses/`
+> and `windows/herdr-app/keys.pixel-picker.merge.json` are repo-only: no row, never
+> copied — `keys.json` is machine-local and is merged by hand, not overwritten.
 
 > `windows/herdr/plugins.json` is Herdr's plugin registry (installed plugins and
 > their `enabled` flag). It stores **absolute** `manifest_path` / `plugin_root`
