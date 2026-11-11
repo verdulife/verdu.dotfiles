@@ -110,28 +110,18 @@
   margin-right: 4px;
 }
 
-/* ---- System info icons: CPU / RAM / GPU wordmark PNGs ----
-   The label's icon span carries no text; each widget sets its wordmark as the
-   span's pixmap. The PNGs are rendered from the source block grid at 2px per
-   cell (28x8), so the bar does no runtime scaling; qproperty-pixmap needs the
-   matching fixed min/max size or the label collapses to zero width. */
-.cpu-widget .icon,
-.memory-widget .icon,
-.gpu-widget .icon {
-  min-width: 28px;
-  max-width: 28px;
-  min-height: 8px;
-  max-height: 8px;
-  margin-right: 5px;
-}
-.cpu-widget .icon {
-  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/cpu-icon.png");
-}
-.memory-widget .icon {
-  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/ram-icon.png");
-}
-.gpu-widget .icon {
-  qproperty-pixmap: url("C:/Users/verdu/.config/yasb/gpu-icon.png");
+/* ---- System info labels: faux small caps (CPU / RAM / GPU / DISK) ----
+   The wordmark PNGs are retired. Qt rich text ignores `font-variant: small-caps`
+   and no Nerd Font here carries the Unicode small-caps block, so each label is
+   upper case at ~70% of the pill text size with wider tracking — the same faux
+   small caps pi_agents.py uses for a session state. The size/colour/tracking live
+   inline in config.yaml (one span per label), so this block only pins the family
+   the label inherits and the gap before the number. */
+.cpu-widget .label,
+.memory-widget .label,
+.gpu-widget .label,
+.disk-widget .label {
+  font-family: "JetBrainsMono NF", "JetBrainsMono NFP", sans-serif;
 }
 
 /* Media Lite: spacing between cover and text + its popup */

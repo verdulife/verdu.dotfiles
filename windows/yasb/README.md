@@ -11,7 +11,7 @@ left : komorebi_workspaces        (5 dots; active opaque, rest translucent)
        pi_agents                  (live Pi sessions: Project STATE ...)
 center: audio_visualizer          (self-collapses to nothing when quiet)
 right : opencode_go               (OpenCode Go usage: 5h · week · month)
-        grouper_sysinfo           (cpu % · memory · gpu)
+        grouper_sysinfo           (cpu % · memory · gpu · disk %)
         grouper_actions           (systray collapsed ▾ | clock 00:00 | power)
 ```
 
@@ -21,38 +21,43 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 |---|---|---|
 | `komorebi_workspaces` | `komorebi.workspaces.WorkspaceWidget` | dots via label glyphs `•`/`●`, `hide_empty_workspaces: false` (5 always) |
 | `audio_visualizer` | `yasb.audio_visualizer.AudioVisualizerWidget` | bars, `hide_idle: true`, mono; collapses to 0 px when quiet, so the center is empty without audio |
-| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu |
+| `grouper_sysinfo` | `yasb.grouper.GrouperWidget` | not collapsible; children cpu/memory/gpu/disk |
 | `grouper_actions` | `yasb.grouper.GrouperWidget` | systray (collapsed ▾) left, clock center, power right |
-| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | CPU shows the icon + percentage (`{info[percent][total]}%`, no MHz). GPU shows utilization only; the temperature and the memory detail live in `label_alt`, one left click away (`GpuWidget` defaults `on_left` to `toggle_label`) |
+| `cpu` / `memory` / `gpu` | `yasb.cpu.CpuWidget` etc. | small-caps label + percentage (`{info[percent][total]}%`, no MHz). GPU shows utilization only; the temperature and the memory detail live in `label_alt`, one left click away (`GpuWidget` defaults `on_left` to `toggle_label`) |
+| `disk` | `yasb.disk.DiskWidget` | used percentage of `volume_label` (`C`); left click toggles to `label_alt` (used/total GB). Two v2.0.8 quirks the validator enforces: `update_interval` is in **seconds** here (not ms like the other sysinfo widgets) and caps at 3600, and it rejects a `menu` block |
 | `systray` | `yasb.systray.SystrayWidget` | `show_unpinned: false` (collapsed by default), `use_hook: false` |
 | `clock` | `yasb.clock.ClockWidget` | label `{%H:%M}`; hover off (v2.0.7 hardcodes the tooltip); left click opens the calendar |
 | `power_menu` | `yasb.power_menu.PowerMenuWidget` | popup below the pill; requires `shutdown/restart/cancel` keys — the validator rejects otherwise |
 | `opencode_go` | `yasb.custom.CustomWidget` | OpenCode Go usage via `opencode_go.py`; 4 states cycled by left click, right click opens the dashboard |
 | `pi_agents` | `yasb.custom.CustomWidget` | live Pi sessions via `pi_agents.py`; `Project STATE` per session (state in faux small caps), Pi mark icon from `pi-logo.png`; left click slides the overflow by one session, right click opens the detail table |
 
-## System info icons (CPU / RAM / GPU)
+## System info labels: faux small caps (CPU / RAM / GPU / DISK)
 
-The three sysinfo widgets open with a wordmark PNG instead of a Nerd Font glyph:
-the label's icon span is empty (`<span class="icon"></span>`) and `styles.css` sets
-`qproperty-pixmap` per widget class (`.cpu-widget`, `.memory-widget`,
-`.gpu-widget`), pointing at absolute paths under `C:/Users/verdu/.config/yasb/`
-(the stylesheet resolves relative paths against the YASB working directory).
+Each sysinfo widget opens with its name set in faux small caps, not an icon:
 
-`cpu-icon.png`, `ram-icon.png`, `gpu-icon.png` are 28x8 with a transparent
-background and `#F2F4F7` blocks, rendered by `make_sysinfo_icons.py` from the
-1024x384 FigCraft exports (art on a 14x4 grid of 64px cells). The script reads
-the grid and repaints each filled cell as 2x2 px instead of resampling, because
-plain downscaling loses the 2px gaps between cells and smears the strokes.
+```yaml
+label: "<span style=\"font-size:10px; letter-spacing:1px\"><font color=\"#9aa3b2\">CPU</font></span> {info[percent][total]}%"
+```
 
-The rules set a fixed 28x8 `min`/`max` size on the span: `qproperty-pixmap` alone
-leaves the label at zero width. To change the size, run
-`py -B make_sysinfo_icons.py --cell <n>` in this folder (14*n wide, 4*n tall) and
-match the three size values in `styles.css`. A missing PNG simply renders an empty
-icon, never a tofu box.
+**Why faux:** Qt rich text ignores `font-variant: small-caps`, and no Nerd Font on
+this machine carries the Unicode small-caps block (CaskaydiaCove NF/NFP/NFM and
+JetBrainsMono NF* lack the glyphs for `b c d e f k m n o p r t w`), so a word cannot
+be spelled in real small caps. The label is therefore upper case at ~70% of the pill
+text size with `letter-spacing: 1px` — the same trick `pi_agents.py` uses for a
+session state. Keep the two consistent: if the pill font size changes, the `10px`
+here moves with it.
 
-At this size the letters are 4 cells wide, so `CPU` and `GPU` read cleanly while
-the `M` of `RAM` (identical to an `H` except for its top bump) still reads as
-`RAH`. That is the source art, not the scaling: a legible `M` needs 5 columns.
+The colour `#9aa3b2` is the muted label tone the icons used, so the wordmark reads as
+a label and the number stays the bright part of the pill. `styles.css` only pins the
+font family for these four widgets; size, tracking and colour live inline in
+`config.yaml` because rich-text spans take inline styles, not QSS classes.
+
+**Retired:** `cpu-icon.png`, `ram-icon.png` and `gpu-icon.png` (28x8 wordmark PNGs
+rendered by `make_sysinfo_icons.py` from the FigCraft exports) are no longer
+referenced by the stylesheet. The files and their `MANIFEST.md` rows stay for now so
+reverting is a config edit: restore the `<span class="icon"></span>` spans and the
+`qproperty-pixmap` rules (git history has them) and the bar looks exactly as before.
+Delete the three PNGs and their manifest rows once the labels are settled.
 
 ## Center: the audio visualizer alone
 
