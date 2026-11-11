@@ -31,8 +31,14 @@ Set-Alias less 'C:\Program Files\Git\usr\bin\less.exe'
 # sign-ins, models, chats and packages are shared with plain `pi` rather than
 # duplicated. Guarded because the bin lives in the fnm `default` alias: if that
 # alias ever points at another Node version, the profile must still load.
-if (Get-Command gentle-shell -ErrorAction SilentlyContinue) {
-  Set-Alias gs gentle-shell
+# `.cmd` and NOT the bare name: npm drops both `gentle-shell.cmd` and
+# `gentle-shell.ps1` on PATH and PowerShell resolves the `.ps1` first (measured on
+# this machine, 2026-11-11), so a bare `gentle-shell` alias hits the script shim and
+# a Restricted execution policy blocks it. The alias stores the name, not a path,
+# because the shim lives in a per-shell `fnm_multishells\<pid>_<id>` directory.
+# Same alias in the Nushell config.
+if (Get-Command gentle-shell.cmd -ErrorAction SilentlyContinue) {
+  Set-Alias gs gentle-shell.cmd
 }
 
 if ($Host.Name -eq 'ConsoleHost' -and -not [Console]::IsOutputRedirected) {
