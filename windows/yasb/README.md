@@ -78,15 +78,15 @@ words look identical. Restoring tracking would need a real rich-text label on ev
 widget, not a stylesheet edit.
 
 **Retired:** `cpu-icon.png`, `ram-icon.png` and `gpu-icon.png` (28x8 wordmark PNGs
-rendered by `make_sysinfo_icons.py` from the FigCraft exports) are gone. The
-stylesheet stopped referencing them when the labels became text, and on 2026-11-11
-the files and their `MANIFEST.md` rows were deleted, along with the deployed copies.
-Reverting is still a config edit, not a redesign: restore the
-`<span class="icon"></span>` spans and the `qproperty-pixmap` rules from git
-history, plus the three PNGs (`git show <old-commit>:windows/yasb/cpu-icon.png`) and
-their rows, and the bar looks exactly as before. One caveat if you expect the
-generator to do it: its inputs are the FigCraft exports, which are **not** tracked
-here, so `make_sysinfo_icons.py` cannot rebuild them from this repo alone.
+rendered from the FigCraft exports) are gone. The stylesheet stopped referencing
+them when the labels became text, and on 2026-11-11 the files and their `MANIFEST.md`
+rows were deleted, along with the deployed copies and the generator that drew them,
+`make_sysinfo_icons.py`. Reverting is still a config edit, not a redesign: restore
+the `<span class="icon"></span>` spans and the `qproperty-pixmap` rules from git
+history, plus the three PNGs (`git show <old-commit>:windows/yasb/cpu-icon.png`),
+their rows and the generator, and the bar looks exactly as before. Redrawing is the
+only thing that does not come back for free: the generator read the FigCraft
+exports, which were never tracked here.
 
 ## SSD saturation (`ssd_busy.py`)
 
