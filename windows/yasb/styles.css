@@ -113,14 +113,33 @@
 /* ---- System info labels: faux small caps (CPU / RAM / GPU / SSD) ----
    The wordmark PNGs are retired. Qt rich text ignores `font-variant: small-caps`
    and no Nerd Font here carries the Unicode small-caps block, so each label is
-   upper case at 9px with wider tracking — byte for byte what pi_agents.py does for
-   a session state. Size/colour/tracking live inline (config.yaml for the built-in
-   widgets, ssd_busy.py for SSD), so this block only pins the family. */
+   upper case at 9px in the muted label colour — byte for byte what pi_agents.py
+   does for a session state.
+
+   Two hooks, because YASB renders the two kinds of label differently:
+   - built-in widgets (cpu / memory / gpu): YASB splits the label mark-up into one
+     child QLabel per <span> and DISCARDS the span's inline `style` when it
+     recreates it — only `class` survives. So the word is `<span class="sc">CPU</span>`
+     in config.yaml and the look comes from the `.sc` rule below.
+   - custom widget (ssd): ssd_busy.py emits the whole label and one QLabel renders
+     it, so its inline `style` still works.
+
+   Qt Style Sheets have no `letter-spacing`, which is why the built-in labels carry
+   no tracking and the SSD label gives its 1px up to match them exactly. */
 .cpu-widget .label,
 .memory-widget .label,
 .gpu-widget .label,
 .ssd-widget .label {
   font-family: "JetBrainsMono NF", "JetBrainsMono NFP", sans-serif;
+}
+.cpu-widget .sc,
+.memory-widget .sc,
+.gpu-widget .sc {
+  color: #9aa3b2;
+  font-size: 9px;
+  /* The span and the number are separate child labels, so the space in the
+     label string is collapsed: this margin is the gap. */
+  margin-right: 4px;
 }
 
 /* Media Lite: spacing between cover and text + its popup */

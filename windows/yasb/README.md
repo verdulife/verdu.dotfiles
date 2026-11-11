@@ -35,20 +35,47 @@ right : opencode_go               (OpenCode Go usage: 5h · week · month)
 ## System info labels: faux small caps (CPU / RAM / GPU / SSD)
 
 Each sysinfo widget opens with its name in the same faux small caps `pi_agents.py`
-uses for a session state — 9px, `letter-spacing: 1px`, upper case:
+uses for a session state — upper case, 9px, `#9aa3b2`, no tracking:
 
 ```yaml
-label: "<span style=\"font-size:9px; letter-spacing:1px\"><font color=\"#9aa3b2\">CPU</font></span> {info[percent][total]}%"
+# built-in widgets: the look comes from the `.sc` class in styles.css
+label: "<span class=\"sc\">CPU</span> {info[percent][total]}%"
 ```
 
 **Why faux:** Qt rich text ignores `font-variant: small-caps`, and no Nerd Font on
 this machine carries the Unicode small-caps block (CaskaydiaCove NF/NFP/NFM and
 JetBrainsMono NF* lack the glyphs for `b c d e f k m n o p r t w`), so a word cannot
-be spelled in real small caps. Two places own the span: `config.yaml` for the three
-built-in widgets, `ssd_busy.py` for SSD (`LABEL_FONT_SIZE`). Change one, change both.
+be spelled in real small caps. The `#9aa3b2` tone is the muted label colour the
+icons used, so the word reads as a label and the number stays the bright part of the
+pill.
 
-The `#9aa3b2` tone is the muted label colour the icons used, so the word reads as a
-label and the number stays the bright part of the pill.
+**The gap before the number is a margin, not a space.** On a built-in widget the span
+and the percentage are separate child labels, so the space in the label string is
+collapsed and `CPU8.4%` runs together; `.sc` carries `margin-right: 4px` to restore
+it. The `ssd` label is one HTML string, so its space survives on its own — which is
+why the two hooks also differ in how the gap is produced.
+
+### Two hooks, because YASB renders the two kinds of label differently
+
+| widget kind | widgets | where the word is styled |
+|---|---|---|
+| built-in | `cpu`, `memory`, `gpu` | `<span class="sc">CPU</span>` in `config.yaml` + the `.cpu-widget .sc` / `.memory-widget .sc` / `.gpu-widget .sc` rule in `styles.css` |
+| custom | `ssd` | inline `<span style="font-size:9px"><font color="#9aa3b2">SSD</font></span>` emitted by `ssd_busy.py` (`LABEL_FONT_SIZE`) |
+
+**Gotcha — YASB discards inline `style` on built-in labels.** A built-in widget's
+label mark-up is split into one child QLabel per `<span>`, and the span's inline
+`style` attribute is dropped when YASB recreates the label; only `class` survives
+(that is how the retired `.icon` / `qproperty-pixmap` rules worked). Proven
+experimentally: a `font-size:16px` inline probe on the CPU label changed nothing on
+the bar after a config reload. Custom widgets are different — their whole HTML
+string is rendered by a single QLabel, so `ssd_busy.py`'s inline style is correct
+and must stay inline. Do not "unify" the two: the built-ins cannot use inline
+styles and the custom widget does not need a QSS class.
+
+**Gotcha — Qt Style Sheets have no `letter-spacing`.** The built-in labels therefore
+carry no tracking, and the SSD span gives its `1px` up to match them, so all four
+words look identical. Restoring tracking would need a real rich-text label on every
+widget, not a stylesheet edit.
 
 **Retired:** `cpu-icon.png`, `ram-icon.png` and `gpu-icon.png` (28x8 wordmark PNGs
 rendered by `make_sysinfo_icons.py` from the FigCraft exports) are no longer

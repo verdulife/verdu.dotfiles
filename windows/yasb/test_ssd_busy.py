@@ -33,11 +33,15 @@ class ClampPercentTest(unittest.TestCase):
 
 
 class LabelTest(unittest.TestCase):
-    def test_label_reuses_the_pi_agents_small_caps_span(self):
+    def test_label_matches_the_builtin_small_caps_span(self):
+        # The three built-in sysinfo widgets are styled through the `.sc` QSS class
+        # and carry no tracking (Qt style sheets have no `letter-spacing`), so the
+        # SSD span gives its 1px up to look identical next to them.
         label = ssd.format_label(64.8)
-        self.assertIn("font-size:9px; letter-spacing:1px", label)
+        self.assertIn("font-size:9px", label)
         self.assertIn(">SSD</font>", label)
         self.assertIn("64.8%", label)
+        self.assertNotIn("letter-spacing", label)
 
     def test_the_word_is_muted_and_only_the_word_carries_a_colour(self):
         label = ssd.format_label(0.0)

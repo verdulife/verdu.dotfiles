@@ -13,8 +13,10 @@ requested, which we never do. Percentage counters need two collections separated
 the sampling window, so a run costs `--window` milliseconds (default 500).
 
 Prints one JSON document: a ready-made label for a `yasb.custom.CustomWidget`, with
-the word in the same faux small caps as `pi_agents.py` (Qt ignores
-`font-variant: small-caps`, so it is upper case at ~70% of the pill size).
+the word in the same faux small caps as the built-in sysinfo widgets (Qt ignores
+`font-variant: small-caps`, so it is upper case at ~70% of the pill size). The span
+carries no tracking: Qt style sheets have no `letter-spacing`, so the three built-in
+labels have none either and this one gives its 1px up to match them.
 """
 
 from __future__ import annotations
@@ -111,7 +113,7 @@ def sample_busy_percent(window_ms: int = SAMPLE_WINDOW_MS) -> float:
 def format_label(percent: float) -> str:
     """`SSD 12.3%` with the word in faux small caps and the number left bright."""
     return (
-        f'<span style="font-size:{LABEL_FONT_SIZE}px; letter-spacing:1px">'
+        f'<span style="font-size:{LABEL_FONT_SIZE}px">'
         f'<font color="{LABEL_COLOUR}">{LABEL_TEXT}</font></span> {clamp_percent(percent):.1f}%'
     )
 
