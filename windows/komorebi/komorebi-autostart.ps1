@@ -34,23 +34,9 @@
 # attempts and bails in ~0 s, so the horizon must live outside the binary. Round 1
 # (2026-10-05) retried 3 times in ~10 s, which stayed entirely inside the blind
 # window: at the 2026-10-06 logon komorebi died at 10:01:54 / 10:01:57 / 10:02:00 and
-# the session got no WM until a manual relaunch. Round 2 (2026-10-06) retried ~240 s.
-#
-# ROUND 3 (2026-10-27): the blind window is NOT bounded by ForegroundLockTimeout, so
-# "give up after N seconds" is the defect, not the number. Evidence from this machine:
-#   - 2026-10-27 logon: 9 attempts 09:38:36 -> 09:41:52 (196 s), all failed; the same
-#     script succeeded on its first attempt at 09:53:16, ~15 min after logon.
-#   - 2026-10-23 logon: the same 9 attempts spanned 09:39:35 -> 09:44:44 (309 s) and
-#     every one failed too, so widening the window is not a fix either.
-#   - The value of ForegroundLockTimeout alone does not predict the outcome: measured
-#     here, an armed 200000 ms lock did not always block a fresh process, and komorebi
-#     has been seen starting with the lock armed. The gate also depends on which window
-#     owns the foreground, which the launcher cannot control at logon.
-# Conclusion: the launcher must keep trying until the gate opens, and record enough to
-# diagnose the next bad logon. Two phases (burst then steady) below, and every failed
-# attempt logs the gate triple (lock / idle / asfw). It still adopts any instance that
-# already answers (Windows "restart apps" may have started one) instead of starting a
-# second.
+# the session got no WM until a manual relaunch. This round retries for ~240 s with
+# backoff, and adopts any instance that already answers (Windows "restart apps" may
+# have started one) instead of blindly starting a second.
 
 $ErrorActionPreference = 'SilentlyContinue'
 
@@ -108,44 +94,6 @@ function Write-Log([string]$msg) {
     "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg" | Out-File -FilePath $log -Append -Encoding utf8
 }
 
-# --- Gate diagnostics for the log. komorebi's first action is AllowSetForegroundWindow
-# --- on itself and it exits if that fails; whether it succeeds depends on Win32
-# --- foreground state (which window owns the foreground, the foreground lock timeout,
-# --- time since the last user input) that a background launcher cannot control. Three
-# --- numbers per failed attempt are what turn the next bad logon into evidence instead
-# --- of a mystery: the session lock timeout (SPI_GETFOREGROUNDLOCKTIMEOUT, 0x2000), the
-# --- seconds since the last user input, and the same probe komorebi makes, issued for
-# --- this process (not ASFW_ANY: a successful probe is also a grant, and a grant to this
-# --- launcher would be the wrong, over-broad one).
-# --- Guarded twice over (Add-Type and the function body): diagnostics must never be the
-# --- reason a session has no window manager.
-if (-not ('KomorebiGate' -as [type])) {
-    Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class KomorebiGate {
-    [DllImport("user32.dll", SetLastError = true)] public static extern bool AllowSetForegroundWindow(int pid);
-    [DllImport("user32.dll", SetLastError = true)] public static extern bool SystemParametersInfo(uint action, uint param, out uint value, uint winini);
-    [DllImport("user32.dll", SetLastError = true)] public static extern bool GetLastInputInfo(ref LastInputInfo info);
-    [StructLayout(LayoutKind.Sequential)] public struct LastInputInfo { public uint cbSize; public uint dwTime; }
-}
-'@ -ErrorAction SilentlyContinue
-}
-function Get-GateDiagnostics {
-    try {
-        $lock = 0
-        [void][KomorebiGate]::SystemParametersInfo(0x2000, 0, [ref]$lock, 0)
-        $lastInput = New-Object KomorebiGate+LastInputInfo
-        $lastInput.cbSize = 8
-        [void][KomorebiGate]::GetLastInputInfo([ref]$lastInput)
-        $idle = [int](([Environment]::TickCount - [int]$lastInput.dwTime) / 1000)
-        $asfw = [bool][KomorebiGate]::AllowSetForegroundWindow($PID)
-        return "lock=$lock idle=${idle}s asfw=$asfw"
-    } catch {
-        return 'gate diagnostics unavailable'
-    }
-}
-
 # --- Hotkeys + status bar first, guarded per process. Deliberately NOT gated on
 # --- komorebi: a window-manager failure must not also cost the hotkeys and the bar.
 # --- CORRECTION 2026-10-20: this used to claim YASB's komorebi widget "reconnects by
@@ -174,26 +122,11 @@ if (-not (Get-Process yasb -ErrorAction SilentlyContinue)) {
 # --- answering instance is fine regardless of komorebi's focus_follows_mouse). Without
 # --- this every command below fails silently against a not-yet-ready socket (the bug
 # --- this fixes).
-# Phase 1 (burst): a normal logon settles inside a couple of minutes, so probe densely at
-# first. Phase 2 (steady): keep trying every minute until the horizon, because the gate has
-# been observed closed for ~15 min after logon (see header). Each doomed attempt costs a
-# process that exits in milliseconds, so retrying for a long time is cheaper than a session
-# with no window manager. The horizon is bounded so a genuinely broken install still ends
-# with a visible [FAIL] instead of retrying forever.
-$burstBackoff   = @(5, 10, 20, 30, 30, 30, 30, 30)   # phase 1: 9 attempts, ~240 s
-$steadyInterval = 60                                  # phase 2: seconds between attempts
-$horizonSeconds = 45 * 60                             # phase 1 + 2: give up after 45 min
-$attempts = 0
+$attempts = 9
+$backoff  = @(5, 10, 20, 30, 30, 30, 30, 30)   # s between attempts (attempt n waits backoff[n-1]); horizon ~240 s
 $ready    = $false
-$deadline = (Get-Date).AddSeconds($horizonSeconds)
-while (-not $ready) {
-    if ((Get-Date) -gt $deadline) { break }
-    if ($attempts -gt 0) {
-        $wait = if ($attempts -le $burstBackoff.Count) { $burstBackoff[$attempts - 1] } else { $steadyInterval }
-        if ($wait -gt ($deadline - (Get-Date)).TotalSeconds) { break }
-        Start-Sleep -Seconds $wait
-    }
-    $attempts++
+for ($attempt = 1; $attempt -le $attempts -and -not $ready; $attempt++) {
+    if ($attempt -gt 1) { Start-Sleep -Seconds $backoff[$attempt - 2] }
 
     # Adopt an instance that already answers (e.g. launched by Windows "restart apps"
     # or by hand) instead of starting a second one.
@@ -246,7 +179,7 @@ while (-not $ready) {
         $why    = (Get-Content $komorebiErr -Raw -ErrorAction SilentlyContinue)
         $why    = if ($why) { ($why -replace '\s+', ' ').Trim() } else { 'no stderr output' }
         if ($why.Length -gt 200) { $why = $why.Substring(0, 200) + '...' }
-        Write-Log "[warn] komorebi start attempt $attempts failed ($status): $why [$(Get-GateDiagnostics)]"
+        Write-Log "[warn] komorebi start attempt $attempt/$attempts failed ($status): $why"
     }
 }
 
@@ -325,7 +258,7 @@ if ($ready) {
         }
     }
 } else {
-    Write-Log "[FAIL] komorebi not ready after $attempts attempts (~$([math]::Ceiling($horizonSeconds / 60)) min); config NOT applied (see $komorebiErr) [$(Get-GateDiagnostics)]"
+    Write-Log "[FAIL] komorebi not ready after $attempts attempts (~240 s); config NOT applied (see $komorebiErr)"
 }
 
 # Report komorebi's outcome as the script's exit code, so a failure is still visible

@@ -234,3 +234,20 @@ Note for the next incident: with the new loop the failure path is no longer "giv
 up after ~4 min". A `[FAIL]` now means 45 min of attempts, and the `[lock=… idle=…s
 asfw=…]` triple in every `[warn]` line is the evidence to compare against the values
 in the table above.
+
+### Reverted the same day (2026-11-11, user decision)
+
+The user rejected the two-phase retry: round 3 is out, and `komorebi-autostart.ps1`
+is back to 9 attempts over a ~240 s backoff (`$attempts = 9`, sleeps
+5/10/20/30/30/30/30/30 s) with no `KomorebiGate` diagnostics. The `[warn]` line is
+`komorebi start attempt n/9 failed (<status>): <reason>` again.
+
+The *diagnosis* above stands and was kept in README gotcha 17, because it does not
+depend on the rejected implementation: the blind window is not bounded by
+`ForegroundLockTimeout`, so no fixed horizon is safe, and the value of the lock does
+not predict the outcome. What the revert costs is stated there too — a slow logon can
+still end with no window manager, which is the failure this file was written for.
+
+Round 3 code remains in git history (`6f9e7c2` plus the docs in `6f78dee`); the
+revert commit is the follow-up to those two, so `git revert <revert>` re-applies it
+if the trade-off is ever revisited.
