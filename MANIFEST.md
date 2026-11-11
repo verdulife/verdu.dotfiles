@@ -58,6 +58,8 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/nushell/env.nu` | `%APPDATA%\nushell\env.nu` |
 | `windows/herdr/config.toml` | `%APPDATA%\herdr\config.toml` |
 | `windows/herdr/plugins.json` | `%APPDATA%\herdr\plugins.json` |
+| `windows/herdr-app/mods/files/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\files\` |
+| `windows/herdr-app/mods/changes/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\changes\` |
 | `windows/wallpapers/beach-house-in-japan.1920x1080.mp4` | `%USERPROFILE%\Pictures\Wallpapers\beach-house-in-japan.1920x1080.mp4` |
 
 > **Copy exactly one komorebi configuration.** `komorebi.home.json` on the two-monitor
