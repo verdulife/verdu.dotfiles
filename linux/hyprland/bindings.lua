@@ -28,9 +28,10 @@
 
 -- --- Personal overrides -----------------------------------------------------
 
--- SUPER + RETURN opens the Herdr workspace instead of the default terminal
--- (omarchy-launch-terminal / xdg-terminal-exec).
-o.rebind("SUPER + RETURN", "Herdr", { omarchy = "terminal-herdr" })
+-- SUPER + RETURN opens the Herdr desktop app (the GPUI window), not the herdr
+-- TUI in a terminal — `omarchy terminal-herdr` runs `omarchy-launch-terminal
+-- herdr`, which is the terminal flavour and is NOT what this chord is for.
+o.rebind("SUPER + RETURN", "Herdr app", { launch = "herdr-app" })
 
 -- ...and the plain terminal moves to SUPER + CTRL + RETURN, the chord Herdr used
 -- to hold, so one chord still opens a single shell. SUPER + ALT + RETURN keeps
