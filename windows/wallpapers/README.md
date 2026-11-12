@@ -1,16 +1,9 @@
-# Wallpapers
+# Wallpapers — the Windows engine
 
-The videos and images the desktop actually uses, kept here so a rebuilt machine
-does not have to hunt them down again. **This folder is the source of truth**;
-the wallpaper engine keeps its own working copy elsewhere (see below).
-
-No LFS, no archive step: files stay small enough for plain Git.
-
-## Current set
-
-| File | Kind | Notes |
-|---|---|---|
-| `beach-house-in-japan.1920x1080.mp4` | video (H.264, 1920x1080) | the wallpaper running on this machine |
+The media itself lives in `../../shared/wallpapers/` (it is not OS-specific and
+Linux plays the same file through OWE). **This folder is documentation only**: how
+Lively Wallpaper is built and where it keeps its own working copy, so a rebuilt
+machine does not hunt for it again.
 
 ## Lively Wallpaper: which build, and where its data lands
 
@@ -32,9 +25,10 @@ video). `WallpaperLayout.json` in the app folder records which `wptmp` entry is
 active per monitor — that is how you find the current video if the name is not
 obvious. Do not edit the package paths; Lively regenerates them.
 
-To apply a file from this folder:
+To apply a file from the repo:
 
-1. Copy it wherever it should live on the target (see `MANIFEST.md`);
+1. Copy `shared/wallpapers/<file>` to its manifest destination
+   (`%USERPROFILE%\Pictures\Wallpapers\<file>`);
 2. Lively → **Add wallpaper** → pick the file (video wallpapers can be added
    straight from disk, no zip needed);
 3. Choose the monitor and confirm it appears under `Library\wallpapers\`.
@@ -60,3 +54,7 @@ bytes to that value (exactly what that Task Manager toggle does). To disable it
 again, use the toggle or write `03 00 00 00` followed by the current FILETIME;
 removing the `Run` value alone does work, but the leftover blob is what makes a
 reinstall come back disabled.
+
+## Linux
+
+Not here — see `../../shared/wallpapers/README.md`.

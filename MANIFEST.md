@@ -70,7 +70,7 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 | `windows/herdr-app/mods/pixel-picker/` (recursive) | `%USERPROFILE%\.config\herdr-app\mods\pixel-picker\` |
 | `windows/herdr-app/programs.json` | `%USERPROFILE%\.config\herdr-app\programs.json` |
 | `windows/herdr-app/pixel-icons/` (recursive) | `%USERPROFILE%\.config\herdr-app\pixel-icons\` |
-| `windows/wallpapers/beach-house-in-japan.1920x1080.mp4` | `%USERPROFILE%\Pictures\Wallpapers\beach-house-in-japan.1920x1080.mp4` |
+| `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `%USERPROFILE%\Pictures\Wallpapers\beach-house-in-japan.1920x1080.mp4` |
 
 > **Copy exactly one komorebi configuration.** `komorebi.home.json` on the two-monitor
 > (home) machine, `komorebi.work.json` on the single-monitor (work) machine — both to
@@ -91,9 +91,11 @@ Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 > paths, so on another machine copy it and then reinstall the plugins there
 > rather than expecting the recorded paths to resolve.
 
-> `windows/wallpapers/` ships **assets, not a live configuration**: Lively keeps
+> `shared/wallpapers/` ships **assets, not a live configuration**: Lively keeps
 > its own virtualized copy of the active wallpaper (MSIX redirect — see
-> `windows/wallpapers/README.md`), so copy the media file and add it in the app.
+> `windows/wallpapers/README.md`, which documents the engine), so copy the media
+> file and add it in the app. The media lives in `shared/` because Linux plays the
+> same file through OWE.
 
 > `windows/nushell/setup-autoloads.nu` is NOT copied; run it once after copying,
 > from a shell where `nu`, `starship` and `zoxide` are on PATH, to regenerate
@@ -115,6 +117,7 @@ tabs open Nushell (the default profile). See README → Verification.
 |---|---|
 | `shared/starship.toml` | `~/.config/starship.toml` |
 | `shared/nvim/` (recursive) | `~/.config/nvim/` |
+| `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `~/Wallpapers/beach-house-in-japan.1920x1080.mp4` |
 | `linux/hyprland/*` (once populated) | `~/.config/hypr/` |
 | `linux/waybar/*` (once populated) | `~/.config/waybar/` |
 

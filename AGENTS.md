@@ -7,10 +7,10 @@ MANIFEST.md to install** — it is the file→destination contract.
 
 Portable personal configuration: a Windows tiling-desktop stack (komorebi +
 masir + AutoHotkey + YASB + Windows Terminal + Nushell + PowerShell) and shared
-tools (Starship, Neovim). Linux folders are placeholders until the Arch configs
-land; `server/balneario-pro/` is separate from that and live — a headless Debian
-server node whose versioned artifacts are systemd **user** units. `odd/` holds
-ODD work records — process history, never deployed.
+tools (Starship, Neovim, wallpaper media). Linux folders are placeholders until
+the Arch configs land; `server/balneario-pro/` is separate from that and live — a
+headless Debian server node whose versioned artifacts are systemd **user** units.
+`odd/` holds ODD work records — process history, never deployed.
 
 ## Install = copy, per MANIFEST.md
 
@@ -78,6 +78,7 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
 | Agent multiplexer (Herdr) | `windows/herdr/config.toml` |
 | Prompt | `shared/starship.toml` |
 | Neovim | `shared/nvim/` |
+| Wallpaper media (both OSes) | `shared/wallpapers/` — engine docs stay per OS |
 | Why a past change was made | `odd/tasks/` (process records, never deployed) |
 
 ## Workflow

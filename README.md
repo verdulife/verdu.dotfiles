@@ -27,7 +27,8 @@ verdu.dotfiles/
 ├── odd/                  ← ODD work records: process history, never deployed
 ├── shared/
 │   ├── starship.toml     ← Starship prompt (both OSes)
-│   └── nvim/             ← Neovim config (LazyVim, lazy.nvim)
+│   ├── nvim/             ← Neovim config (LazyVim, lazy.nvim)
+│   └── wallpapers/       ← wallpaper media (both OSes) + how to apply it
 ├── windows/
 │   ├── komorebi/
 │   │   ├── komorebi.home.json        ← WM config, two-monitor machine
@@ -47,7 +48,7 @@ verdu.dotfiles/
 │   ├── powershell/                   ← PS7 profile + user_profile.ps1
 │   ├── nushell/                      ← Nushell config (+ setup-autoloads.nu: run, not copied)
 │   ├── herdr/                        ← Herdr (agent multiplexer): config.toml + plugins.json
-│   ├── wallpapers/                   ← wallpaper assets (video/image) + how to load them
+│   ├── wallpapers/README.md           ← Windows engine docs (Lively); the media is in `shared/`
 │   └── autostart/komorebi-autostart.vbs  ← windowless logon launcher
 ├── server/
 │   └── balneario-pro/    ← live Debian server: systemd user units
