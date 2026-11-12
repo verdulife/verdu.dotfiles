@@ -145,11 +145,16 @@ shape as the Windows `winget` block above.
 > `pastel-powerline` preset. Unifying them is an explicit decision, never a
 > side effect — the two rows are deliberately different files.
 
-> **No `linux/hyprland/` and no `linux/waybar/`.** The Hyprland config at
+| `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
+| `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
+
+> **`linux/hyprland/` holds only `bindings.lua`.** Every other module in
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
-> package owns it: copying it would freeze defaults while adding no personal
-> decision. There is no waybar on this machine — the bar is `omarchy-shell`. See
-> `linux/README.md`.
+> package owns it: copying them would freeze defaults while adding no personal
+> decision. `bindings.lua` earns its row because it now carries overrides
+> (`SUPER + RETURN` → Herdr, `SUPER + CTRL + RETURN` → the plain terminal). If you
+> edit another module, copy **that file only** and add its row. There is no waybar
+> on this machine — the bar is `omarchy-shell`. See `linux/README.md`.
 
 > `linux/omarchy-shell/README.md` is documentation. It sits next to the config
 > files, so copy **only the rows above**, never the folder wholesale.
