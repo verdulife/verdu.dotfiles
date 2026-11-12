@@ -17,8 +17,11 @@ surface_dim = "black"
 [terminal]
 # Matches -c "#{pane_current_path}" on every split, window, and session
 new_cwd = "follow"
-# New interactive panes run zsh. Empty would mean $SHELL — which on this machine
-# is only correct in sessions started after `chsh`, so it is pinned explicitly.
+# New interactive panes run zsh. NOTE: this key is read by the herdr CLI/TUI
+# only — verified: "default_shell" appears in /usr/bin/herdr but in neither
+# herdr-core nor herdr-app. The desktop app takes its pane shell from $SHELL as
+# inherited by its core at startup, so there it needs a session whose SHELL is
+# already zsh.
 default_shell = "/usr/bin/zsh"
 
 [keys]
