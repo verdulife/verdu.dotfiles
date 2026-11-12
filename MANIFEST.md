@@ -147,6 +147,7 @@ shape as the Windows `winget` block above.
 
 | `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
 | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
+| `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
 
 > **`linux/hyprland/` holds only `bindings.lua`.** Every other module in
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
