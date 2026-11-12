@@ -113,6 +113,18 @@ tabs open Nushell (the default profile). See README → Verification.
 
 ## Linux
 
+Prerequisites (install once, manually, via pacman — not part of the copy):
+
+```bash
+sudo pacman -S --needed zsh zsh-autosuggestions zsh-completions zsh-syntax-highlighting
+chsh -s /usr/bin/zsh   # log out and back in
+```
+
+These require root, so they are never part of a copy: an agent-driven session
+runs with `NoNewPrivs=1`, where the kernel refuses `sudo` and `pkexec` outright.
+Run them yourself, from a terminal that can prompt for the password — the same
+shape as the Windows `winget` block above.
+
 | Repo file | Destination (Linux) |
 |---|---|
 | `linux/starship.toml` | `~/.config/starship.toml` (Linux prompt — `pastel-powerline`) |
