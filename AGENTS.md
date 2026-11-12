@@ -6,11 +6,11 @@ MANIFEST.md to install** — it is the file→destination contract.
 ## What this repo is
 
 Portable personal configuration: a Windows tiling-desktop stack (komorebi +
-masir + AutoHotkey + YASB + Windows Terminal + Nushell + PowerShell) and shared
-tools (Starship, Neovim, wallpaper media). Linux folders are placeholders until
-the Arch configs land; `server/balneario-pro/` is separate from that and live — a
-headless Debian server node whose versioned artifacts are systemd **user** units.
-`odd/` holds ODD work records — process history, never deployed.
+masir + AutoHotkey + YASB + Windows Terminal + Nushell + PowerShell), the Omarchy
+shell on Linux, and shared tools (Starship, Neovim, wallpaper media).
+`server/balneario-pro/` is separate from that and live — a headless Debian server
+node whose versioned artifacts are systemd **user** units. `odd/` holds ODD work
+records — process history, never deployed.
 
 ## Install = copy, per MANIFEST.md
 
@@ -34,6 +34,10 @@ Get-Process komorebi,masir,yasb,AutoHotkey64   # masir = focus-follows-mouse
 Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
 Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..." = the static config took effect
 ```
+
+Linux (Omarchy): `omarchy restart shell` after copying — `shell.json` and
+`shell.toml` hot-reload, but a restart proves the file parsed. A video wallpaper
+only moves if OWE is pinged: see `linux/omarchy-shell/README.md`.
 
 ## Key invariants (do not break)
 
@@ -79,6 +83,9 @@ Get-Content "$HOME\komorebi-autostart.log" -Tail 10   # "[ok] config applied: ..
 | Prompt | `shared/starship.toml` |
 | Neovim | `shared/nvim/` |
 | Wallpaper media (both OSes) | `shared/wallpapers/` — engine docs stay per OS |
+| Omarchy bar, tray, font size, language | `linux/omarchy-shell/` (`shell.json`, `shell.toml`, `language`, `defaults/`) |
+| Omarchy branding, theme-change hook | `linux/omarchy-shell/branding/` · `hooks/theme-set.d/10-owe-sync` |
+| Linux Hyprland config | **nothing to edit** — `~/.config/hypr/` is package-owned (see `linux/README.md`) |
 | Why a past change was made | `odd/tasks/` (process records, never deployed) |
 
 ## Workflow

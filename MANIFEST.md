@@ -118,8 +118,32 @@ tabs open Nushell (the default profile). See README → Verification.
 | `shared/starship.toml` | `~/.config/starship.toml` |
 | `shared/nvim/` (recursive) | `~/.config/nvim/` |
 | `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `~/Wallpapers/beach-house-in-japan.1920x1080.mp4` |
-| `linux/hyprland/*` (once populated) | `~/.config/hypr/` |
-| `linux/waybar/*` (once populated) | `~/.config/waybar/` |
+| `linux/omarchy-shell/shell.json` | `~/.config/omarchy/shell.json` |
+| `linux/omarchy-shell/shell.toml` | `~/.config/omarchy/shell.toml` |
+| `linux/omarchy-shell/language` | `~/.config/omarchy/language` |
+| `linux/omarchy-shell/defaults/agent` | `~/.config/omarchy/defaults/agent` |
+| `linux/omarchy-shell/defaults/dictation` | `~/.config/omarchy/defaults/dictation` |
+| `linux/omarchy-shell/branding/about.txt` | `~/.config/omarchy/branding/about.txt` |
+| `linux/omarchy-shell/branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` |
+| `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
+
+> **No `linux/hyprland/` and no `linux/waybar/`.** The Hyprland config at
+> `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
+> package owns it: copying it would freeze defaults while adding no personal
+> decision. There is no waybar on this machine — the bar is `omarchy-shell`. See
+> `linux/README.md`.
+
+> `linux/omarchy-shell/README.md` is documentation. It sits next to the config
+> files, so copy **only the rows above**, never the folder wholesale.
+
+> `linux/omarchy-shell/shell.json` is a full user copy, not a sparse patch, pinned
+> to Omarchy `4.0.0.alpha`. Upstream default changes will not reach it after an
+> update; re-diff and merge by hand. Its three deltas are listed in
+> `linux/omarchy-shell/README.md`.
+
+> `defaults/dictation.lock`, the `hooks/*.sample` files, `extensions/omarchy-menu.jsonc`,
+> `themes/` and `plugins/superwhisper-panel/` are **never copied**: generated,
+> stock, Aether-managed or package-symlinked (`/opt/superwhisper/`).
 
 ## Server (headless Linux)
 

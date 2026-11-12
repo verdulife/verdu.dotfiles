@@ -53,9 +53,8 @@ verdu.dotfiles/
 ├── server/
 │   └── balneario-pro/    ← live Debian server: systemd user units
 └── linux/
-    ├── hyprland/        ← placeholder (Arch machine config goes here)
-    ├── waybar/          ← placeholder
-    └── README.md
+    ├── omarchy-shell/   ← Omarchy shell: bar/tray/font/language/branding + the OWE hook
+    └── README.md        ← what is versioned and what the package owns
 ```
 
 ---
