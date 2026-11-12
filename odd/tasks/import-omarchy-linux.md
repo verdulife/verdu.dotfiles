@@ -1,6 +1,6 @@
 # Import the Linux side: Omarchy shell config
 
-Status: in progress
+Status: done — T1-T7 complete in `250f239`
 Repo: `~/Projects/verdu.dotfiles`, branch `main`
 Date: 2026-11-12
 Machine: Omarchy 4.0.0.alpha (Arch + Hyprland + Quickshell), kernel from the Arch install
@@ -54,13 +54,13 @@ Arch machine reproduces it by copying files — the same contract as `windows/`.
 
 | ID | Spec | What | Commit |
 |---|---|---|---|
-| T1 | S1, S3 | Restructure: drop `linux/hyprland/`, rename `linux/waybar/` → `linux/omarchy-shell/` | — |
-| T2 | S3, S4 | Import `shell.json`, `shell.toml`, `language`, `defaults/{agent,dictation}` | — |
-| T3 | S3, S4 | Import `branding/{about.txt,screensaver.txt}` and `hooks/theme-set.d/10-owe-sync` | — |
-| T4 | S3, S4 | Write `linux/omarchy-shell/README.md` and rewrite `linux/README.md` | — |
-| T5 | S5 | Add the Linux rows to `MANIFEST.md` and the notes on what is never copied | — |
-| T6 | S5 | Update `README.md` layout tree and `AGENTS.md` | — |
-| T7 | S6 | Verify no stale references, commit on `main` | `feat(linux): import the Omarchy shell config` |
+| T1 | S1, S3 | Restructure: drop `linux/hyprland/`, rename `linux/waybar/` → `linux/omarchy-shell/` | `250f239` |
+| T2 | S3, S4 | Import `shell.json`, `shell.toml`, `language`, `defaults/{agent,dictation}` | `250f239` |
+| T3 | S3, S4 | Import `branding/{about.txt,screensaver.txt}` and `hooks/theme-set.d/10-owe-sync` | `250f239` |
+| T4 | S3, S4 | Write `linux/omarchy-shell/README.md` and rewrite `linux/README.md` | `250f239` |
+| T5 | S5 | Add the Linux rows to `MANIFEST.md` and the notes on what is never copied | `250f239` |
+| T6 | S5 | Update `README.md` layout tree and `AGENTS.md` | `250f239` |
+| T7 | S6 | Verify no stale references, commit on `main` | `250f239` |
 
 ## Log
 

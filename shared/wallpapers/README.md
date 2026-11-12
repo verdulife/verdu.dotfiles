@@ -57,10 +57,13 @@ Any file is accepted. The pickers (`omarchy-theme-bg-switcher`,
   changing theme. That is the engine's normal behaviour, not a defect.
 - **The lock screen never plays video.** It extracts a still poster with
   `ffmpegthumbnailer` and caches it next to the lock plugin.
-- **Two monitors: unverified.** The shell draws one background layer per screen,
-  and whether OWE stretches a single video across the virtual desktop or repeats
-  it on each output has not been checked on this machine. Write the answer here
-  once it is.
+- **Two monitors: the video is per output, not spanned.** Verified on this
+  two-monitor Omarchy machine (2026-11-12): OWE draws the **full frame on each
+  screen** instead of stretching one video across the virtual desktop. So a 16:9
+  video is the right shape here, and a wide "span" composition would only show
+  the same full frame twice. Stills behave differently — the shell centre-crops
+  per screen — but neither path has a span mode, so one image across two outputs
+  is not something this stack supports.
 - **Playback tuning is not tracked.** Pausing rules and transcode limits live in
   OWE's own `~/.config/owe/config.toml` (`[pause]`, `[transcode]`), which is
   machine-local and rewritten by the app — only the media file is versioned.
