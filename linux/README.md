@@ -27,6 +27,16 @@ personal in them on this machine, so the repo does not fork them. If you ever do
 edit one, copy **that file only** and add a manifest row — never the whole tree,
 because `omarchy update` is supposed to keep replacing the rest.
 
+**After editing a Hyprland Lua module you must reload by hand:**
+
+```bash
+hyprctl reload && hyprctl configerrors   # empty output = the file parsed
+```
+
+Hyprland auto-reloads a `.conf` it can see, but these modules are pulled in by
+Lua `require`, which it does not watch. Without the reload the old bindings stay
+active and the edit looks like it "did nothing" — verified on this machine.
+
 ## Install
 
 The same contract as Windows: **copy files to their destinations, no symlinks**.
