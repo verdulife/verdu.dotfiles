@@ -1,0 +1,86 @@
+# ~/.zshrc — zsh on Omarchy
+#
+# Source of truth: verdu.dotfiles/linux/zsh/zshrc → copied to ~/.zshrc.
+# Omarchy ships a bash rc chain only (there is no default/zsh), so this file
+# rebuilds the same environment with zsh-native init hooks.
+
+# --- Environment -----------------------------------------------------------
+# OMARCHY_PATH + the mise/Brew tool paths. Omarchy exports this from
+# /etc/profile.d/omarchy.sh, which only reaches login shells that source
+# /etc/profile — this machine has no /etc/zprofile, so source it here.
+if [[ -r /usr/share/omarchy/default/bash/env-bootstrap ]]; then
+  source /usr/share/omarchy/default/bash/env-bootstrap
+fi
+
+# Linuxbrew: the zsh flavour of what ~/.bashrc does with `brew shellenv bash`.
+if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
+fi
+
+# --- Interactive only from here -------------------------------------------
+[[ $- != *i* ]] && return
+
+# --- History ---------------------------------------------------------------
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS SHARE_HISTORY
+
+# --- Completion ------------------------------------------------------------
+if [[ -d /usr/share/zsh/plugins/zsh-completions ]]; then
+  fpath=(/usr/share/zsh/plugins/zsh-completions $fpath)
+fi
+autoload -Uz compinit && compinit
+
+# --- Autosuggestions -------------------------------------------------------
+# Accept a suggestion with the right arrow (End of line) or Ctrl+E.
+if [[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
+  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+fi
+
+# --- Syntax highlighting (must load after compinit) ------------------------
+if [[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# --- Tools: the zsh versions of Omarchy's bash init ------------------------
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
+
+# fzf key bindings only (Ctrl-R, Ctrl-T, Alt-C). The completion file rewraps
+# ~76 commands on every shell start — Omarchy skips it for the same reason.
+if command -v fzf >/dev/null 2>&1 && [[ -r /usr/share/fzf/key-bindings.zsh ]]; then
+  source /usr/share/fzf/key-bindings.zsh
+fi
+
+# --- Prompt ----------------------------------------------------------------
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
+
+# --- Aliases: the set Omarchy ships for bash, spelled for zsh --------------
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza -lh --group-directories-first --icons=auto'
+  alias lsa='ls -a'
+  alias lt='eza --tree --level=2 --long --icons --git'
+  alias lta='lt -a'
+fi
+
+alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
+alias eff='$EDITOR "$(ff)"'
+
+open() {
+  xdg-open "$@" >/dev/null 2>&1 &
+}
+
+# Protect the shared history file from concurrent writes on a slow exit.
+if command -v zsh >/dev/null 2>&1; then
+  :
+fi

@@ -115,7 +115,8 @@ tabs open Nushell (the default profile). See README → Verification.
 
 | Repo file | Destination (Linux) |
 |---|---|
-| `shared/starship.toml` | `~/.config/starship.toml` |
+| `linux/starship.toml` | `~/.config/starship.toml` (Linux prompt — `pastel-powerline`) |
+| `linux/zsh/zshrc` | `~/.zshrc` |
 | `shared/nvim/` (recursive) | `~/.config/nvim/` |
 | `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `~/Wallpapers/beach-house-in-japan.1920x1080.mp4` |
 | `linux/omarchy-shell/shell.json` | `~/.config/omarchy/shell.json` |
@@ -126,6 +127,11 @@ tabs open Nushell (the default profile). See README → Verification.
 | `linux/omarchy-shell/branding/about.txt` | `~/.config/omarchy/branding/about.txt` |
 | `linux/omarchy-shell/branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` |
 | `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
+
+> **The prompt is no longer shared.** Windows keeps `shared/starship.toml` (a
+> customised catppuccin-powerline); Linux now uses `linux/starship.toml`, the
+> `pastel-powerline` preset. Unifying them is an explicit decision, never a
+> side effect — the two rows are deliberately different files.
 
 > **No `linux/hyprland/` and no `linux/waybar/`.** The Hyprland config at
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
