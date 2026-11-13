@@ -49,3 +49,7 @@ $env.config.color_config.hints = "#444444"
 # `npm i -g --prefix "$env:APPDATA\npm" gentle-pi` on Windows. The PowerShell
 # profile defines the same alias, so both shells answer to `gs`.
 alias gs = gentle-shell
+
+# `cls` for `clear`, the name the Windows shells use. PowerShell ships it as a
+# default alias of Clear-Host, so only zsh and Nushell need it declared.
+alias cls = clear

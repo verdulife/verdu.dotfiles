@@ -79,6 +79,10 @@ fi
 alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
 alias eff='$EDITOR "$(ff)"'
 
+# `cls` as a synonym for `clear`, the name the Windows shells use. PowerShell
+# already ships it as a default alias; zsh and Nushell need it declared.
+alias cls='clear'
+
 # `gs` opens Gentle Shell, same short name as the Windows shells. It shadows
 # Ghostscript's own `gs` (an interactive alias only, so scripts and tools that
 # call the binary keep working); Ghostscript stays reachable as `ghostscript`.
