@@ -100,6 +100,14 @@ mouse_capture = true
 tab_bar_right = [{ type = "zoom" }, { type = "hostname" }]
 
 # set -g set-titles on / set -g set-titles-string '#h:#W', where tmux's #W was
-# the basename of the pane cwd. This is what Hyprland shows in the group bar,
-# and it resolves on the server so remote sessions name the remote host.
-window_title = "{hostname}: {workspace}"
+# the basename of the pane cwd — the tmux *window*, which maps to a Herdr tab
+# here. Tokens in herdr 0.9.5: {hostname}, {workspace}, {tab}, {pane} (the
+# focused pane's manual name) and {terminal_title}. The title renders on the
+# server, so remote sessions name the remote host.
+#
+# Measured 2026-11-13: the running herdr-app window still reads "Herdr" after
+# `herdr server reload-config`, so this value is not what Hyprland's group bar
+# shows on this build. `client.window_title.set` overrides the configured title
+# until `client.window_title.clear` hands it back — that override is the first
+# thing to check if the title never appears.
+window_title = "{hostname}: {tab}"
