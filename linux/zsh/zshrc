@@ -25,6 +25,9 @@ HISTFILE="$HOME/.zsh_history"
 HISTSIZE=50000
 SAVEHIST=50000
 setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS SHARE_HISTORY
+# SHARE_HISTORY makes every interactive shell append to the same file; the fcntl
+# lock is what stops two of them from interleaving a write when one exits slowly.
+setopt HIST_FCNTL_LOCK
 
 # --- Completion ------------------------------------------------------------
 if [[ -d /usr/share/zsh/plugins/zsh-completions ]]; then
@@ -87,8 +90,3 @@ fi
 open() {
   xdg-open "$@" >/dev/null 2>&1 &
 }
-
-# Protect the shared history file from concurrent writes on a slow exit.
-if command -v zsh >/dev/null 2>&1; then
-  :
-fi
