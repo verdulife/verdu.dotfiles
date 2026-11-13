@@ -1,0 +1,19 @@
+[Unit]
+Description=Beeper Bridge Manager (sh-%i)
+Documentation=https://developers.beeper.com/bridges/self-hosting/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/bbctl run sh-%i
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Restart=always
+RestartSec=15
+TimeoutStopSec=30
+MemoryHigh=320M
+MemoryMax=512M
+MemorySwapMax=256M
+
+[Install]
+WantedBy=default.target

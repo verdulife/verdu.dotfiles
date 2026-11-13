@@ -118,6 +118,19 @@ tabs open Nushell (the default profile). See README → Verification.
 | `linux/hyprland/*` (once populated) | `~/.config/hypr/` |
 | `linux/waybar/*` (once populated) | `~/.config/waybar/` |
 
+## Server (headless Linux)
+
+`server/balneario-pro/` is not a placeholder: it is the live Debian home server
+(`balneario-pro`, reached over Tailscale). Its versioned artifacts are systemd
+**user** units — no desktop, so nothing of the Windows or Hyprland stack applies
+here. `bbctl` itself is not versioned: it is a release binary with a pinned
+version and a verified checksum, installed by hand once (see that folder's
+README).
+
+| Repo file | Destination (balneario-pro) |
+|---|---|
+| `server/balneario-pro/systemd/user/bbctl@.service` | `~/.config/systemd/user/bbctl@.service` |
+
 ## Revert
 
 Delete the destination files listed above. Nothing here changes what was on the
@@ -156,3 +169,10 @@ machine before.
   `Microsoft.PowerShell_profile.ps1`. Its destination directory
   (`%USERPROFILE%\.config\powershell\`) is not created by anything else, so
   create it first if the copy fails.
+- `server/balneario-pro/systemd/user/bbctl@.service` is a **user** unit
+  (`systemctl --user`), not a system one: it runs as `verdu`, needs
+  `loginctl enable-linger` to start at boot, and after copying requires
+  `systemctl --user daemon-reload` before `enable --now bbctl@<bridge>`. It is
+  templated on purpose — one instance per bridge, never one file per bridge.
+  `~/.local/share/bbctl/` (live session credentials) and
+  `~/.config/bbctl/config.json` (access token) are never versioned.

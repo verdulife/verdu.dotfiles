@@ -8,7 +8,9 @@ same setup by following the same manifest.
 
 Works on **Windows** (tiling desktop: komorebi + AutoHotkey + YASB) and is
 structured for **Linux** (Arch + Hyprland) — the Linux side currently ships as
-ready-made folders with configs to be added from the Arch machine.
+ready-made folders with configs to be added from the Arch machine. One node is
+live: **`server/balneario-pro/`**, a headless Debian server whose systemd user
+units are versioned here.
 
 Written for humans and agents: **read [MANIFEST.md](MANIFEST.md) to install**,
 [AGENTS.md](AGENTS.md) is the fast path for AI agents.
@@ -47,6 +49,8 @@ verdu.dotfiles/
 │   ├── herdr/                        ← Herdr (agent multiplexer): config.toml + plugins.json
 │   ├── wallpapers/                   ← wallpaper assets (video/image) + how to load them
 │   └── autostart/komorebi-autostart.vbs  ← windowless logon launcher
+├── server/
+│   └── balneario-pro/    ← live Debian server: systemd user units
 └── linux/
     ├── hyprland/        ← placeholder (Arch machine config goes here)
     ├── waybar/          ← placeholder

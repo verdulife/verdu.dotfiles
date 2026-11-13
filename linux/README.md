@@ -4,6 +4,8 @@ This side of the repo is ready but not yet populated: the configuration lives
 on the Arch machine and will be imported here, then installed via the steps
 below. Shared config (`../shared/`) applies to both OSes.
 
+The headless server node lives outside this folder, in `../server/`.
+
 ## Layout (target)
 
 ```
