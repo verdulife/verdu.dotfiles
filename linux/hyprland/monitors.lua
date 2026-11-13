@@ -4,7 +4,13 @@
 -- Monitor scale is Hyprland's scale for the output. It sizes everything
 -- Wayland-native, accepts fractions (1.6, 1.75), and applies immediately.
 -- "auto" lets Hyprland pick per display.
-local omarchy_monitor_scale = "auto"
+--
+-- Pinned to "1" rather than "auto" on purpose: measured with
+-- `hyprctl -j monitors` on 2026-11-13, both HP 24uh panels run 1920x1080 at
+-- scale 1, and the explicit positions below are logical pixels. With "auto" a
+-- panel that resolved to any other scale would leave the right screen floating
+-- away from x=1920 without any error to notice.
+local omarchy_monitor_scale = "1"
 
 -- Explicit layout. The HDMI connector feeds the LEFT screen and the DVI one the
 -- RIGHT screen, but "auto" assigns positions by connector order and put them the
@@ -13,7 +19,9 @@ hl.monitor({ output = "HDMI-A-3", mode = "preferred", position = "0x0", scale = 
 hl.monitor({ output = "DVI-D-1", mode = "preferred", position = "1920x0", scale = omarchy_monitor_scale })
 
 -- Fallback for anything else (a panel plugged in later, the laptop's own screen).
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
+-- Deliberately "auto" here: an unknown panel should pick its own scale instead of
+-- inheriting the pinned 1 that the two named outputs measured.
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
 
 -- Configure a specific monitor.
 -- hl.monitor({ output = "DP-2", mode = "2560x1440@144", position = "0x0", scale = 1 })
@@ -26,5 +34,10 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 -- crisp instead of being stretched by the compositor. GTK only honors whole
 -- numbers, so use the nearest integer to the monitor scale, and restart an
 -- app for a change to reach it.
-local omarchy_gdk_scale = 2
+--
+-- 1, not 2: the monitors measure scale 1 (see above), so the nearest integer is
+-- 1. At 2, any X11 app would draw twice as large on a 1x display. No XWayland
+-- client was running when this was measured (0 of 3 windows), so the change was
+-- dormant rather than visible.
+local omarchy_gdk_scale = 1
 hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
