@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/bbctl run sh-%i
+ExecStart=%h/.local/bin/bbctl run --no-override-config sh-%i
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 Restart=always
 RestartSec=15

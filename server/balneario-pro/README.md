@@ -82,6 +82,30 @@ Details that are not decoration:
 - `loginctl enable-linger` must stay enabled for the unit to start with no
   session open.
 
+## Bridge settings are not overridable by default
+
+`bbctl run` **regenerates `config.yaml` on every start** unless it is told not to.
+The unit therefore runs `bbctl run --no-override-config sh-%i`; with that flag the
+bridge logs `Config already exists, not overriding` and edits survive restarts
+(verified).
+
+That is how the Telegram sync limits are set — the defaults bridge only the 15
+most recently active dialogs:
+
+```yaml
+tg:
+    sync:
+        update_limit: -1        # was 0
+        create_limit: -1        # was 15
+        login_sync_limit: -1    # was 15
+    takeout:
+        dialog_sync: true       # was false: full chat list via Telegram data export
+```
+
+Trade-off, accepted deliberately: a pinned config is not refreshed when the
+bridge binary is updated. If a new bridge version needs new keys, delete
+`config.yaml`, let `bbctl` regenerate it, and re-apply these four values.
+
 ## Never versioned
 
 | Path | Why |
