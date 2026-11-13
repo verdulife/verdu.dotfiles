@@ -146,10 +146,13 @@ shape as the Windows `winget` block above.
 > side effect — the two rows are deliberately different files.
 
 | `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
+| `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
 | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
 | `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
 
-> **`linux/hyprland/` holds only `bindings.lua`.** Every other module in
+> **`linux/hyprland/` holds only the modules that carry a personal decision:**
+> `bindings.lua` (the two chord overrides) and `monitors.lua` (which output is the
+> left screen). Every other module in
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
 > package owns it: copying them would freeze defaults while adding no personal
 > decision. `bindings.lua` earns its row because it now carries overrides
