@@ -141,6 +141,7 @@ shape as the Windows `winget` block above.
 | `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
 | `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
 | `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
+| `linux/hyprland/looknfeel.lua` | `~/.config/hypr/looknfeel.lua` |
 | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
 | `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
 
@@ -150,8 +151,9 @@ shape as the Windows `winget` block above.
 > side effect — the two rows are deliberately different files.
 
 > **`linux/hyprland/` holds only the modules that carry a personal decision:**
-> `bindings.lua` (the two chord overrides) and `monitors.lua` (which output is the
-> left screen). Every other module in
+> `bindings.lua` (the two chord overrides), `monitors.lua` (which output is the
+> left screen, and the pinned scale) and `looknfeel.lua` (rounded window corners).
+> Every other module in
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
 > package owns it: copying them would freeze defaults while adding no personal
 > decision. `bindings.lua` earns its row because it now carries overrides

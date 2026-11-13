@@ -87,7 +87,7 @@ only moves if OWE is pinged: see `linux/omarchy-shell/README.md`.
 | Wallpaper media (both OSes) | `shared/wallpapers/` — engine docs stay per OS |
 | Omarchy bar, tray, font size, language | `linux/omarchy-shell/` (`shell.json`, `shell.toml`, `language`, `defaults/`) |
 | Omarchy branding, theme-change hook | `linux/omarchy-shell/branding/` · `hooks/theme-set.d/10-owe-sync` |
-| Linux Hyprland chords, monitor layout | `linux/hyprland/bindings.lua` · `linux/hyprland/monitors.lua` — the only two modules that carry a personal decision; every other file in `~/.config/hypr/` is package-owned and must never be forked. Reload by hand: `hyprctl reload && hyprctl configerrors` (Lua `require`s are not watched) |
+| Linux Hyprland chords, monitor layout, corners | `linux/hyprland/bindings.lua` · `linux/hyprland/monitors.lua` · `linux/hyprland/looknfeel.lua` — the only three modules that carry a personal decision; every other file in `~/.config/hypr/` is package-owned and must never be forked. Reload by hand: `hyprctl reload && hyprctl configerrors` (Lua `require`s are not watched), and try values with `hyprctl eval`, never `hyprctl keyword` |
 | Linux plain-terminal chord target | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` |
 | Why a past change was made | `odd/tasks/` (process records, never deployed) |
 
