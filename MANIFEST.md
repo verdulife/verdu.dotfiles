@@ -139,16 +139,15 @@ shape as the Windows `winget` block above.
 | `linux/omarchy-shell/branding/about.txt` | `~/.config/omarchy/branding/about.txt` |
 | `linux/omarchy-shell/branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` |
 | `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
+| `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
+| `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
+| `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
+| `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
 
 > **The prompt is no longer shared.** Windows keeps `shared/starship.toml` (a
 > customised catppuccin-powerline); Linux now uses `linux/starship.toml`, the
 > `pastel-powerline` preset. Unifying them is an explicit decision, never a
 > side effect — the two rows are deliberately different files.
-
-| `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
-| `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
-| `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
-| `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
 
 > **`linux/hyprland/` holds only the modules that carry a personal decision:**
 > `bindings.lua` (the two chord overrides) and `monitors.lua` (which output is the

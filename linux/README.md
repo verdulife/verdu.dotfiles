@@ -49,6 +49,7 @@ cd ~/verdu.dotfiles
 
 # shared
 cp -r shared/nvim/. ~/.config/nvim/
+mkdir -p ~/Wallpapers
 cp shared/wallpapers/*.mp4 ~/Wallpapers/
 
 # shell
@@ -68,6 +69,14 @@ cp linux/omarchy-shell/defaults/agent \
 cp linux/omarchy-shell/hooks/theme-set.d/10-owe-sync \
    ~/.config/omarchy/hooks/theme-set.d/
 chmod +x ~/.config/omarchy/hooks/theme-set.d/10-owe-sync
+
+# personal Hyprland modules, plain-terminal target, Herdr shell
+# (the rest of ~/.config/hypr/ is package-owned — never copy the whole tree)
+mkdir -p ~/.config/hypr ~/.config/xdg-terminal-exec ~/.config/herdr
+cp linux/hyprland/bindings.lua linux/hyprland/monitors.lua ~/.config/hypr/
+cp linux/xdg-terminal-exec/hyprland-xdg-terminals.list ~/.config/xdg-terminal-exec/
+cp linux/herdr/config.toml ~/.config/herdr/config.toml
+hyprctl reload && hyprctl configerrors   # Lua modules are not auto-reloaded
 ```
 
 Then `omarchy restart shell`.

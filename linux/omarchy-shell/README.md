@@ -14,7 +14,7 @@ themes and plugins are deliberately absent; `../README.md` explains why.
 | `shell.json` | `~/.config/omarchy/shell.json` | bar layout, dock pins, idle timings, tray widgets |
 | `shell.toml` | `~/.config/omarchy/shell.toml` | shell font size (`[font] base-size = 12`) |
 | `language` | `~/.config/omarchy/language` | locale the shell formats dates and numbers with (`es-MX`) |
-| `defaults/agent` | `~/.config/omarchy/defaults/agent` | which agent the launcher opens (`opencode`) |
+| `defaults/agent` | `~/.config/omarchy/defaults/agent` | which agent the launcher opens (`pi`) |
 | `defaults/dictation` | `~/.config/omarchy/defaults/dictation` | which dictation engine the launcher opens (`superwhisper`) |
 | `branding/about.txt` | `~/.config/omarchy/branding/about.txt` | ASCII letterform art shown by the "about" panel |
 | `branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` | ASCII art shown by the screensaver |

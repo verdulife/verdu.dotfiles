@@ -7,7 +7,9 @@ MANIFEST.md to install** — it is the file→destination contract.
 
 Portable personal configuration: a Windows tiling-desktop stack (komorebi +
 masir + AutoHotkey + YASB + Windows Terminal + Nushell + PowerShell), the Omarchy
-shell on Linux, and shared tools (Starship, Neovim, wallpaper media).
+shell on Linux (plus the two Hyprland modules that carry a personal decision), and
+shared tools (Neovim, wallpaper media; the Starship prompt is **per OS** —
+`shared/starship.toml` on Windows, `linux/starship.toml` on Linux).
 `server/balneario-pro/` is separate from that and live — a headless Debian server
 node whose versioned artifacts are systemd **user** units. `odd/` holds ODD work
 records — process history, never deployed.
@@ -79,13 +81,14 @@ only moves if OWE is pinged: see `linux/omarchy-shell/README.md`.
 | Bar widgets/groups/pill look | `windows/yasb/config.yaml` + `styles.css` |
 | Windows Terminal (profiles, keys) | `windows/win-terminal/settings.json` |
 | Shell profiles (PS7, Nushell) | `windows/powershell/` · `windows/nushell/` |
-| Agent multiplexer (Herdr) | `windows/herdr/config.toml` |
-| Prompt | `shared/starship.toml` |
+| Agent multiplexer (Herdr) | `windows/herdr/config.toml` · `linux/herdr/config.toml` |
+| Prompt | **per OS**: `shared/starship.toml` (Windows, catppuccin-powerline) · `linux/starship.toml` (Linux, pastel-powerline) — unifying them is an explicit decision, never a side effect |
 | Neovim | `shared/nvim/` |
 | Wallpaper media (both OSes) | `shared/wallpapers/` — engine docs stay per OS |
 | Omarchy bar, tray, font size, language | `linux/omarchy-shell/` (`shell.json`, `shell.toml`, `language`, `defaults/`) |
 | Omarchy branding, theme-change hook | `linux/omarchy-shell/branding/` · `hooks/theme-set.d/10-owe-sync` |
-| Linux Hyprland config | **nothing to edit** — `~/.config/hypr/` is package-owned (see `linux/README.md`) |
+| Linux Hyprland chords, monitor layout | `linux/hyprland/bindings.lua` · `linux/hyprland/monitors.lua` — the only two modules that carry a personal decision; every other file in `~/.config/hypr/` is package-owned and must never be forked. Reload by hand: `hyprctl reload && hyprctl configerrors` (Lua `require`s are not watched) |
+| Linux plain-terminal chord target | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` |
 | Why a past change was made | `odd/tasks/` (process records, never deployed) |
 
 ## Workflow
