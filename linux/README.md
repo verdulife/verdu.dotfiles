@@ -103,6 +103,14 @@ machine has no `/etc/zprofile`, so `/etc/profile.d/omarchy.sh` never reaches zsh
 `zsh-autosuggestions` and `zsh-syntax-highlighting` load behind `-r` guards, so
 a machine missing either package still starts a working shell.
 
+**Tab completion ignores case.** `zstyle ':completion:*' matcher-list ''
+'m:{a-z}={A-Za-z}'` matches `proj` against `Projects` and inserts the real
+spelling. The empty first entry is deliberate: zsh tries the entries in order, so
+an exact-case match still wins before the insensitive fallback runs. Only
+completion is affected — a path typed out and executed stays case-sensitive,
+because the filesystem is (ext4/btrfs cannot be case-insensitive per directory
+without `casefold`, which git and other tools dislike).
+
 **The prompt is per OS now.** `shared/starship.toml` is the Windows prompt (custom
 catppuccin-powerline); `linux/starship.toml` is the `pastel-powerline` preset.
 Changing one does not change the other.

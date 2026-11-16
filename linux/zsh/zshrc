@@ -35,6 +35,12 @@ if [[ -d /usr/share/zsh/plugins/zsh-completions ]]; then
 fi
 autoload -Uz compinit && compinit
 
+# Case-insensitive tab completion: 'proj' finds 'Projects' and the completed text
+# keeps the real spelling. The empty first entry is deliberate — zsh tries the
+# entries in order, so an exact-case match still wins before the fallback runs.
+# This only affects completion: a path typed out and executed stays case-sensitive.
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Za-z}'
+
 # --- Autosuggestions -------------------------------------------------------
 # Accept a suggestion with the right arrow (End of line) or Ctrl+E.
 if [[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
