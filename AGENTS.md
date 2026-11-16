@@ -14,11 +14,18 @@ shared tools (Neovim, wallpaper media; the Starship prompt is **per OS** —
 node whose versioned artifacts are systemd **user** units. `odd/` holds ODD work
 records — process history, never deployed.
 
-## Install = copy, per MANIFEST.md
+## Install = copy or link, per MANIFEST.md
 
-No installers, no symlinks. For each row in `MANIFEST.md`:
+No installers, no symlink manager. For each row in `MANIFEST.md`:
 
-- `copy <repo-file> <destination>` — exact paths, do not invent.
+- `copy <repo-file> <destination>` or `link <repo-file> <destination>`
+  (`ln -sfn`) — exact paths, do not invent; the row names the mode.
+- `link` only the rows marked so: files that no application and no package
+  writes. Anything an app or a package rewrites (`shared/nvim/`,
+  `linux/omarchy-shell/`, the Hyprland modules) stays a copy, because the
+  rewrite replaces the symlink with a real file and the clone silently stops
+  reaching the machine.
+- Windows rows are all `copy` — symlinks there need admin or Developer Mode.
 - `shared/nvim/` is the only recursive copy.
 - Windows: first install the winget prerequisites listed at the top of the
   manifest (one-time, manual).
@@ -26,7 +33,8 @@ No installers, no symlinks. For each row in `MANIFEST.md`:
 
 ## Revert
 
-Delete the destination files from the manifest.
+Delete the destination files from the manifest. A `link` row is a symlink: `rm`
+removes the link and leaves the repo file where it is.
 
 ## Health checks
 
@@ -93,10 +101,11 @@ only moves if OWE is pinged: see `linux/omarchy-shell/README.md`.
 
 ## Workflow
 
-1. Clone; copy per `MANIFEST.md`.
+1. Clone; install per `MANIFEST.md` (each row is a `copy` or a `link`).
 2. Verify with the health checks.
-3. If you change a config in the repo, update the file AND the relevant README,
-   then re-copy that single file on the target machine.
+3. If you change a config in the repo, update the file AND the relevant README.
+   A `link` row is already live at the next shell start; a `copy` row must be
+   re-copied on the target machine.
 
 ## Rules
 

@@ -1,8 +1,24 @@
 # Manifest — where every file goes
 
-Copy-based dotfiles: each repo file maps to exactly one destination on the
-target machine. **This file is the contract.** Copiar = `copy` the source to
-the destination; never more, never less. No installer, no symlinks.
+Each repo file maps to exactly one destination on the target machine, and every
+row names its **mode**. **This file is the contract**: copy or link, never more,
+never less.
+
+- `copy <repo-file> <destination>` — install by copying the file.
+- `link <repo-file> <destination>` — `ln -sfn <repo-file> <destination>`, so an
+  edit in the clone is live at the next shell or prompt start, with no drift
+  between the repo and the machine.
+
+**Link only what no application and no package writes.** A program that rewrites
+its own config replaces the symlink with a real file, silently: the repo keeps
+your version, the machine runs another, and nothing warns you. So `link` is for
+files only you write (`~/.zshrc`, the Starship prompt, the terminal list, the
+Herdr shell key); `copy` is for anything a package may refresh
+(`linux/omarchy-shell/`, the Hyprland modules) and anything the app rewrites
+itself (`shared/nvim/`: lazy.nvim rewrites `lazy-lock.json` and `lazyvim.json`
+in place, so a linked tree would dirty the clone on every plugin update).
+Windows is copy-only — symlinks there need admin or Developer Mode, and the
+manifest has to stay readable as one install flow.
 
 ## Windows
 
@@ -29,6 +45,8 @@ The PowerShell profile also imports a module that winget does not provide:
 ```powershell
 Install-Module -Name Terminal-Icons -Scope CurrentUser -Force
 ```
+
+**Every row below is `copy`:** Windows symlinks need admin or Developer Mode.
 
 | Repo file | Destination (Windows) |
 |---|---|
@@ -125,25 +143,25 @@ runs with `NoNewPrivs=1`, where the kernel refuses `sudo` and `pkexec` outright.
 Run them yourself, from a terminal that can prompt for the password — the same
 shape as the Windows `winget` block above.
 
-| Repo file | Destination (Linux) |
-|---|---|
-| `linux/starship.toml` | `~/.config/starship.toml` (Linux prompt — `pastel-powerline`) |
-| `linux/zsh/zshrc` | `~/.zshrc` |
-| `shared/nvim/` (recursive) | `~/.config/nvim/` |
-| `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `~/Wallpapers/beach-house-in-japan.1920x1080.mp4` |
-| `linux/omarchy-shell/shell.json` | `~/.config/omarchy/shell.json` |
-| `linux/omarchy-shell/shell.toml` | `~/.config/omarchy/shell.toml` |
-| `linux/omarchy-shell/language` | `~/.config/omarchy/language` |
-| `linux/omarchy-shell/defaults/agent` | `~/.config/omarchy/defaults/agent` |
-| `linux/omarchy-shell/defaults/dictation` | `~/.config/omarchy/defaults/dictation` |
-| `linux/omarchy-shell/branding/about.txt` | `~/.config/omarchy/branding/about.txt` |
-| `linux/omarchy-shell/branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` |
-| `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
-| `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
-| `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
-| `linux/hyprland/looknfeel.lua` | `~/.config/hypr/looknfeel.lua` |
-| `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
-| `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
+| Mode | Repo file | Destination (Linux) |
+|---|---|---|
+| **link** | `linux/zsh/zshrc` | `~/.zshrc` |
+| **link** | `linux/starship.toml` | `~/.config/starship.toml` (Linux prompt — `pastel-powerline`) |
+| **link** | `linux/xdg-terminal-exec/hyprland-xdg-terminals.list` | `~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list` |
+| **link** | `linux/herdr/config.toml` | `~/.config/herdr/config.toml` |
+| copy | `shared/nvim/` (recursive) | `~/.config/nvim/` — the app writes `lazy-lock.json` and `lazyvim.json` inside it |
+| copy | `shared/wallpapers/beach-house-in-japan.1920x1080.mp4` | `~/Wallpapers/beach-house-in-japan.1920x1080.mp4` |
+| copy | `linux/omarchy-shell/shell.json` | `~/.config/omarchy/shell.json` |
+| copy | `linux/omarchy-shell/shell.toml` | `~/.config/omarchy/shell.toml` |
+| copy | `linux/omarchy-shell/language` | `~/.config/omarchy/language` |
+| copy | `linux/omarchy-shell/defaults/agent` | `~/.config/omarchy/defaults/agent` |
+| copy | `linux/omarchy-shell/defaults/dictation` | `~/.config/omarchy/defaults/dictation` |
+| copy | `linux/omarchy-shell/branding/about.txt` | `~/.config/omarchy/branding/about.txt` |
+| copy | `linux/omarchy-shell/branding/screensaver.txt` | `~/.config/omarchy/branding/screensaver.txt` |
+| copy | `linux/omarchy-shell/hooks/theme-set.d/10-owe-sync` | `~/.config/omarchy/hooks/theme-set.d/10-owe-sync` (keep it executable) |
+| copy | `linux/hyprland/bindings.lua` | `~/.config/hypr/bindings.lua` |
+| copy | `linux/hyprland/monitors.lua` | `~/.config/hypr/monitors.lua` |
+| copy | `linux/hyprland/looknfeel.lua` | `~/.config/hypr/looknfeel.lua` |
 
 > **The prompt is no longer shared.** Windows keeps `shared/starship.toml` (a
 > customised catppuccin-powerline); Linux now uses `linux/starship.toml`, the

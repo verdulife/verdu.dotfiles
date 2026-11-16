@@ -42,8 +42,13 @@ active and the edit looks like it "did nothing" — verified on this machine.
 
 ## Install
 
-The same contract as Windows: **copy files to their destinations, no symlinks**.
-`MANIFEST.md`'s Linux table is the source of truth for every path.
+The same contract as Windows, with one extra mode: each row is a `copy` or a
+`link`. Only files that no application and no package writes are linked
+(`~/.zshrc`, the Starship prompt, the terminal list, Herdr's shell key); a
+package that refreshes `omarchy-shell/` or the Hyprland modules, or an app that
+rewrites its own config, would replace the symlink with a real file and the
+clone would stop reaching the machine. `MANIFEST.md`'s Linux table is the source
+of truth for every path and its mode.
 
 ```bash
 git clone <this-repo> ~/verdu.dotfiles
@@ -56,8 +61,8 @@ cp shared/wallpapers/*.mp4 ~/Wallpapers/
 
 # shell
 sudo pacman -S --needed zsh zsh-autosuggestions zsh-completions zsh-syntax-highlighting
-cp linux/zsh/zshrc ~/.zshrc
-cp linux/starship.toml ~/.config/starship.toml
+ln -sfn "$PWD/linux/zsh/zshrc" ~/.zshrc
+ln -sfn "$PWD/linux/starship.toml" ~/.config/starship.toml
 chsh -s /usr/bin/zsh   # takes effect on the next login
 
 # omarchy-shell (README.md in that folder is documentation — never copy it)
@@ -77,8 +82,9 @@ chmod +x ~/.config/omarchy/hooks/theme-set.d/10-owe-sync
 mkdir -p ~/.config/hypr ~/.config/xdg-terminal-exec ~/.config/herdr
 cp linux/hyprland/bindings.lua linux/hyprland/monitors.lua \
    linux/hyprland/looknfeel.lua ~/.config/hypr/
-cp linux/xdg-terminal-exec/hyprland-xdg-terminals.list ~/.config/xdg-terminal-exec/
-cp linux/herdr/config.toml ~/.config/herdr/config.toml
+ln -sfn "$PWD/linux/xdg-terminal-exec/hyprland-xdg-terminals.list" \
+   ~/.config/xdg-terminal-exec/hyprland-xdg-terminals.list
+ln -sfn "$PWD/linux/herdr/config.toml" ~/.config/herdr/config.toml
 hyprctl reload && hyprctl configerrors   # Lua modules are not auto-reloaded
 ```
 

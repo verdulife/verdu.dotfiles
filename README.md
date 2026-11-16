@@ -1,10 +1,11 @@
 # verdu.dotfiles
 
 Personal configuration, ported across machines and OSes. Everything here is
-**source of truth**; to use it anywhere you **copy files to their exact
-destinations** — see [MANIFEST.md](MANIFEST.md), which maps every file. No
-installers, no symlink managers: copy is the contract. Machines get exactly the
-same setup by following the same manifest.
+**source of truth**; to use it anywhere you install each file at its exact
+destination — see [MANIFEST.md](MANIFEST.md), which maps every file **and its
+mode**. No installers and no symlink manager: on Linux a row is either a `copy`
+or a `link`, and Windows rows are all copies. Machines get exactly the same
+setup by following the same manifest.
 
 Works on **Windows** (tiling desktop: komorebi + AutoHotkey + YASB) and is
 structured for **Linux** (Arch + Hyprland) — the Linux side currently ships as
@@ -21,7 +22,7 @@ Written for humans and agents: **read [MANIFEST.md](MANIFEST.md) to install**,
 
 ```
 verdu.dotfiles/
-├── MANIFEST.md           ← WHERE EVERY FILE GOES (the contract for copying)
+├── MANIFEST.md           ← WHERE EVERY FILE GOES (the contract: copy or link)
 ├── README.md
 ├── AGENTS.md
 ├── odd/                  ← ODD work records: process history, never deployed
@@ -59,13 +60,13 @@ verdu.dotfiles/
 
 ---
 
-## Install — copy per the manifest
+## Install — copy or link per the manifest
 
 1. Clone the repo anywhere.
 2. Open **`MANIFEST.md`** — it lists each repo file and its exact destination
    for Windows and Linux.
-3. Copy the files to those destinations (a handful of `copy`/`cp` commands; the
-   `shared/nvim/` entry is a recursive copy).
+3. Install each file the way its row says: `copy` it, or `link` it with
+   `ln -sfn` (a handful of commands; `shared/nvim/` is the only recursive copy).
 4. Windows: install the prerequisites listed at the top of the manifest (winget
    commands — one-time, not part of the repo), then sign in once (or run
    `%USERPROFILE%\komorebi-autostart.ps1` once) and verify (below).
@@ -193,7 +194,8 @@ Get-Content "$HOME\.config\yasb\yasb.log" -Tail 20
   widget set/order in `config.yaml` under `bars.status-bar.widgets`.
 - **Focus follows mouse**: the `masir` daemon, started by the autostart; it only
   raises managed tiles. Never re-add an AHK polling loop for this.
-- After editing a config, **re-copy that single file** to reinstall it.
+- After editing a config, **re-copy that single file** — unless its row is a
+  `link`, where the edit is already live at the next shell or prompt start.
 
 ## Gotchas (learned the hard way)
 
