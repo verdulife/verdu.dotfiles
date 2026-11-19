@@ -169,15 +169,20 @@ shape as the Windows `winget` block above.
 > side effect — the two rows are deliberately different files.
 
 > **`linux/hyprland/` holds only the modules that carry a personal decision:**
-> `bindings.lua` (the two chord overrides), `monitors.lua` (which output is the
-> left screen, and the pinned scale) and `looknfeel.lua` (rounded window corners).
+> `bindings.lua` (the chord scheme mirrored from the Windows komorebi one),
+> `monitors.lua` (which output is the left screen, and the pinned scale) and
+> `looknfeel.lua` (rounded window corners).
 > Every other module in
 > `~/.config/hypr/` is byte-identical to `/usr/share/omarchy/config/hypr/`, so the
 > package owns it: copying them would freeze defaults while adding no personal
-> decision. `bindings.lua` earns its row because it now carries overrides
-> (`SUPER + RETURN` → Herdr, `SUPER + CTRL + RETURN` → the plain terminal). If you
-> edit another module, copy **that file only** and add its row. There is no waybar
-> on this machine — the bar is `omarchy-shell`. See `linux/README.md`.
+> decision. `bindings.lua` earns its row because it carries the personal scheme:
+> launchers (`SUPER + RETURN` → Herdr, `SUPER + F` → Ferdium, `SUPER + M` →
+> Thunderbird, `SUPER + O` → Obsidian, `SUPER + B`/`SUPER + SHIFT + B` → the two
+> browsers, `SUPER + E` → file manager), arrow resize on `SUPER + CTRL + arrows`,
+> capture/colour/OCR on `SUPER + SHIFT + S/C/T`, and the freed chords of the dead
+> Chromium web apps. If you edit another module, copy **that file only** and add
+> its row. There is no waybar on this machine — the bar is `omarchy-shell`. See
+> `linux/README.md`.
 
 > `linux/omarchy-shell/README.md` is documentation. It sits next to the config
 > files, so copy **only the rows above**, never the folder wholesale.
